@@ -55,4 +55,10 @@ jobs:
             --target "$GITHUB_SHA" \
             --latest
           gh release upload latest d4-boss-alarm.apk --clobber
-          gh release view latest --json isDraft,assets
+          # Some gh versions leave the release as a draft after an upload; publish it explicitly
+          id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq '.[] | select(.tag_name == "latest") | .id' | head -1)
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$id" -F draft=false -f make_latest=true --jq '.draft'
+          sleep 3
+          draft=$(gh api "repos/$GITHUB_REPOSITORY/releases/$id" --jq '.draft')
+          echo "draft=$draft"
+          [ "$draft" = "false" ]
