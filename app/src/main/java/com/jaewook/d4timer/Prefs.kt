@@ -24,8 +24,22 @@ class Prefs(context: Context) {
     fun setAnchor(e: GameEvent, epochMs: Long) = sp.edit().putLong("anchor_${e.key}", epochMs).apply()
     fun resetAnchor(e: GameEvent) = sp.edit().remove("anchor_${e.key}").apply()
 
-    /** The event with the user's correction applied. */
-    fun effective(e: GameEvent) = e.copy(anchor = sp.getLong("anchor_${e.key}", e.anchor))
+    /** The event with the user's correction applied, else the last online sync, else the built-in anchor. */
+    fun effective(e: GameEvent) =
+        e.copy(anchor = sp.getLong("anchor_${e.key}", sp.getLong("sync_anchor_${e.key}", e.anchor)))
+
+    // Online sync
+    fun setSyncAnchor(e: GameEvent, epochMs: Long) = sp.edit().putLong("sync_anchor_${e.key}", epochMs).apply()
+    fun hasSyncAnchor(e: GameEvent) = sp.contains("sync_anchor_${e.key}")
+    fun bossList(): String = sp.getString("boss_list", "[]") ?: "[]"
+    fun setBossList(json: String) = sp.edit().putString("boss_list", json).apply()
+    fun syncRaw(): String = sp.getString("sync_raw", "") ?: ""
+    fun setSyncRaw(text: String) = sp.edit().putString("sync_raw", text).apply()
+    fun syncOk() = sp.getBoolean("sync_ok", false)
+    fun syncMessage(): String = sp.getString("sync_msg", "") ?: ""
+    fun syncTime() = sp.getLong("sync_time", 0L)
+    fun setSyncResult(ok: Boolean, message: String) = sp.edit()
+        .putBoolean("sync_ok", ok).putString("sync_msg", message).putLong("sync_time", System.currentTimeMillis()).apply()
 
     /** true = keep ringing until the user stops it, false = ring once. */
     fun repeat(e: GameEvent) = sp.getBoolean("repeat_${e.key}", e.key == "boss")

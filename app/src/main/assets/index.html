@@ -164,6 +164,12 @@ svg{display:block}
 .quiet-banner svg,.row .moon{width:18px;height:18px;flex:none;color:#a99bff}
 .quiet-banner b{color:#fff}
 .row.muted{opacity:.55}
+.boss-info{margin-top:4px;display:flex;align-items:center;gap:6px;font-size:13.5px;color:#f0d6c8;text-shadow:0 1px 4px #000}
+.boss-info b{color:#fff}
+.boss-info svg{width:14px;height:14px;color:var(--c)}
+.row .sub{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:1px}
+.raw{margin:0;padding:12px 16px;max-height:240px;overflow:auto;font:12px/1.5 ui-monospace,monospace;color:#cbbfb7;white-space:pre-wrap;word-break:break-all;border-top:1px solid var(--line)}
+.btn-ghost{height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--line);color:#d7ccc4;font-size:13px;font-weight:700;background:#1a1312}
 .note{font-size:12.5px;line-height:1.7;color:var(--dim);padding:2px 4px}
 
 /* ---------- bottom nav ---------- */
@@ -264,6 +270,15 @@ svg{display:block}
     <div class="info-row"><span class="k">테스트 알림</span><button class="fix" id="btn-test2">보내기</button></div>
   </div>
   <div class="info-block">
+    <div class="info-row"><span class="k">온라인 일정 동기화<br><span class="v" style="font-size:12.5px" id="sync-st"></span></span>
+      <button class="fix" id="sync-now">지금</button></div>
+    <div class="info-row"><span class="k v" style="font-size:12.5px" id="sync-msg"></span><button class="btn-ghost" id="sync-raw-btn">받아온 내용</button></div>
+    <div id="sync-raw-wrap" hidden>
+      <pre class="raw" id="sync-raw"></pre>
+      <div class="info-row"><span class="k v" style="font-size:12.5px">이 내용을 복사해서 보내주시면 맞춰드려요</span><button class="fix" id="sync-copy">복사</button></div>
+    </div>
+  </div>
+  <div class="info-block">
     <div class="info-row"><span class="k">방해금지 시간<br><span class="v" style="font-size:12.5px">이 시간에는 알림이 울리지 않아요</span></span>
       <button class="switch quiet-sw" role="switch" id="q-on" aria-label="방해금지 시간"></button></div>
     <div class="info-row quiet-times">
@@ -273,7 +288,7 @@ svg{display:block}
   </div>
   <div class="info-block">
     <div class="info-row"><span class="k">앱 버전</span><span class="v" id="st-ver"></span></div>
-    <div class="info-row"><span class="k">계산 방식</span><span class="v">고정 주기 (인터넷 불필요)</span></div>
+    <div class="info-row"><span class="k">계산 방식</span><span class="v">온라인 동기화 + 고정 주기 계산</span></div>
   </div>
   <p class="note" id="anchor-note"></p>
   <p class="note">이 앱은 팬이 만든 비공식 도구이며 Blizzard Entertainment와 관련이 없습니다. 게임 업데이트로 주기가 바뀌면 시간이 어긋날 수 있습니다.</p>
@@ -342,6 +357,12 @@ function loadState() {
   if (bridge) return JSON.parse(bridge.getState());
   return {
     version: "미리보기", notif: true, exact: true, quiet: { on: true, start: 0, end: 480 },
+    sync: { ok: true, msg: "helltides.com · 월드보스, 지옥물결, 군단", time: Date.now() - 3 * MIN, running: false },
+    bossList: [
+      { t: Date.UTC(2026,9,21,16,30), name: "Wandering Death", zone: "Kehjistan" },
+      { t: Date.UTC(2026,9,21,20,0), name: "Avarice", zone: "Fractured Peaks" },
+      { t: Date.UTC(2026,9,21,23,30), name: "Avarice", zone: "Scosglen, Nahantu" }
+    ],
     events: [
       { key: "boss", name: "월드보스", anchor: Date.UTC(2026,9,21,13,0), period: 210*MIN, duration: 15*MIN, on: true, lead: 1, sound: "Morning Flower", repeat: true },
       { key: "tide", name: "지옥물결", anchor: Date.UTC(2026,9,21,0,0), period: 60*MIN, duration: 55*MIN, on: true, lead: 5, sound: "기본 알림음" },
@@ -388,6 +409,7 @@ function buildHome() {
       </div>
       <div class="count" data-r="count"></div>
       <div class="caption" data-r="caption"></div>
+      <div class="boss-info" data-r="bossinfo" hidden></div>
       <div class="upcoming" data-r="upcoming"></div>
       <button class="alarm-btn" data-r="alarm"></button>
     </article>`).join("");
@@ -441,12 +463,55 @@ function tickHome(t) {
     card.querySelector('[data-r="caption"]').innerHTML = live
       ? `종료까지 남은 시간 · <b>${hm(lastStart(e, t) + e.duration)}</b> 종료`
       : `<b>${hm(next)}</b> 시작`;
+    const bi = card.querySelector('[data-r="bossinfo"]');
+    const b = e.key === "boss" ? bossAt(live ? lastStart(e, t) : next) : null;
+    bi.hidden = !b;
+    if (b) {
+      const html = `${PIN}<b>${esc(ko(b.name))}</b>${b.zone ? " · " + esc(ko(b.zone)) : ""}`;
+      if (bi.innerHTML !== html) bi.innerHTML = html;
+    }
     const first = live ? 0 : 1, list = [];
     for (let i = first; list.length < 4; i++) list.push(`<span>${CLOCK}${hm(next + i * e.period)}</span>`);
     const up = card.querySelector('[data-r="upcoming"]'), html = list.join("");
     if (up.innerHTML !== html) up.innerHTML = html;
   }
 }
+
+/* ---------- world boss names from sync ---------- */
+const KO = {
+  "wandering death": "방랑하는 죽음", "avarice": "아바리스", "ashava": "아샤바", "azmodan": "아즈모단",
+  "fractured peaks": "조각난 봉우리", "scosglen": "스코스글렌", "dry steppes": "메마른 평원", "kehjistan": "케지스탄",
+  "hawezar": "하웨자르", "nahantu": "나한투", "skovos": "스코보스"
+};
+const ko = s => (s || "").split(/\s*,\s*/).filter(Boolean).map(x => KO[x.toLowerCase().replace(/^the /, "")] || x).join(", ");
+function bossAt(t) {
+  return (S.bossList || []).find(b => Math.abs(b.t - t) < 5 * MIN) || null;
+}
+const PIN = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
+
+/* ---------- sync status ---------- */
+function paintSync() {
+  const y = S.sync || {};
+  let st;
+  if (y.running) st = "받아오는 중…";
+  else if (!y.time) st = "아직 동기화 안 됨";
+  else st = (y.ok ? "성공 · " : "실패 · ") + new Date(y.time).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+  $("sync-st").textContent = st;
+  $("sync-st").className = y.time && !y.running ? (y.ok ? "ok" : "bad") : "";
+  $("sync-msg").textContent = y.ok ? `${y.msg}에서 일정을 맞췄어요` : (y.msg || "helltides.com에서 최신 일정을 받아 기준 시각을 맞춰요. 실패해도 자체 계산으로 동작해요.");
+}
+$("sync-now").onclick = () => { if (bridge) { bridge.syncNow(); toast("일정을 받아오는 중이에요"); } else toast("앱에서 동작해요"); };
+$("sync-raw-btn").onclick = () => {
+  const w = $("sync-raw-wrap"); w.hidden = !w.hidden;
+  if (!w.hidden) $("sync-raw").textContent = (bridge ? bridge.getSyncRaw() : "{ \"sample\": true }") || "아직 받아온 내용이 없어요";
+};
+$("sync-copy").onclick = () => {
+  const text = $("sync-raw").textContent;
+  navigator.clipboard.writeText(text).then(() => toast("복사했어요"), () => {
+    const r = document.createRange(); r.selectNodeContents($("sync-raw"));
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("길게 눌러 복사해 주세요");
+  });
+};
 
 /* ---------- quiet hours ---------- */
 const MOON = '<svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>';
@@ -504,7 +569,7 @@ function renderSchedule(t) {
     if (day !== lastDay) { html += `<div class="day">${day}</div>`; lastDay = day; }
     const live = s <= t, quiet = !live && inQuiet(s - e.lead * MIN);
     html += `<div class="row${live ? " live" : ""}${quiet ? " muted" : ""}" data-k="${e.key}"><span class="bar"></span><span class="tm">${hm(s)}</span>
-      <span class="nm">${e.name}</span>${quiet ? MOON : ""}<span class="in">${live ? "진행 중" : relative(s - t)}</span></div>`;
+      <span class="nm">${e.name}${(() => { const b = e.key === "boss" && bossAt(s); return b ? `<span class="sub">${esc(ko(b.name))}${b.zone ? " · " + esc(ko(b.zone)) : ""}</span>` : ""; })()}</span>${quiet ? MOON : ""}<span class="in">${live ? "진행 중" : relative(s - t)}</span></div>`;
   }
   $("sched-list").innerHTML = html;
 }
@@ -557,7 +622,7 @@ function paintSheet() {
     refresh(); toast("기본 일정으로 되돌렸어요");
   };
 }
-function refresh() { if (bridge) S = loadState(); paintSettings(); paintSheet(); paintInfo(); paintQuiet(); if (page === "schedule") renderSchedule(Date.now()); }
+function refresh() { if (bridge) S = loadState(); paintSettings(); paintSheet(); paintInfo(); paintQuiet(); paintSync(); if (page === "schedule") renderSchedule(Date.now()); }
 function closeSheet() { $("sheet-wrap").classList.remove("open"); sheetKey = null; }
 $("scrim").onclick = closeSheet;
 $("sh-leads").addEventListener("click", e2 => {
@@ -618,7 +683,7 @@ window.handleBack = () => {
   return false;
 };
 
-buildHome(); buildSchedule(); buildGuide(); paintSettings(); paintInfo(); paintQuiet();
+buildHome(); buildSchedule(); buildGuide(); paintSettings(); paintInfo(); paintQuiet(); paintSync();
 function loop() {
   const t = Date.now();
   if (page === "home") tickHome(t);

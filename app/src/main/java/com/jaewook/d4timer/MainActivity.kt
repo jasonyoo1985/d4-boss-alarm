@@ -83,6 +83,20 @@ class MainActivity : Activity() {
         super.onResume()
         Alarms.scheduleAll(this)
         refreshPage()
+        if (System.currentTimeMillis() - Prefs(this).syncTime() > SYNC_EVERY) startSync()
+    }
+
+    @Volatile private var syncing = false
+
+    private fun startSync() {
+        if (syncing) return
+        syncing = true
+        refreshPage()
+        Thread {
+            Sync.run(applicationContext)
+            syncing = false
+            runOnUiThread { refreshPage() }
+        }.start()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -135,7 +149,8 @@ class MainActivity : Activity() {
                     .put("on", prefs.isOn(e)).put("lead", prefs.lead(e))
                     .put("sound", Alarms.soundName(this, e))
                     .put("custom", prefs.hasCustomAnchor(e))
-                    .put("repeat", prefs.repeat(e)),
+                    .put("repeat", prefs.repeat(e))
+                    .put("synced", prefs.hasSyncAnchor(e)),
             )
         }
         val notif = getSystemService(NotificationManager::class.java).areNotificationsEnabled()
@@ -143,6 +158,12 @@ class MainActivity : Activity() {
         return JSONObject()
             .put("version", version).put("notif", notif).put("exact", Alarms.canExact(this))
             .put("events", events)
+            .put("bossList", JSONArray(prefs.bossList()))
+            .put(
+                "sync",
+                JSONObject().put("ok", prefs.syncOk()).put("msg", prefs.syncMessage()).put("time", prefs.syncTime())
+                    .put("running", syncing),
+            )
             .put(
                 "quiet",
                 JSONObject().put("on", prefs.quietOn()).put("start", prefs.quietStart()).put("end", prefs.quietEnd()),
@@ -184,6 +205,12 @@ class MainActivity : Activity() {
             Prefs(this@MainActivity).resetAnchor(e)
             Alarms.schedule(this@MainActivity, e)
         }
+
+        @JavascriptInterface
+        fun syncNow() = runOnUiThread { startSync() }
+
+        @JavascriptInterface
+        fun getSyncRaw(): String = Prefs(this@MainActivity).syncRaw()
 
         @JavascriptInterface
         fun setRepeat(key: String, on: Boolean) = Prefs(this@MainActivity).setRepeat(event(key), on)
@@ -233,5 +260,6 @@ class MainActivity : Activity() {
     companion object {
         private const val REQ_NOTIF = 1
         private const val REQ_SOUND = 100
+        private const val SYNC_EVERY = 10 * MIN
     }
 }
