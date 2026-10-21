@@ -126,6 +126,8 @@ object Sync {
         "(\\d{1,2})/(\\d{1,2})/(\\d{4}),? (\\d{1,2}):(\\d{2}) ?([AP]M)\\s+([A-Za-z' ]+?)\\s+in\\s+(Fractured Peaks|Dry Steppes|[A-Z][A-Za-z]+)",
     )
 
+    private val NEXT_NAME = Regex("([A-Z][A-Za-z']+(?: [A-Z][A-Za-z']+)?) [Ss]pawns [Ii]n")
+
     /** Reads embedded JSON if present, else the "MM/DD/YYYY h:mm AM Boss in Zone" list. */
     private fun parseHtml(html: String, prefs: Prefs): List<Found> {
         val out = mutableListOf<Found>()
@@ -148,6 +150,11 @@ object Sync {
             val t = offsets.map { utc - it * 60 * MIN }.firstOrNull { Math.floorMod(it - boss.anchor, boss.period) == 0L }
                 ?: continue
             out += Found("boss", t, name.trim(), zone.trim())
+        }
+        // The very next boss is shown separately ("Wandering Death spawns in 3h 04m"), not in the list
+        NEXT_NAME.find(stripTags(html))?.let { m ->
+            val t = Schedule.nextStart(boss, System.currentTimeMillis())
+            if (out.none { it.time == t }) out += Found("boss", t, m.groupValues[1].trim(), null)
         }
         return out
     }

@@ -111,6 +111,8 @@ svg{display:block}
   display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .upcoming span{display:flex;align-items:center;gap:5px;font-family:var(--num);font-weight:600;font-size:16px;color:#e6ddd6;font-variant-numeric:tabular-nums}
 .upcoming svg{width:14px;height:14px;color:var(--muted)}
+.upcoming .slot{display:flex;flex-direction:column;gap:1px;min-width:0}
+.upcoming .who{font-family:var(--body);font-size:11px;font-weight:600;color:var(--c2);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .alarm-btn{margin-top:12px;width:100%;min-height:46px;border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:10px;text-align:left;
   background:linear-gradient(90deg,rgba(var(--rgb),.14),rgba(var(--rgb),.04));border:1px solid rgba(var(--rgb),.45);color:var(--c2)}
 .alarm-btn:active{background:rgba(var(--rgb),.22)}
@@ -360,9 +362,10 @@ function loadState() {
     version: "미리보기", notif: true, exact: true, quiet: { on: true, start: 0, end: 480 },
     sync: { ok: true, msg: "helltides.com/api/schedule에서 일정을 맞췄어요 (월드보스, 지옥물결, 군단)", time: Date.now() - 3 * MIN, running: false },
     bossList: [
-      { t: Date.UTC(2026,9,21,16,30), name: "Wandering Death", zone: "Kehjistan" },
-      { t: Date.UTC(2026,9,21,20,0), name: "Avarice", zone: "Fractured Peaks" },
-      { t: Date.UTC(2026,9,21,23,30), name: "Avarice", zone: "Scosglen, Nahantu" }
+      { t: Date.UTC(2026,9,21,16,30), name: "Wandering Death", zone: "" },
+      { t: Date.UTC(2026,9,21,20,0), name: "Wandering Death", zone: "Kehjistan" },
+      { t: Date.UTC(2026,9,21,23,30), name: "Avarice", zone: "Fractured Peaks" },
+      { t: Date.UTC(2026,9,22,3,0), name: "Avarice", zone: "Scosglen" }
     ],
     events: [
       { key: "boss", name: "월드보스", anchor: Date.UTC(2026,9,21,13,0), period: 210*MIN, duration: 15*MIN, on: true, lead: 1, sound: "Morning Flower", repeat: true },
@@ -472,7 +475,10 @@ function tickHome(t) {
       if (bi.innerHTML !== html) bi.innerHTML = html;
     }
     const first = live ? 0 : 1, list = [];
-    for (let i = first; list.length < 4; i++) list.push(`<span>${CLOCK}${hm(next + i * e.period)}</span>`);
+    for (let i = first; list.length < 4; i++) {
+      const st = next + i * e.period, who = e.key === "boss" && bossAt(st);
+      list.push(`<div class="slot"><span>${CLOCK}${hm(st)}</span>${who ? `<span class="who">${esc(ko(who.name))}</span>` : ""}</div>`);
+    }
     const up = card.querySelector('[data-r="upcoming"]'), html = list.join("");
     if (up.innerHTML !== html) up.innerHTML = html;
   }
