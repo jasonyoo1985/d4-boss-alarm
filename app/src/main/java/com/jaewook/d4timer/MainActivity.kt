@@ -141,7 +141,12 @@ class MainActivity : Activity() {
         val version = packageManager.getPackageInfo(packageName, 0).versionName
         return JSONObject()
             .put("version", version).put("notif", notif).put("exact", Alarms.canExact(this))
-            .put("events", events).toString()
+            .put("events", events)
+            .put(
+                "quiet",
+                JSONObject().put("on", prefs.quietOn()).put("start", prefs.quietStart()).put("end", prefs.quietEnd()),
+            )
+            .toString()
     }
 
     /** Methods the page calls as window.Android.*; they run off the UI thread. */
@@ -177,6 +182,12 @@ class MainActivity : Activity() {
             val e = event(key)
             Prefs(this@MainActivity).resetAnchor(e)
             Alarms.schedule(this@MainActivity, e)
+        }
+
+        @JavascriptInterface
+        fun setQuiet(on: Boolean, start: Int, end: Int) {
+            Prefs(this@MainActivity).setQuiet(on, start, end)
+            Alarms.scheduleAll(this@MainActivity)
         }
 
         @JavascriptInterface

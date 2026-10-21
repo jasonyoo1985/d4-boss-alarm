@@ -15,7 +15,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val key = intent.getStringExtra(Alarms.EXTRA_KEY) ?: return
         val e = Schedule.byKey(key)
         val start = intent.getLongExtra(Alarms.EXTRA_START, 0L)
-        notify(context, e, start)
+        if (!Prefs(context).isQuiet(System.currentTimeMillis())) notify(context, e, start)
         Alarms.schedule(context, e)
     }
 

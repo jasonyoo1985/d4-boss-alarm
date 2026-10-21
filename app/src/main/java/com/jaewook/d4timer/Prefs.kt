@@ -27,6 +27,23 @@ class Prefs(context: Context) {
     /** The event with the user's correction applied. */
     fun effective(e: GameEvent) = e.copy(anchor = sp.getLong("anchor_${e.key}", e.anchor))
 
+    // Quiet hours: minutes from local midnight; the window may cross midnight
+    fun quietOn() = sp.getBoolean("quiet_on", false)
+    fun quietStart() = sp.getInt("quiet_start", 0)
+    fun quietEnd() = sp.getInt("quiet_end", 8 * 60)
+    fun setQuiet(on: Boolean, start: Int, end: Int) =
+        sp.edit().putBoolean("quiet_on", on).putInt("quiet_start", start).putInt("quiet_end", end).apply()
+
+    fun isQuiet(time: Long): Boolean {
+        if (!quietOn()) return false
+        val s = quietStart()
+        val e = quietEnd()
+        if (s == e) return false
+        val cal = java.util.Calendar.getInstance().apply { timeInMillis = time }
+        val m = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+        return if (s < e) m in s until e else m >= s || m < e
+    }
+
     companion object {
         const val SILENT = "silent"
     }

@@ -153,6 +153,17 @@ svg{display:block}
 .info-row .v{color:var(--muted);font-size:14px}
 .ok{color:#5fd38a!important}.bad{color:#ff6b5e!important}
 .fix{height:32px;padding:0 12px;border-radius:9px;background:rgba(255,59,47,.18);border:1px solid rgba(255,59,47,.6);color:#ffb3aa;font-size:13px;font-weight:700}
+.quiet-sw{--c:#8f7dff;--rgb:143,125,255}
+.time-in{height:38px;border-radius:9px;border:1px solid var(--line);background:#1a1312;color:#fff;padding:0 8px;
+  font-family:var(--num);font-weight:700;font-size:18px;color-scheme:dark}
+.time-in:disabled{opacity:.4}
+.quiet-times{display:flex;align-items:center;gap:8px}
+.quiet-times .u{color:var(--muted);font-size:14px}
+.quiet-banner{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:12px;font-size:13.5px;
+  color:#cfc6ff;background:rgba(143,125,255,.1);border:1px solid rgba(143,125,255,.35)}
+.quiet-banner svg,.row .moon{width:18px;height:18px;flex:none;color:#a99bff}
+.quiet-banner b{color:#fff}
+.row.muted{opacity:.55}
 .note{font-size:12.5px;line-height:1.7;color:var(--dim);padding:2px 4px}
 
 /* ---------- bottom nav ---------- */
@@ -224,7 +235,7 @@ svg{display:block}
   </header>
 
   <nav class="seg" role="tablist" id="seg"></nav>
-  <div class="page"><div class="cards" id="cards"></div></div>
+  <div class="page"><div class="quiet-banner" id="quiet-banner" hidden></div><div class="cards" id="cards"></div></div>
 </section>
 
 <!-- ================= 전체 일정 ================= -->
@@ -250,6 +261,14 @@ svg{display:block}
     <div class="info-row"><span class="k">알림 허용</span><span class="v" id="st-notif"></span><button class="fix" id="fix-notif" hidden>켜기</button></div>
     <div class="info-row"><span class="k">정확한 시간에 알람</span><span class="v" id="st-exact"></span><button class="fix" id="fix-exact" hidden>켜기</button></div>
     <div class="info-row"><span class="k">테스트 알림</span><button class="fix" id="btn-test2">보내기</button></div>
+  </div>
+  <div class="info-block">
+    <div class="info-row"><span class="k">방해금지 시간<br><span class="v" style="font-size:12.5px">이 시간에는 알림이 울리지 않아요</span></span>
+      <button class="switch quiet-sw" role="switch" id="q-on" aria-label="방해금지 시간"></button></div>
+    <div class="info-row quiet-times">
+      <input class="time-in" type="time" id="q-start" aria-label="시작"><span class="u">부터</span>
+      <input class="time-in" type="time" id="q-end" aria-label="끝"><span class="u">까지</span>
+    </div>
   </div>
   <div class="info-block">
     <div class="info-row"><span class="k">앱 버전</span><span class="v" id="st-ver"></span></div>
@@ -315,7 +334,7 @@ const bridge = window.Android || null;
 function loadState() {
   if (bridge) return JSON.parse(bridge.getState());
   return {
-    version: "미리보기", notif: true, exact: true,
+    version: "미리보기", notif: true, exact: true, quiet: { on: true, start: 0, end: 480 },
     events: [
       { key: "boss", name: "월드보스", anchor: Date.UTC(2026,9,21,13,0), period: 210*MIN, duration: 15*MIN, on: true, lead: 1, sound: "Morning Flower" },
       { key: "tide", name: "지옥물결", anchor: Date.UTC(2026,9,21,0,0), period: 60*MIN, duration: 55*MIN, on: true, lead: 5, sound: "기본 알림음" },
@@ -422,6 +441,36 @@ function tickHome(t) {
   }
 }
 
+/* ---------- quiet hours ---------- */
+const MOON = '<svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>';
+const fmtMin = m => pad(Math.floor(m / 60)) + ":" + pad(m % 60);
+const parseMin = v => { const [h, m] = (v || "0:0").split(":").map(Number); return h * 60 + m; };
+function inQuiet(t) {
+  const q = S.quiet; if (!q || !q.on || q.start === q.end) return false;
+  const d = new Date(t), m = d.getHours() * 60 + d.getMinutes();
+  return q.start < q.end ? m >= q.start && m < q.end : m >= q.start || m < q.end;
+}
+function paintQuiet() {
+  const q = S.quiet || { on: false, start: 0, end: 480 };
+  $("q-on").setAttribute("aria-checked", q.on);
+  $("q-start").value = fmtMin(q.start); $("q-end").value = fmtMin(q.end);
+  $("q-start").disabled = $("q-end").disabled = !q.on;
+  const b = $("quiet-banner");
+  b.hidden = !q.on || q.start === q.end;
+  b.innerHTML = `${MOON}<span>방해금지 <b>${fmtMin(q.start)} ~ ${fmtMin(q.end)}</b> · 이 시간엔 알림이 울리지 않아요</span>`;
+}
+function saveQuiet() {
+  const q = S.quiet;
+  bridge && bridge.setQuiet(q.on, q.start, q.end);
+  paintQuiet();
+}
+$("q-on").onclick = () => {
+  S.quiet.on = !S.quiet.on; saveQuiet();
+  toast(S.quiet.on ? `방해금지 ${fmtMin(S.quiet.start)} ~ ${fmtMin(S.quiet.end)}` : "방해금지를 껐어요");
+};
+$("q-start").onchange = () => { S.quiet.start = parseMin($("q-start").value); saveQuiet(); };
+$("q-end").onchange = () => { S.quiet.end = parseMin($("q-end").value); saveQuiet(); };
+
 /* ---------- schedule ---------- */
 let filter = "boss";
 function buildSchedule() {
@@ -446,9 +495,9 @@ function renderSchedule(t) {
   for (const { e, s } of items) {
     const d = new Date(s), day = `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
     if (day !== lastDay) { html += `<div class="day">${day}</div>`; lastDay = day; }
-    const live = s <= t;
-    html += `<div class="row${live ? " live" : ""}" data-k="${e.key}"><span class="bar"></span><span class="tm">${hm(s)}</span>
-      <span class="nm">${e.name}</span><span class="in">${live ? "진행 중" : relative(s - t)}</span></div>`;
+    const live = s <= t, quiet = !live && inQuiet(s - e.lead * MIN);
+    html += `<div class="row${live ? " live" : ""}${quiet ? " muted" : ""}" data-k="${e.key}"><span class="bar"></span><span class="tm">${hm(s)}</span>
+      <span class="nm">${e.name}</span>${quiet ? MOON : ""}<span class="in">${live ? "진행 중" : relative(s - t)}</span></div>`;
   }
   $("sched-list").innerHTML = html;
 }
@@ -500,7 +549,7 @@ function paintSheet() {
     refresh(); toast("기본 일정으로 되돌렸어요");
   };
 }
-function refresh() { if (bridge) S = loadState(); paintSettings(); paintSheet(); paintInfo(); if (page === "schedule") renderSchedule(Date.now()); }
+function refresh() { if (bridge) S = loadState(); paintSettings(); paintSheet(); paintInfo(); paintQuiet(); if (page === "schedule") renderSchedule(Date.now()); }
 function closeSheet() { $("sheet-wrap").classList.remove("open"); sheetKey = null; }
 $("scrim").onclick = closeSheet;
 $("sh-leads").addEventListener("click", e2 => {
@@ -554,7 +603,7 @@ window.handleBack = () => {
   return false;
 };
 
-buildHome(); buildSchedule(); buildGuide(); paintSettings(); paintInfo();
+buildHome(); buildSchedule(); buildGuide(); paintSettings(); paintInfo(); paintQuiet();
 function loop() {
   const t = Date.now();
   if (page === "home") tickHome(t);
