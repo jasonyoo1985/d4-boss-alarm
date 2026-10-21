@@ -19,6 +19,14 @@ class Prefs(context: Context) {
     fun channelVersion(e: GameEvent) = sp.getInt("chver_${e.key}", 0)
     fun bumpChannelVersion(e: GameEvent) = sp.edit().putInt("chver_${e.key}", channelVersion(e) + 1).apply()
 
+    /** A start time the user set from the in-game map; any start on the cycle works as the anchor. */
+    fun hasCustomAnchor(e: GameEvent) = sp.contains("anchor_${e.key}")
+    fun setAnchor(e: GameEvent, epochMs: Long) = sp.edit().putLong("anchor_${e.key}", epochMs).apply()
+    fun resetAnchor(e: GameEvent) = sp.edit().remove("anchor_${e.key}").apply()
+
+    /** The event with the user's correction applied. */
+    fun effective(e: GameEvent) = e.copy(anchor = sp.getLong("anchor_${e.key}", e.anchor))
+
     companion object {
         const val SILENT = "silent"
     }

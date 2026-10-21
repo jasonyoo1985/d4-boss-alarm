@@ -75,15 +75,16 @@ object Alarms {
         val intent = Intent(context, AlarmReceiver::class.java)
             .putExtra(EXTRA_KEY, e.key)
             .putExtra(EXTRA_START, start)
-        val requestCode = Schedule.events.indexOf(e)
+        val requestCode = Schedule.events.indexOfFirst { it.key == e.key }
         return PendingIntent.getBroadcast(
             context, requestCode, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }
 
-    fun schedule(context: Context, e: GameEvent) {
+    fun schedule(context: Context, base: GameEvent) {
         val prefs = Prefs(context)
+        val e = prefs.effective(base)
         val am = context.getSystemService(AlarmManager::class.java)
         if (!prefs.isOn(e)) {
             am.cancel(pending(context, e, 0))

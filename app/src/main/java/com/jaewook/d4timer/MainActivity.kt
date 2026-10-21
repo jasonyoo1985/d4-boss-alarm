@@ -126,13 +126,15 @@ class MainActivity : Activity() {
     private fun stateJson(): String {
         val prefs = Prefs(this)
         val events = JSONArray()
-        for (e in Schedule.events) {
+        for (base in Schedule.events) {
+            val e = prefs.effective(base)
             events.put(
                 JSONObject()
                     .put("key", e.key).put("name", e.name)
                     .put("anchor", e.anchor).put("period", e.period).put("duration", e.duration)
                     .put("on", prefs.isOn(e)).put("lead", prefs.lead(e))
-                    .put("sound", Alarms.soundName(this, e)),
+                    .put("sound", Alarms.soundName(this, e))
+                    .put("custom", prefs.hasCustomAnchor(e)),
             )
         }
         val notif = getSystemService(NotificationManager::class.java).areNotificationsEnabled()
@@ -160,6 +162,20 @@ class MainActivity : Activity() {
         fun setLead(key: String, min: Int) {
             val e = event(key)
             Prefs(this@MainActivity).setLead(e, min)
+            Alarms.schedule(this@MainActivity, e)
+        }
+
+        @JavascriptInterface
+        fun setAnchor(key: String, epochMs: String) {
+            val e = event(key)
+            Prefs(this@MainActivity).setAnchor(e, epochMs.toLong())
+            Alarms.schedule(this@MainActivity, e)
+        }
+
+        @JavascriptInterface
+        fun resetAnchor(key: String) {
+            val e = event(key)
+            Prefs(this@MainActivity).resetAnchor(e)
             Alarms.schedule(this@MainActivity, e)
         }
 
