@@ -134,7 +134,8 @@ class MainActivity : Activity() {
                     .put("anchor", e.anchor).put("period", e.period).put("duration", e.duration)
                     .put("on", prefs.isOn(e)).put("lead", prefs.lead(e))
                     .put("sound", Alarms.soundName(this, e))
-                    .put("custom", prefs.hasCustomAnchor(e)),
+                    .put("custom", prefs.hasCustomAnchor(e))
+                    .put("repeat", prefs.repeat(e)),
             )
         }
         val notif = getSystemService(NotificationManager::class.java).areNotificationsEnabled()
@@ -183,6 +184,9 @@ class MainActivity : Activity() {
             Prefs(this@MainActivity).resetAnchor(e)
             Alarms.schedule(this@MainActivity, e)
         }
+
+        @JavascriptInterface
+        fun setRepeat(key: String, on: Boolean) = Prefs(this@MainActivity).setRepeat(event(key), on)
 
         @JavascriptInterface
         fun setQuiet(on: Boolean, start: Int, end: Int) {

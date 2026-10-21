@@ -27,6 +27,10 @@ class Prefs(context: Context) {
     /** The event with the user's correction applied. */
     fun effective(e: GameEvent) = e.copy(anchor = sp.getLong("anchor_${e.key}", e.anchor))
 
+    /** true = keep ringing until the user stops it, false = ring once. */
+    fun repeat(e: GameEvent) = sp.getBoolean("repeat_${e.key}", e.key == "boss")
+    fun setRepeat(e: GameEvent, on: Boolean) = sp.edit().putBoolean("repeat_${e.key}", on).apply()
+
     // Quiet hours: minutes from local midnight; the window may cross midnight
     fun quietOn() = sp.getBoolean("quiet_on", false)
     fun quietStart() = sp.getInt("quiet_start", 0)
