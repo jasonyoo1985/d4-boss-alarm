@@ -29,8 +29,10 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug bundleRelease --no-daemon
           cp app/build/outputs/apk/debug/app-debug.apk d4-boss-alarm.apk
+          # Unsigned Play bundle; it is signed with the upload key outside the repo
+          cp app/build/outputs/bundle/release/app-release.aab d4-boss-alarm-unsigned.aab
 
       - uses: actions/upload-artifact@v4
         with:
@@ -72,10 +74,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir apk-out
-          cp d4-boss-alarm.apk apk-out/
+          cp d4-boss-alarm.apk d4-boss-alarm-unsigned.aab apk-out/
           cd apk-out
           git init -q -b apk
-          git add d4-boss-alarm.apk
+          git add d4-boss-alarm.apk d4-boss-alarm-unsigned.aab
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -qm "APK build ${GITHUB_SHA::7}"
           git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" apk
