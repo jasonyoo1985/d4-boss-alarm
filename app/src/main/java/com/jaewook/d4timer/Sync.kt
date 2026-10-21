@@ -16,62 +16,150 @@ import java.time.OffsetDateTime
  * boss/legion/helltide key that carries a recognizable time field.
  */
 object Sync {
+    // JSON endpoints first; the HTML page is only used for boss names and zones
     private val SOURCES = listOf(
         "https://helltides.com/api/schedule",
-        "https://d4armory.io/api/events/recent",
+        "https://helltides.com/api/worldboss",
+        "https://helltides.com/worldboss",
     )
     private val TIME_KEYS = listOf(
         "startTime", "start_time", "start", "spawnTime", "spawn_time", "expected", "timestamp", "time", "date",
     )
-    private const val RAW_LIMIT = 6000
+    private const val SNIPPET = 1500
+    private const val BROWSER_UA =
+        "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36"
 
     data class Found(val key: String, val time: Long, val name: String?, val zone: String?)
 
     /** Blocking; call off the main thread. Returns true when at least one event was updated. */
     fun run(context: Context): Boolean {
         val prefs = Prefs(context)
-        val errors = mutableListOf<String>()
+        val log = StringBuilder()
+        val notes = mutableListOf<String>()
+        var anchored = false
+        var named = false
         for (url in SOURCES) {
-            val text = try {
+            val (code, body) = try {
                 fetch(url)
             } catch (e: Exception) {
-                errors += "${host(url)}: ${e.javaClass.simpleName} ${e.message ?: ""}".trim()
+                log.append("[$url] 실패: ${e.javaClass.simpleName} ${e.message ?: ""}\n\n")
+                notes += "${path(url)} 연결 실패"
                 continue
             }
-            prefs.setSyncRaw("[$url]\n" + text.take(RAW_LIMIT))
+            val html = body.trimStart().startsWith("<")
+            log.append("[$url] HTTP $code, ${body.length}자, ${if (html) "HTML" else "JSON?"}\n")
+            log.append(if (html) htmlSnippet(body) else body.take(SNIPPET)).append("\n\n")
+            if (code !in 200..299) {
+                notes += "${path(url)} HTTP $code"
+                continue
+            }
             val found = try {
-                parse(text)
+                if (html) parseHtml(body, prefs) else parse(body)
             } catch (e: Exception) {
-                errors += "${host(url)}: 형식을 읽지 못함 (${e.javaClass.simpleName})"
+                notes += "${path(url)} 형식 오류"
                 continue
             }
-            val applied = apply(context, found)
-            if (applied.isNotEmpty()) {
-                prefs.setSyncResult(true, "${host(url)} · " + applied.joinToString(", "))
-                Alarms.scheduleAll(context)
-                return true
+            if (found.isEmpty()) {
+                notes += "${path(url)} 일정 없음"
+                continue
             }
-            errors += "${host(url)}: 일정 정보를 찾지 못함"
+            if (html) {
+                // Page times have no timezone, so they only label starts already on our cycle
+                if (!named && saveBossList(prefs, found)) named = true
+            } else {
+                val applied = apply(context, found)
+                if (applied.isNotEmpty()) {
+                    anchored = true
+                    named = true
+                    notes += "${path(url)}에서 일정을 맞췄어요 (" + applied.joinToString(", ") + ")"
+                    break
+                }
+                notes += "${path(url)} 일정 없음"
+            }
         }
-        prefs.setSyncResult(false, errors.joinToString(" / "))
-        return false
+        prefs.setSyncRaw(log.toString())
+        val ok = anchored || named
+        val msg = when {
+            anchored -> notes.last()
+            named -> "보스 이름·지역만 받아왔어요 (시간은 자체 계산)"
+            else -> notes.joinToString(" / ")
+        }
+        prefs.setSyncResult(ok, msg)
+        if (anchored) Alarms.scheduleAll(context)
+        return ok
     }
 
-    private fun host(url: String) = URL(url).host
+    private fun path(url: String) = URL(url).let { it.host + it.path }
 
-    private fun fetch(url: String): String {
+    private fun fetch(url: String): Pair<Int, String> {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 10_000
         conn.readTimeout = 10_000
-        conn.setRequestProperty("Accept", "application/json")
-        conn.setRequestProperty("User-Agent", "D4BossAlarm/2 (Android)")
+        conn.instanceFollowRedirects = true
+        conn.setRequestProperty("Accept", "application/json, text/html;q=0.9")
+        conn.setRequestProperty("User-Agent", BROWSER_UA)
         try {
             val code = conn.responseCode
-            if (code !in 200..299) throw IllegalStateException("HTTP $code")
-            return conn.inputStream.bufferedReader().use { it.readText() }
+            val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+            val body = stream?.bufferedReader()?.use { it.readText() } ?: ""
+            return code to body
         } finally {
             conn.disconnect()
         }
+    }
+
+    private fun stripTags(html: String) = html
+        .replace(Regex("(?s)<script.*?</script>|<style.*?</style>"), " ")
+        .replace(Regex("<[^>]+>"), " ")
+        .replace("&amp;", "&").replace("&#x27;", "'").replace("&#39;", "'")
+        .replace(Regex("\\s+"), " ")
+
+    private fun htmlSnippet(html: String): String {
+        val scripts = Regex("<script([^>]*)>").findAll(html).map { it.groupValues[1].trim() }
+            .filter { it.isNotEmpty() }.take(12).joinToString(" | ")
+        val text = stripTags(html)
+        val i = text.indexOf("Upcoming").takeIf { it >= 0 } ?: 0
+        return "scripts: $scripts\ntext: " + text.substring(i).take(SNIPPET)
+    }
+
+    private val PAGE_ENTRY = Regex(
+        "(\\d{1,2})/(\\d{1,2})/(\\d{4}),? (\\d{1,2}):(\\d{2}) ?([AP]M)\\s+([A-Za-z' ]+?)\\s+in\\s+(Fractured Peaks|Dry Steppes|[A-Z][A-Za-z]+)",
+    )
+
+    /** Reads embedded JSON if present, else the "MM/DD/YYYY h:mm AM Boss in Zone" list. */
+    private fun parseHtml(html: String, prefs: Prefs): List<Found> {
+        val out = mutableListOf<Found>()
+        Regex("(?s)<script[^>]*(?:__NEXT_DATA__|application/json)[^>]*>(.*?)</script>").findAll(html).forEach {
+            runCatching { out += parse(it.groupValues[1]) }
+        }
+        if (out.isNotEmpty()) return out
+        val boss = prefs.effective(Schedule.byKey("boss"))
+        for (m in PAGE_ENTRY.findAll(stripTags(html))) {
+            val (mo, d, y, h, mi, ap, name, zone) = m.destructured
+            var hour = h.toInt() % 12
+            if (ap == "PM") hour += 12
+            val utc = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
+                clear()
+                set(y.toInt(), mo.toInt() - 1, d.toInt(), hour, mi.toInt())
+            }.timeInMillis
+            // Offsets 7 hours apart both land on a 3.5h cycle, so try UTC and the phone's zone first
+            val local = java.util.TimeZone.getDefault().getOffset(utc) / (60 * MIN).toInt()
+            val offsets = (listOf(0, local) + (-12..14).sortedBy { Math.abs(it) }).distinct()
+            val t = offsets.map { utc - it * 60 * MIN }.firstOrNull { Math.floorMod(it - boss.anchor, boss.period) == 0L }
+                ?: continue
+            out += Found("boss", t, name.trim(), zone.trim())
+        }
+        return out
+    }
+
+    private fun saveBossList(prefs: Prefs, found: List<Found>): Boolean {
+        val now = System.currentTimeMillis()
+        val list = JSONArray()
+        found.filter { it.key == "boss" && it.time > now - 15 * MIN }.sortedBy { it.time }.distinctBy { it.time }.take(12)
+            .forEach { list.put(JSONObject().put("t", it.time).put("name", it.name ?: "").put("zone", it.zone ?: "")) }
+        if (list.length() == 0) return false
+        prefs.setBossList(list.toString())
+        return true
     }
 
     fun parse(text: String): List<Found> {

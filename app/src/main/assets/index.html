@@ -357,7 +357,7 @@ function loadState() {
   if (bridge) return JSON.parse(bridge.getState());
   return {
     version: "미리보기", notif: true, exact: true, quiet: { on: true, start: 0, end: 480 },
-    sync: { ok: true, msg: "helltides.com · 월드보스, 지옥물결, 군단", time: Date.now() - 3 * MIN, running: false },
+    sync: { ok: true, msg: "helltides.com/api/schedule에서 일정을 맞췄어요 (월드보스, 지옥물결, 군단)", time: Date.now() - 3 * MIN, running: false },
     bossList: [
       { t: Date.UTC(2026,9,21,16,30), name: "Wandering Death", zone: "Kehjistan" },
       { t: Date.UTC(2026,9,21,20,0), name: "Avarice", zone: "Fractured Peaks" },
@@ -498,7 +498,7 @@ function paintSync() {
   else st = (y.ok ? "성공 · " : "실패 · ") + new Date(y.time).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
   $("sync-st").textContent = st;
   $("sync-st").className = y.time && !y.running ? (y.ok ? "ok" : "bad") : "";
-  $("sync-msg").textContent = y.ok ? `${y.msg}에서 일정을 맞췄어요` : (y.msg || "helltides.com에서 최신 일정을 받아 기준 시각을 맞춰요. 실패해도 자체 계산으로 동작해요.");
+  $("sync-msg").textContent = (y.msg || "helltides.com에서 최신 일정을 받아 기준 시각을 맞춰요. 실패해도 자체 계산으로 동작해요.");
 }
 $("sync-now").onclick = () => { if (bridge) { bridge.syncNow(); toast("일정을 받아오는 중이에요"); } else toast("앱에서 동작해요"); };
 $("sync-raw-btn").onclick = () => {

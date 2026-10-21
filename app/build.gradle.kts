@@ -11,8 +11,8 @@ android {
         applicationId = "com.jaewook.d4timer"
         minSdk = 26
         targetSdk = 34
-        versionCode = 11
-        versionName = "2.5"
+        versionCode = 12
+        versionName = "2.6"
     }
 
     // A fixed key so each new APK installs over the previous one
