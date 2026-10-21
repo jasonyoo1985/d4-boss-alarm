@@ -118,8 +118,9 @@ object Sync {
         val scripts = Regex("<script([^>]*)>").findAll(html).map { it.groupValues[1].trim() }
             .filter { it.isNotEmpty() }.take(12).joinToString(" | ")
         val text = stripTags(html)
-        val i = text.indexOf("Upcoming").takeIf { it >= 0 } ?: 0
-        return "scripts: $scripts\ntext: " + text.substring(i).take(SNIPPET)
+        // Include the part above the list too; the next boss is shown there
+        val i = (text.indexOf("Upcoming").takeIf { it >= 0 } ?: 0) - 600
+        return "scripts: $scripts\ntext: " + text.substring(i.coerceAtLeast(0)).take(SNIPPET + 600)
     }
 
     private val PAGE_ENTRY = Regex(
@@ -151,20 +152,42 @@ object Sync {
                 ?: continue
             out += Found("boss", t, name.trim(), zone.trim())
         }
-        // The very next boss is shown separately ("Wandering Death spawns in 3h 04m"), not in the list
-        NEXT_NAME.find(stripTags(html))?.let { m ->
-            val t = Schedule.nextStart(boss, System.currentTimeMillis())
-            if (out.none { it.time == t }) out += Found("boss", t, m.groupValues[1].trim(), null)
+        // The very next boss is shown separately above the list, so the list starts one spawn later
+        val next = Schedule.nextStart(boss, System.currentTimeMillis())
+        if (out.none { it.time == next }) nextBoss(stripTags(html), out)?.let { (name, zone) ->
+            out += Found("boss", next, name, zone)
         }
         return out
     }
 
+    private val KNOWN_BOSSES = listOf("Wandering Death", "Avarice", "Ashava", "Azmodan")
+    private val ZONES = "Fractured Peaks|Dry Steppes|Scosglen|Kehjistan|Hawezar|Nahantu|Skovos"
+
+    /** Finds the first boss name in the text before the upcoming list, plus a zone right after it. */
+    private fun nextBoss(text: String, listed: List<Found>): Pair<String, String?>? {
+        NEXT_NAME.find(text)?.let { return it.groupValues[1].trim() to null }
+        val names = (KNOWN_BOSSES + listed.mapNotNull { it.name }).distinct()
+        // Only look just above the list, and take the closest name, to skip menus and intro text
+        val end = PAGE_ENTRY.find(text)?.range?.first ?: return null
+        val head = text.substring((end - 600).coerceAtLeast(0), end)
+        val hit = names.mapNotNull { n -> Regex("\\b" + Regex.escape(n) + "\\b").findAll(head).lastOrNull()?.let { it.range.first to n } }
+            .maxByOrNull { it.first } ?: return null
+        val zone = Regex("^.{0,80}?($ZONES)").find(head.substring(hit.first + hit.second.length))?.groupValues?.get(1)
+        return hit.second to zone
+    }
+
     private fun saveBossList(prefs: Prefs, found: List<Found>): Boolean {
         val now = System.currentTimeMillis()
+        val fresh = found.filter { it.key == "boss" && it.time > now - 15 * MIN && !it.name.isNullOrBlank() }
+        if (fresh.isEmpty()) return false
+        // The page drops the next boss from its list, so keep names learned by earlier syncs
+        val old = runCatching { JSONArray(prefs.bossList()) }.getOrNull()
+        val kept = (0 until (old?.length() ?: 0)).mapNotNull { i ->
+            old!!.optJSONObject(i)?.let { Found("boss", it.optLong("t"), it.optString("name"), it.optString("zone")) }
+        }.filter { it.time > now - 15 * MIN && !it.name.isNullOrBlank() }
         val list = JSONArray()
-        found.filter { it.key == "boss" && it.time > now - 15 * MIN }.sortedBy { it.time }.distinctBy { it.time }.take(12)
+        (fresh + kept).sortedBy { it.time }.distinctBy { it.time }.take(12)
             .forEach { list.put(JSONObject().put("t", it.time).put("name", it.name ?: "").put("zone", it.zone ?: "")) }
-        if (list.length() == 0) return false
         prefs.setBossList(list.toString())
         return true
     }
