@@ -13,11 +13,11 @@ data class GameEvent(
 )
 
 object Schedule {
-    // Anchors checked against helltides.com and timesaver.gg on 2026-10-21
+    // Anchors checked against helltides.com on 2026-10-21 (legion corrected from the user's screenshot)
     val events = listOf(
         GameEvent("boss", "월드보스", 1792587600000L, 210 * MIN, 15 * MIN, 0xFFE2483F.toInt(), true),
         GameEvent("tide", "지옥물결", 1792540800000L, 60 * MIN, 55 * MIN, 0xFFF08A1C.toInt(), false),
-        GameEvent("legion", "군단", 1792585800000L, 25 * MIN, 4 * MIN, 0xFF8B6CF0.toInt(), false),
+        GameEvent("legion", "군단", 1792589700000L, 25 * MIN, 4 * MIN, 0xFF8B6CF0.toInt(), false),
     )
 
     fun byKey(key: String) = events.first { it.key == key }
