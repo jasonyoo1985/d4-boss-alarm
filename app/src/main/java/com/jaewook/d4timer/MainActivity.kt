@@ -1,246 +1,206 @@
 package com.jaewook.d4timer
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
-import android.util.TypedValue
-import android.view.Gravity
 import android.view.View
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.Switch
-import android.widget.TextView
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import android.view.WindowManager
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import org.json.JSONArray
+import org.json.JSONObject
 
+/** The screen is a local web page (assets/index.html); this class bridges it to alarms and settings. */
 class MainActivity : Activity() {
 
-    private class Card(
-        val e: GameEvent,
-        val status: TextView,
-        val count: TextView,
-        val caption: TextView,
-        val upcoming: TextView,
-    )
+    private lateinit var web: WebView
+    private var insetTop = 0
+    private var insetBottom = 0
+    private var pageReady = false
 
-    private val gold = 0xFFC9A24A.toInt()
-    private val panel = 0xFF181412.toInt()
-    private val line = 0xFF2C2420.toInt()
-    private val fg = 0xFFECE4DC.toInt()
-    private val muted = 0xFF9A8D82.toInt()
-
-    private val cards = mutableListOf<Card>()
-    private lateinit var prefs: Prefs
-    private lateinit var exactWarning: View
-    private val handler = Handler(Looper.getMainLooper())
-    private val hm = SimpleDateFormat("HH:mm", Locale.KOREA)
-
-    private val tick = object : Runnable {
-        override fun run() {
-            render()
-            handler.postDelayed(this, 1000L - System.currentTimeMillis() % 1000L)
-        }
-    }
-
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        prefs = Prefs(this)
-        Alarms.ensureChannel(this)
-        setContentView(buildUi())
+        Schedule.events.forEach { Alarms.ensureChannel(this, it) }
+
+        // Draw behind the status and navigation bars; the page pads itself with the insets
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+        }
+
+        web = WebView(this).apply {
+            setBackgroundColor(Color.rgb(7, 5, 5))
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            isVerticalScrollBarEnabled = false
+            overScrollMode = View.OVER_SCROLL_NEVER
+            addJavascriptInterface(Bridge(), "Android")
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView, url: String) {
+                    pageReady = true
+                    pushInsets()
+                }
+            }
+        }
+        web.setOnApplyWindowInsetsListener { v, insets ->
+            val density = resources.displayMetrics.density
+            @Suppress("DEPRECATION")
+            insetTop = (insets.systemWindowInsetTop / density).toInt()
+            @Suppress("DEPRECATION")
+            insetBottom = (insets.systemWindowInsetBottom / density).toInt()
+            pushInsets()
+            v.onApplyWindowInsets(insets)
+        }
+        setContentView(web)
+        web.loadUrl("file:///android_asset/index.html")
+
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_NOTIF)
         }
         Alarms.scheduleAll(this)
     }
 
     override fun onResume() {
         super.onResume()
-        exactWarning.visibility = if (Alarms.canExact(this)) View.GONE else View.VISIBLE
         Alarms.scheduleAll(this)
-        handler.post(tick)
+        refreshPage()
     }
 
-    override fun onPause() {
-        super.onPause()
-        handler.removeCallbacks(tick)
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        refreshPage()
     }
 
-    private fun dp(v: Int) = TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics,
-    ).toInt()
-
-    private fun text(s: String, sizeSp: Float, color: Int, bold: Boolean = false) = TextView(this).apply {
-        text = s
-        setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp)
-        setTextColor(color)
-        if (bold) setTypeface(typeface, Typeface.BOLD)
+    private fun pushInsets() {
+        if (pageReady) web.evaluateJavascript("window.setInsets && setInsets($insetTop, $insetBottom)", null)
     }
 
-    private fun rounded(fill: Int, stroke: Int, radiusDp: Int) = GradientDrawable().apply {
-        setColor(fill)
-        cornerRadius = dp(radiusDp).toFloat()
-        if (stroke != 0) setStroke(dp(1), stroke)
+    private fun refreshPage() {
+        if (pageReady) web.evaluateJavascript("window.onState && onState()", null)
     }
 
-    private fun buildUi(): View {
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(28), dp(16), dp(32))
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        web.evaluateJavascript("window.handleBack ? handleBack() : false") { handled ->
+            @Suppress("DEPRECATION")
+            if (handled != "true") super.onBackPressed()
         }
-
-        root.addView(text("디아4 월드보스 알람", 24f, gold, bold = true).apply {
-            gravity = Gravity.CENTER
-            letterSpacing = 0.05f
-            typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
-        })
-        root.addView(text("디아블로4 월드보스 출현 일정 및 알림 앱", 13f, muted).apply {
-            gravity = Gravity.CENTER
-            setPadding(0, dp(4), 0, dp(12))
-        })
-
-        exactWarning = Button(this).apply {
-            text = "정확한 알람 권한을 켜주세요 (누르면 설정으로 이동)"
-            setTextColor(Color.BLACK)
-            background = rounded(gold, 0, 10)
-            setOnClickListener {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    startActivity(
-                        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")),
-                    )
-                }
-            }
-        }
-        root.addView(exactWarning, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
-
-        for (e in Schedule.events) root.addView(buildCard(e), LinearLayout.LayoutParams(-1, -2).apply {
-            bottomMargin = dp(14)
-        })
-
-        root.addView(Button(this).apply {
-            text = "테스트 알림 보내기"
-            setTextColor(fg)
-            background = rounded(panel, line, 10)
-            setOnClickListener {
-                val e = Schedule.events[0]
-                AlarmReceiver.notify(this@MainActivity, e, Schedule.nextStart(e, System.currentTimeMillis()))
-            }
-        }, LinearLayout.LayoutParams(-1, dp(48)))
-
-        root.addView(text(
-            "시간은 고정 주기로 계산합니다.\n월드보스 3시간 30분 · 지옥물결 매시 정각(55분) · 군단 25분",
-            12f, muted,
-        ).apply {
-            gravity = Gravity.CENTER
-            setPadding(0, dp(16), 0, 0)
-        })
-
-        return ScrollView(this).apply { addView(root) }
     }
 
-    private fun buildCard(e: GameEvent): View {
-        val card = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            background = rounded(panel, line, 16)
-            setPadding(dp(18), dp(14), dp(18), dp(16))
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode < REQ_SOUND || resultCode != RESULT_OK || data == null) return
+        val e = Schedule.events.getOrNull(requestCode - REQ_SOUND) ?: return
+        @Suppress("DEPRECATION")
+        val uri = data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        val value = when {
+            uri == null -> Prefs.SILENT
+            uri == Settings.System.DEFAULT_ALARM_ALERT_URI -> null
+            else -> uri.toString()
         }
+        Alarms.changeSound(this, e, value)
+        refreshPage()
+    }
 
-        val header = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        header.addView(View(this).apply { background = rounded(e.color, 0, 2) }, LinearLayout.LayoutParams(dp(4), dp(22)))
-        header.addView(text(e.name, 19f, fg, bold = true).apply { setPadding(dp(10), 0, 0, 0) })
-        val status = text("", 12f, muted).apply { setPadding(dp(10), 0, 0, 0) }
-        header.addView(status, LinearLayout.LayoutParams(0, -2, 1f))
-        header.addView(Switch(this).apply {
-            isChecked = prefs.isOn(e)
-            thumbTintList = ColorStateList(
-                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                intArrayOf(e.color, muted),
+    private fun stateJson(): String {
+        val prefs = Prefs(this)
+        val events = JSONArray()
+        for (e in Schedule.events) {
+            events.put(
+                JSONObject()
+                    .put("key", e.key).put("name", e.name)
+                    .put("anchor", e.anchor).put("period", e.period).put("duration", e.duration)
+                    .put("on", prefs.isOn(e)).put("lead", prefs.lead(e))
+                    .put("sound", Alarms.soundName(this, e)),
             )
-            setOnCheckedChangeListener { _, on ->
-                prefs.setOn(e, on)
-                Alarms.schedule(this@MainActivity, e)
-            }
-        })
-        card.addView(header)
-
-        val count = text("--:--:--", 44f, e.color, bold = true).apply {
-            gravity = Gravity.CENTER
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-            setPadding(0, dp(10), 0, 0)
         }
-        card.addView(count)
-        val caption = text("", 13f, muted).apply { gravity = Gravity.CENTER }
-        card.addView(caption)
-        val upcoming = text("", 13f, fg).apply {
-            gravity = Gravity.CENTER
-            typeface = Typeface.MONOSPACE
-            setPadding(0, dp(8), 0, dp(8))
-        }
-        card.addView(upcoming)
-
-        card.addView(Button(this).apply {
-            setTextColor(gold)
-            background = rounded(0xFF221C19.toInt(), 0, 8)
-            fun label() { text = "알림: " + leadLabel(prefs.lead(e)) + "  (눌러서 변경)" }
-            label()
-            setOnClickListener {
-                val choices = Prefs.LEAD_CHOICES
-                val next = choices[(choices.indexOf(prefs.lead(e)) + 1) % choices.size]
-                prefs.setLead(e, next)
-                label()
-                Alarms.schedule(this@MainActivity, e)
-            }
-        }, LinearLayout.LayoutParams(-1, dp(40)))
-
-        cards += Card(e, status, count, caption, upcoming)
-        return card
+        val notif = getSystemService(NotificationManager::class.java).areNotificationsEnabled()
+        val version = packageManager.getPackageInfo(packageName, 0).versionName
+        return JSONObject()
+            .put("version", version).put("notif", notif).put("exact", Alarms.canExact(this))
+            .put("events", events).toString()
     }
 
-    private fun leadLabel(min: Int) = if (min == 0) "시작할 때" else "시작 ${min}분 전"
+    /** Methods the page calls as window.Android.*; they run off the UI thread. */
+    inner class Bridge {
+        private fun event(key: String) = Schedule.byKey(key)
 
-    private fun fmt(ms: Long): String {
-        val s = (ms.coerceAtLeast(0) / 1000)
-        return String.format(Locale.US, "%02d:%02d:%02d", s / 3600, s % 3600 / 60, s % 60)
-    }
+        @JavascriptInterface
+        fun getState(): String = stateJson()
 
-    private fun render() {
-        val now = System.currentTimeMillis()
-        for (c in cards) {
-            val e = c.e
-            val next = Schedule.nextStart(e, now)
-            val live = Schedule.isLive(e, now)
-            if (live) {
-                c.status.text = "● 진행 중"
-                c.status.setTextColor(e.color)
-                c.count.text = fmt(Schedule.lastStart(e, now) + e.duration - now)
-                c.caption.text = "종료까지 남은 시간"
-            } else {
-                c.status.text = "대기"
-                c.status.setTextColor(muted)
-                c.count.text = fmt(next - now)
-                c.caption.text = hm.format(Date(next)) + " 시작"
-            }
-            val first = if (live) 0 else 1
-            c.upcoming.text = (first until first + 4).joinToString("   ") {
-                hm.format(Date(next + it * e.period))
+        @JavascriptInterface
+        fun setOn(key: String, on: Boolean) {
+            val e = event(key)
+            Prefs(this@MainActivity).setOn(e, on)
+            Alarms.schedule(this@MainActivity, e)
+        }
+
+        @JavascriptInterface
+        fun setLead(key: String, min: Int) {
+            val e = event(key)
+            Prefs(this@MainActivity).setLead(e, min)
+            Alarms.schedule(this@MainActivity, e)
+        }
+
+        @JavascriptInterface
+        fun test(key: String) {
+            val e = event(key)
+            AlarmReceiver.notify(this@MainActivity, e, System.currentTimeMillis() + Prefs(this@MainActivity).lead(e) * MIN)
+        }
+
+        @JavascriptInterface
+        fun pickSound(key: String) = runOnUiThread {
+            val e = event(key)
+            val current = Alarms.soundUri(this@MainActivity, e)
+            val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALL)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "${e.name} 알람음")
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, Settings.System.DEFAULT_ALARM_ALERT_URI)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, current)
+            @Suppress("DEPRECATION")
+            startActivityForResult(intent, REQ_SOUND + Schedule.events.indexOf(e))
+        }
+
+        @JavascriptInterface
+        fun openNotifSettings() = runOnUiThread {
+            startActivity(
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
+            )
+        }
+
+        @JavascriptInterface
+        fun openExactSettings() = runOnUiThread {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
             }
         }
+    }
+
+    companion object {
+        private const val REQ_NOTIF = 1
+        private const val REQ_SOUND = 100
     }
 }

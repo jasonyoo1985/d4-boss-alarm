@@ -21,7 +21,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
     companion object {
         fun notify(context: Context, e: GameEvent, start: Long) {
-            Alarms.ensureChannel(context)
+            Alarms.ensureChannel(context, e)
             val left = ((start - System.currentTimeMillis() + 30_000) / MIN).coerceAtLeast(0)
             val time = SimpleDateFormat("HH:mm", Locale.KOREA).format(Date(start))
             val title = if (left > 0) "${e.name} ${left}분 전" else "${e.name} 시작!"
@@ -29,7 +29,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 context, 100, Intent(context, MainActivity::class.java),
                 PendingIntent.FLAG_IMMUTABLE,
             )
-            val n = Notification.Builder(context, Alarms.CHANNEL)
+            val n = Notification.Builder(context, Alarms.channelId(context, e))
                 .setSmallIcon(R.drawable.ic_notify)
                 .setColor(e.color)
                 .setContentTitle(title)

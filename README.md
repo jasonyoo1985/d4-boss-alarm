@@ -12,6 +12,11 @@
 기준 시각은 `app/src/main/java/com/jaewook/d4timer/Schedule.kt`에 있습니다.
 블리자드가 주기를 바꾸면 이 파일만 고치면 됩니다.
 
+## 구조
+
+화면은 `app/src/main/assets/index.html` 웹 페이지이고, `MainActivity.kt`가 알람·벨소리·권한을 연결합니다.
+이벤트마다 폰에 있는 벨소리를 알람음으로 고를 수 있습니다.
+
 ## 설치
 
 `main`에 푸시할 때마다 GitHub Actions가 APK를 빌드해서 **Releases → 최신 버전**에 올립니다.

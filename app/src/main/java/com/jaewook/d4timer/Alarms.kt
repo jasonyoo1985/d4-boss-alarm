@@ -8,25 +8,62 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 
 object Alarms {
-    const val CHANNEL = "events"
     const val EXTRA_KEY = "event"
     const val EXTRA_START = "start"
 
-    fun ensureChannel(context: Context) {
+    fun channelId(context: Context, e: GameEvent) = "ev_${e.key}_${Prefs(context).channelVersion(e)}"
+
+    fun soundUri(context: Context, e: GameEvent): Uri? = when (val s = Prefs(context).sound(e)) {
+        null -> Settings.System.DEFAULT_ALARM_ALERT_URI
+        Prefs.SILENT -> null
+        else -> Uri.parse(s)
+    }
+
+    fun soundName(context: Context, e: GameEvent): String {
+        val s = Prefs(context).sound(e)
+        if (s == Prefs.SILENT) return "무음 (진동만)"
+        if (s == null) return "기본 알람음"
+        return try {
+            RingtoneManager.getRingtone(context, Uri.parse(s))?.getTitle(context) ?: "선택한 소리"
+        } catch (_: Exception) {
+            "선택한 소리"
+        }
+    }
+
+    fun ensureChannel(context: Context, e: GameEvent) {
         val nm = context.getSystemService(NotificationManager::class.java)
-        if (nm.getNotificationChannel(CHANNEL) != null) return
-        val ch = NotificationChannel(CHANNEL, "이벤트 알림", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "월드보스, 지옥물결, 군단 시작 알림"
+        val id = channelId(context, e)
+        if (nm.getNotificationChannel(id) != null) return
+        // Remove this event's older channels and the single channel from v1.x
+        for (ch in nm.notificationChannels) {
+            if (ch.id == "events" || (ch.id.startsWith("ev_${e.key}_") && ch.id != id)) nm.deleteNotificationChannel(ch.id)
+        }
+        val ch = NotificationChannel(id, "${e.name} 알림", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "${e.name} 시작 전에 알려줍니다"
             enableVibration(true)
+            vibrationPattern = longArrayOf(0, 400, 200, 400)
+            // Alarm usage keeps it audible when the ringer is on vibrate
             setSound(
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
-                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT).build(),
+                soundUri(context, e),
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build(),
             )
         }
         nm.createNotificationChannel(ch)
+    }
+
+    fun changeSound(context: Context, e: GameEvent, uri: String?) {
+        val prefs = Prefs(context)
+        prefs.setSound(e, uri)
+        prefs.bumpChannelVersion(e)
+        ensureChannel(context, e)
     }
 
     fun canExact(context: Context): Boolean {
