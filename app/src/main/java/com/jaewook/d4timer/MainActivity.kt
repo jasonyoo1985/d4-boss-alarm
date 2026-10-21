@@ -103,9 +103,9 @@ class MainActivity : Activity() {
             setPadding(dp(16), dp(28), dp(16), dp(32))
         }
 
-        root.addView(text("SANCTUARY TIMER", 24f, gold, bold = true).apply {
+        root.addView(text("디아4 월드보스 알람", 24f, gold, bold = true).apply {
             gravity = Gravity.CENTER
-            letterSpacing = 0.15f
+            letterSpacing = 0.05f
             typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
         })
         root.addView(text("월드보스 · 지옥물결 · 군단", 13f, muted).apply {

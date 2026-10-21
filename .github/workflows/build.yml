@@ -25,12 +25,12 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
-          cp app/build/outputs/apk/debug/app-debug.apk sanctuary-timer.apk
+          cp app/build/outputs/apk/debug/app-debug.apk d4-boss-alarm.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sanctuary-timer
-          path: sanctuary-timer.apk
+          name: d4-boss-alarm
+          path: d4-boss-alarm.apk
 
       # Keep one "latest" release so the phone always has the same download link
       - name: Publish latest release
@@ -39,7 +39,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest sanctuary-timer.apk \
+          gh release create latest d4-boss-alarm.apk \
             --title "최신 버전" \
             --notes "빌드: ${GITHUB_SHA::7}" \
             --target "$GITHUB_SHA"
