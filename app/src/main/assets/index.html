@@ -101,12 +101,12 @@ svg{display:block}
   font-variant-numeric:tabular-nums;white-space:nowrap}
 .count .sep{padding:0 5px}
 /* Ember layer: a jagged, glowing outline behind the digits */
-.count .fx{position:absolute;left:0;top:0;color:transparent;-webkit-text-stroke:2px var(--c);filter:url(#ember);opacity:.9}
+.count .fx{position:absolute;left:0;top:0;color:#000;filter:url(#ember)}
 /* Face: hot core fading to the event color */
 .count .face{position:relative;display:inline-block;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--c2) 45%,#fff) 0%,color-mix(in srgb,var(--c2) 60%,var(--c)) 45%,var(--c) 100%);
+  background:radial-gradient(120% 70% at 50% 35%,color-mix(in srgb,var(--c2) 55%,#fff) 0%,color-mix(in srgb,var(--c2) 70%,var(--c)) 45%,var(--c) 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 2px rgba(var(--rgb),1)) drop-shadow(0 0 12px rgba(var(--rgb),.65))}
+  filter:drop-shadow(0 0 1px #ff2a10) drop-shadow(0 0 3px rgba(var(--rgb),.95)) drop-shadow(0 0 14px rgba(var(--rgb),.6))}
 .caption{margin-top:6px;font-size:15px;color:#d6ccc4;text-shadow:0 1px 4px #000}
 .caption b{font-weight:700;color:#fff}
 .upcoming{margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.1);
@@ -226,13 +226,20 @@ svg{display:block}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <filter id="ember" x="-10%" y="-30%" width="120%" height="160%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.09 0.05" numOctaves="2" seed="3" result="n">
-      <animate attributeName="baseFrequency" dur="3s" values="0.09 0.05;0.1 0.07;0.09 0.05" repeatCount="indefinite"/>
+  <!-- Sparks: thin veins of fire just outside the glyph edges; the glyph itself is untouched -->
+  <filter id="ember" x="-15%" y="-40%" width="130%" height="180%" color-interpolation-filters="sRGB">
+    <feMorphology in="SourceAlpha" operator="dilate" radius="10" result="wide"/>
+    <feComposite in="wide" in2="SourceAlpha" operator="out" result="ring"/>
+    <feTurbulence type="turbulence" baseFrequency="0.02 0.06" numOctaves="2" seed="7" result="n">
+      <animate attributeName="seed" dur="1.2s" values="7;11;19;7" calcMode="discrete" repeatCount="indefinite"/>
     </feTurbulence>
-    <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
-    <feGaussianBlur in="d" stdDeviation="0.8" result="b"/>
-    <feMerge><feMergeNode in="b"/><feMergeNode in="d"/></feMerge>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -22 1.25" result="veins"/>
+    <feComposite in="veins" in2="ring" operator="in" result="sp"/>
+    <feGaussianBlur in="sp" stdDeviation="0.6" result="spb"/>
+    <feFlood flood-color="#ffb070"/><feComposite in2="spb" operator="in" result="core"/>
+    <feGaussianBlur in="spb" stdDeviation="2" result="halo"/>
+    <feFlood flood-color="#ff2a10"/><feComposite in2="halo" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="glow"/><feMergeNode in="core"/></feMerge>
   </filter>
 </svg>
 
