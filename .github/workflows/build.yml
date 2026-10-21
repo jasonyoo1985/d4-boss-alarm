@@ -40,6 +40,7 @@ jobs:
       # Keep one "latest" release so the phone always has the same download link
       - name: Publish latest release
         if: github.ref == 'refs/heads/main'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -62,3 +63,19 @@ jobs:
           draft=$(gh api "repos/$GITHUB_REPOSITORY/releases/$id" --jq '.draft')
           echo "draft=$draft"
           [ "$draft" = "false" ]
+
+      # Releases sometimes flip back to draft (404), so also keep the APK on its own branch:
+      # https://github.com/<owner>/<repo>/raw/apk/d4-boss-alarm.apk
+      - name: Publish APK branch
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir apk-out
+          cp d4-boss-alarm.apk apk-out/
+          cd apk-out
+          git init -q -b apk
+          git add d4-boss-alarm.apk
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "APK build ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" apk
