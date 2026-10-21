@@ -108,7 +108,7 @@ class MainActivity : Activity() {
             letterSpacing = 0.05f
             typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
         })
-        root.addView(text("월드보스 · 지옥물결 · 군단", 13f, muted).apply {
+        root.addView(text("디아블로4 월드보스 일정 · 출현 알림", 13f, muted).apply {
             gravity = Gravity.CENTER
             setPadding(0, dp(4), 0, dp(12))
         })
