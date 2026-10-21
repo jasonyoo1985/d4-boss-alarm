@@ -120,7 +120,12 @@ object Sync {
         val text = stripTags(html)
         // Include the part above the list too; the next boss is shown there
         val i = (text.indexOf("Upcoming").takeIf { it >= 0 } ?: 0) - 600
-        return "scripts: $scripts\ntext: " + text.substring(i.coerceAtLeast(0)).take(SNIPPET + 600)
+        val data = Regex("(?s)<script[^>]*__NUXT_DATA__[^>]*>(.*?)</script>").find(html)?.groupValues?.get(1)
+        val peek = data?.let { d ->
+            val j = Regex("Wandering Death|Avarice|Ashava|Azmodan").find(d)?.range?.first ?: 0
+            "\nnuxt(${d.length}자): " + d.substring((j - 700).coerceAtLeast(0)).take(1400)
+        } ?: ""
+        return "scripts: $scripts\ntext: " + text.substring(i.coerceAtLeast(0)).take(SNIPPET + 600) + peek
     }
 
     private val PAGE_ENTRY = Regex(
@@ -132,11 +137,22 @@ object Sync {
     /** Reads embedded JSON if present, else the "MM/DD/YYYY h:mm AM Boss in Zone" list. */
     private fun parseHtml(html: String, prefs: Prefs): List<Found> {
         val out = mutableListOf<Found>()
-        Regex("(?s)<script[^>]*(?:__NEXT_DATA__|application/json)[^>]*>(.*?)</script>").findAll(html).forEach {
-            runCatching { out += parse(it.groupValues[1]) }
-        }
-        if (out.isNotEmpty()) return out
         val boss = prefs.effective(Schedule.byKey("boss"))
+        Regex("(?s)<script[^>]*(?:__NEXT_DATA__|__NUXT_DATA__|application/json)[^>]*>(.*?)</script>").findAll(html).forEach {
+            val raw = it.groupValues[1]
+            runCatching { out += parse(raw) }
+            // Nuxt stores its state flattened (values point at each other by index); rebuild it first
+            runCatching { out += walkAll(Devalue.decode(raw)) }
+        }
+        // Keep only named world bosses that land on the cycle, so stray dates in page state are ignored
+        val onCycle = out.mapNotNull { f ->
+            val snapped = boss.anchor + Math.round((f.time - boss.anchor).toDouble() / boss.period) * boss.period
+            f.copy(time = snapped).takeIf {
+                f.key == "boss" && !f.name.isNullOrBlank() && Math.abs(f.time - snapped) <= 5 * MIN
+            }
+        }
+        out.clear()
+        out += onCycle
         for (m in PAGE_ENTRY.findAll(stripTags(html))) {
             val (mo, d, y, h, mi, ap, name, zone) = m.destructured
             var hour = h.toInt() % 12
@@ -190,6 +206,12 @@ object Sync {
             .forEach { list.put(JSONObject().put("t", it.time).put("name", it.name ?: "").put("zone", it.zone ?: "")) }
         prefs.setBossList(list.toString())
         return true
+    }
+
+    private fun walkAll(node: Any?): List<Found> {
+        val out = mutableListOf<Found>()
+        walk(node, "", out)
+        return out
     }
 
     fun parse(text: String): List<Found> {
