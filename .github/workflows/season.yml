@@ -1,0 +1,32 @@
+name: Season check
+
+# Once a day: refresh season.json from community trackers (see tools/update_season.py).
+# The app reads season.json from main, so no app update is needed for a new season.
+on:
+  schedule:
+    - cron: "20 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  season:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/update_season.py
+      - name: Commit if changed
+        run: |
+          # Only the season fields count as a change; "checked" alone isn't worth a commit
+          if git diff --quiet -- season.json || [ "$(git diff -U0 -- season.json | grep -c '^[-+] ')" = "$(git diff -U0 -- season.json | grep -c '^[-+] *"checked"')" ]; then
+            echo "no change"; exit 0
+          fi
+          git config user.name "season-bot"
+          git config user.email "season-bot@users.noreply.github.com"
+          git add season.json
+          git commit -m "Update season info"
+          git push

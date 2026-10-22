@@ -33,8 +33,25 @@ class Prefs(context: Context) {
     fun resetAnchor(e: GameEvent) = sp.edit().remove("anchor_${e.key}").apply()
 
     /** The event with the user's correction applied, else the last online sync, else the built-in anchor. */
-    fun effective(e: GameEvent) =
-        e.copy(anchor = sp.getLong("anchor_${e.key}", sp.getLong("sync_anchor_${e.key}", e.anchor)))
+    fun effective(e: GameEvent): GameEvent {
+        val base = override(e) ?: e.copy(anchor = sp.getLong("sync_anchor_${e.key}", e.anchor))
+        return base.copy(anchor = sp.getLong("anchor_${e.key}", base.anchor))
+    }
+
+    /** season.json from GitHub (season info, plus an optional hand-edited schedule override). */
+    fun remoteConfig(): String = sp.getString("remote_cfg", "") ?: ""
+    fun setRemoteConfig(json: String) = sp.edit().putString("remote_cfg", json).apply()
+    fun remoteSeason(): org.json.JSONObject? =
+        runCatching { org.json.JSONObject(remoteConfig()).getJSONObject("season") }.getOrNull()
+
+    /** {"boss": {"anchor": "2026-10-21T13:00:00Z", "periodMin": 210, "durationMin": 15}} in season.json "schedule". */
+    private fun override(e: GameEvent): GameEvent? = runCatching {
+        val o = org.json.JSONObject(remoteConfig()).getJSONObject("schedule").getJSONObject(e.key)
+        val period = o.getLong("periodMin") * MIN
+        val duration = o.optLong("durationMin", e.duration / MIN) * MIN
+        require(period >= 10 * MIN && duration in MIN..period)
+        e.copy(anchor = java.time.Instant.parse(o.getString("anchor")).toEpochMilli(), period = period, duration = duration)
+    }.getOrNull()
 
     // Online sync
     fun setSyncAnchor(e: GameEvent, epochMs: Long) = sp.edit().putLong("sync_anchor_${e.key}", epochMs).apply()

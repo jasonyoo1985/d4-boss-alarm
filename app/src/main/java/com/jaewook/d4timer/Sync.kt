@@ -31,8 +31,26 @@ object Sync {
 
     data class Found(val key: String, val time: Long, val name: String?, val zone: String?)
 
+    // Season info and the emergency schedule override; a daily GitHub job keeps it current
+    private const val CONFIG_URL = "https://raw.githubusercontent.com/jasonyoo1985/d4-boss-alarm/main/season.json"
+
+    /** Keeps the last good copy; any failure leaves it untouched and is never shown to the user. */
+    private fun fetchConfig(context: Context) {
+        try {
+            val (code, body) = fetch(CONFIG_URL)
+            if (code !in 200..299) return
+            JSONObject(body).getJSONObject("season")
+            val prefs = Prefs(context)
+            val changed = prefs.remoteConfig() != body
+            prefs.setRemoteConfig(body)
+            if (changed) Alarms.scheduleAll(context)
+        } catch (_: Exception) {
+        }
+    }
+
     /** Blocking; call off the main thread. Returns true when at least one event was updated. */
     fun run(context: Context): Boolean {
+        fetchConfig(context)
         val prefs = Prefs(context)
         val log = StringBuilder()
         val notes = mutableListOf<String>()

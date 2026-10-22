@@ -186,6 +186,7 @@ class MainActivity : Activity() {
             .put("version", version).put("notif", notif).put("exact", Alarms.canExact(this))
             .put("events", events)
             .put("onlyOpen", prefs.onlyOpen())
+            .put("season", prefs.remoteSeason() ?: JSONObject.NULL)
             .put("bossList", JSONArray(prefs.bossList()))
             .put(
                 "sync",
