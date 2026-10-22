@@ -11,6 +11,8 @@
 @font-face{font-family:"Barlow Condensed";font-weight:700;src:url(fonts/Barlow700.woff2) format("woff2")}
 
 :root{
+  --lava:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='120'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.045 0.07' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32  0 0 0 0 .02  0 0 0 0 0  -6 0 0 0 1.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  
   --sat:24px; --sab:0px;
   --bg:#070505; --panel:#0f0b0a; --line:rgba(255,255,255,.08);
   --fg:#f1e9e2; --muted:#9b8e85; --dim:#6d625b;
@@ -101,13 +103,16 @@ svg{display:block}
 .count{position:relative;margin-top:10px;font-family:var(--num);font-weight:700;font-size:64px;line-height:.95;letter-spacing:.01em;
   font-variant-numeric:tabular-nums;white-space:nowrap}
 .count .sep{padding:0 5px}
-/* Ember layer: a jagged, glowing outline behind the digits */
-.count .fx{position:absolute;left:0;top:0;color:#000;filter:url(#ember)}
-/* Face: hot core fading to the event color */
-.count .face{position:relative;display:inline-block;
-  background:radial-gradient(120% 70% at 50% 35%,color-mix(in srgb,var(--c2) 55%,#fff) 0%,color-mix(in srgb,var(--c2) 70%,var(--c)) 45%,var(--c) 100%);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 1px #ff2a10) drop-shadow(0 0 3px rgba(var(--rgb),.95)) drop-shadow(0 0 14px rgba(var(--rgb),.6))}
+/* Face: molten texture flowing inside the digits, with a hot rim */
+.count .face{position:relative;display:inline-block;color:var(--c);
+  background:
+    linear-gradient(180deg,rgba(255,244,230,.5),rgba(255,244,230,0) 45%),
+    var(--lava) 0 0/180px 120px,
+    radial-gradient(120% 80% at 50% 40%,color-mix(in srgb,var(--c2) 50%,#ffe6c0),var(--c2) 45%,var(--c));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:lava 14s linear infinite;
+  filter:drop-shadow(0 0 1px #ff2a10) drop-shadow(0 0 3px rgba(var(--rgb),.9)) drop-shadow(0 0 14px rgba(var(--rgb),.55))}
+@keyframes lava{to{background-position:0 0,180px -120px,0 0}}
 .caption{margin-top:6px;font-size:15px;color:#d6ccc4;text-shadow:0 1px 4px #000}
 .caption b{font-weight:700;color:#fff}
 .upcoming{margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.1);
@@ -125,7 +130,7 @@ svg{display:block}
 .alarm-btn .txt{min-width:0;flex:1}
 .alarm-btn .chev{width:16px;height:16px;color:var(--muted)}
 .card.off .count{opacity:.7}
-.card.off .count .fx{display:none}
+.card.off .count .face{animation:none}
 .card.off .alarm-btn{color:var(--muted);border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.03)}
 
 /* ---------- other pages ---------- */
@@ -227,21 +232,7 @@ svg{display:block}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <!-- Sparks: thin veins of fire just outside the glyph edges; the glyph itself is untouched -->
-  <filter id="ember" x="-15%" y="-40%" width="130%" height="180%" color-interpolation-filters="sRGB">
-    <feMorphology in="SourceAlpha" operator="dilate" radius="10" result="wide"/>
-    <feComposite in="wide" in2="SourceAlpha" operator="out" result="ring"/>
-    <feTurbulence type="turbulence" baseFrequency="0.02 0.06" numOctaves="2" seed="7" result="n">
-      <animate attributeName="seed" dur="1.2s" values="7;11;19;7" calcMode="discrete" repeatCount="indefinite"/>
-    </feTurbulence>
-    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -22 1.25" result="veins"/>
-    <feComposite in="veins" in2="ring" operator="in" result="sp"/>
-    <feGaussianBlur in="sp" stdDeviation="0.6" result="spb"/>
-    <feFlood flood-color="#ffb070"/><feComposite in2="spb" operator="in" result="core"/>
-    <feGaussianBlur in="spb" stdDeviation="2" result="halo"/>
-    <feFlood flood-color="#ff2a10"/><feComposite in2="halo" operator="in" result="glow"/>
-    <feMerge><feMergeNode in="glow"/><feMergeNode in="glow"/><feMergeNode in="core"/></feMerge>
-  </filter>
+
 </svg>
 
 <!-- ================= 알림 ================= -->
@@ -515,7 +506,7 @@ function tickHome(t) {
     const remain = live ? lastStart(e, t) + e.duration - t : next - t;
     const [h, m, s] = splitHMS(remain);
     const digits = `${h}<span class="sep">:</span>${m}<span class="sep">:</span>${s}`;
-    card.querySelector('[data-r="count"]').innerHTML = `<span class="fx" aria-hidden="true">${digits}</span><span class="face">${digits}</span>`;
+    card.querySelector('[data-r="count"]').innerHTML = `<span class="face">${digits}</span>`;
     const chip = card.querySelector('[data-r="chip"]');
     const soon = !live && remain <= 5 * MIN;
     chip.textContent = live ? "진행 중" : soon ? "곧 시작" : "대기";
