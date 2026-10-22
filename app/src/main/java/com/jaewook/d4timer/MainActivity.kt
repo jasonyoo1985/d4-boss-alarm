@@ -172,7 +172,7 @@ class MainActivity : Activity() {
                 JSONObject()
                     .put("key", e.key).put("name", e.name)
                     .put("anchor", e.anchor).put("period", e.period).put("duration", e.duration)
-                    .put("on", prefs.isOn(e)).put("lead", prefs.lead(e))
+                    .put("on", prefs.isOn(e)).put("leads", JSONArray(prefs.leads(e)))
                     .put("sound", Alarms.soundName(this, e))
                     .put("custom", prefs.hasCustomAnchor(e))
                     .put("repeat", prefs.repeat(e))
@@ -226,9 +226,9 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
-        fun setLead(key: String, min: Int) {
+        fun setLeads(key: String, mins: String) {
             val e = event(key)
-            Prefs(this@MainActivity).setLead(e, min)
+            Prefs(this@MainActivity).setLeads(e, mins.split(",").mapNotNull { it.trim().toIntOrNull() }.ifEmpty { listOf(5) })
             Alarms.schedule(this@MainActivity, e)
         }
 
@@ -264,7 +264,7 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun test(key: String) {
             val e = event(key)
-            AlarmReceiver.notify(this@MainActivity, e, System.currentTimeMillis() + Prefs(this@MainActivity).lead(e) * MIN)
+            AlarmReceiver.notify(this@MainActivity, e, System.currentTimeMillis() + Prefs(this@MainActivity).leads(e).last() * MIN)
         }
 
         @JavascriptInterface

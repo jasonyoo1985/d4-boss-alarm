@@ -8,8 +8,16 @@ class Prefs(context: Context) {
     fun isOn(e: GameEvent) = sp.getBoolean("on_${e.key}", e.defaultOn)
     fun setOn(e: GameEvent, on: Boolean) = sp.edit().putBoolean("on_${e.key}", on).apply()
 
-    fun lead(e: GameEvent) = sp.getInt("lead_${e.key}", 5)
-    fun setLead(e: GameEvent, min: Int) = sp.edit().putInt("lead_${e.key}", min).apply()
+    /** Minutes before the start to ring, earliest first; up to [MAX_LEADS] alerts per event. */
+    fun leads(e: GameEvent): List<Int> {
+        val saved = sp.getString("leads_${e.key}", null)?.split(",")?.mapNotNull { it.toIntOrNull() }
+        val list = if (saved.isNullOrEmpty()) listOf(sp.getInt("lead_${e.key}", 5)) else saved
+        return list.distinct().sortedDescending().take(MAX_LEADS)
+    }
+    fun setLeads(e: GameEvent, mins: List<Int>) =
+        sp.edit().putString("leads_${e.key}", mins.distinct().sortedDescending().take(MAX_LEADS).joinToString(",")).apply()
+    /** The earliest alert. */
+    fun lead(e: GameEvent) = leads(e).first()
 
     /** null = phone's default alarm sound, [SILENT] = no sound, otherwise a ringtone URI. */
     fun sound(e: GameEvent): String? = sp.getString("sound_${e.key}", null)
@@ -84,5 +92,6 @@ class Prefs(context: Context) {
 
     companion object {
         const val SILENT = "silent"
+        const val MAX_LEADS = 3
     }
 }
