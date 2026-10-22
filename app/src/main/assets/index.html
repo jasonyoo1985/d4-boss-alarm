@@ -161,7 +161,10 @@ svg{display:block}
 .info-row:first-child{border-top:0}
 .info-row .k{flex:1}
 .info-row .v{color:var(--muted);font-size:14px}
-.ok{color:#5fd38a!important}.bad{color:#ff6b5e!important}
+.ok{color:#5fd38a!important}
+.lamp{display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 6px 1px 0;vertical-align:middle}
+.lamp.on{background:#5fd38a;box-shadow:0 0 6px #5fd38a}
+.lamp.off{background:#e0564b;box-shadow:0 0 6px #e0564b}.bad{color:#ff6b5e!important}
 .fix{height:32px;padding:0 12px;border-radius:9px;background:rgba(255,59,47,.18);border:1px solid rgba(255,59,47,.6);color:#ffb3aa;font-size:13px;font-weight:700}
 .quiet-sw{--c:#8f7dff;--rgb:143,125,255}
 .time-in{height:38px;border-radius:9px;border:1px solid var(--line);background:#1a1312;color:#fff;padding:0 8px;
@@ -602,9 +605,9 @@ const PIN = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0
 function paintSync() {
   // Neutral wording only: a failed check never shows as an error, the timers run on their own anyway
   const y = S.sync || {};
-  $("sync-st").textContent = y.running ? "확인하는 중…" : y.time ? "마지막 확인 · " + relativePast(Date.now() - y.time) : "";
-  // Green on success; a failure just stays grey
-  $("sync-st").classList.toggle("ok", !y.running && !!y.time && !!y.ok);
+  // Only a small light tells success from failure; the wording stays the same either way
+  const dot = y.running || !y.time ? "" : `<i class="lamp ${y.ok ? "on" : "off"}"></i>`;
+  $("sync-st").innerHTML = dot + (y.running ? "확인하는 중…" : y.time ? "마지막 확인 · " + relativePast(Date.now() - y.time) : "");
   $("sync-msg").textContent = "보스 이름·지역은 helltides.com에서 받아와요. 시간은 앱이 직접 계산해서 인터넷이 없어도 맞아요.";
 }
 function relativePast(ms) {
