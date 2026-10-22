@@ -195,6 +195,7 @@ class MainActivity : Activity() {
             .put("onlyOpen", prefs.onlyOpen())
             .put("season", prefs.remoteSeason() ?: JSONObject.NULL)
             .put("bossList", JSONArray(prefs.bossList()))
+            .put("feedback", prefs.feedback())
             .put(
                 "sync",
                 JSONObject().put("ok", prefs.syncOk()).put("msg", prefs.syncMessage()).put("time", prefs.syncTime())
@@ -213,6 +214,24 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun getState(): String = stateJson()
+
+        /** Saves the message and tries to send it now; if that fails it goes out on a later sync. */
+        @JavascriptInterface
+        fun sendFeedback(stars: Int, text: String) {
+            val version = packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+            Feedback.add(this@MainActivity, stars, text, version)
+            runOnUiThread { refreshPage() }
+            Thread {
+                Feedback.sync(applicationContext)
+                runOnUiThread { refreshPage() }
+            }.start()
+        }
+
+        @JavascriptInterface
+        fun markFeedbackSeen() {
+            Feedback.markSeen(this@MainActivity)
+            runOnUiThread { refreshPage() }
+        }
 
         @JavascriptInterface
         fun setOnlyOpen(on: Boolean) = Prefs(this@MainActivity).setOnlyOpen(on)
