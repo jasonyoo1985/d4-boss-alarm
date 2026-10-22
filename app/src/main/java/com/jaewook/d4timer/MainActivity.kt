@@ -3,6 +3,7 @@ package com.jaewook.d4timer
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -17,6 +18,9 @@ import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -77,6 +81,26 @@ class MainActivity : Activity() {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_NOTIF)
         }
         Alarms.scheduleAll(this)
+        checkForUpdate()
+    }
+
+    /** Offers a newer Play Store version; the user can always choose "later". Silent outside Play installs. */
+    private fun checkForUpdate() {
+        val manager = AppUpdateManagerFactory.create(this)
+        manager.appUpdateInfo.addOnSuccessListener { info ->
+            if (isFinishing || info.updateAvailability() != UpdateAvailability.UPDATE_AVAILABLE ||
+                !info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) return@addOnSuccessListener
+            AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle("새 버전이 있어요")
+                .setMessage("더 좋아진 버전으로 업데이트할까요?\nA new version is available.")
+                .setPositiveButton("업데이트") { _, _ ->
+                    @Suppress("DEPRECATION")
+                    manager.startUpdateFlowForResult(info, AppUpdateType.IMMEDIATE, this, REQ_UPDATE)
+                }
+                .setNegativeButton("나중에", null)
+                .show()
+        }
     }
 
     override fun onResume() {
@@ -275,6 +299,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQ_NOTIF = 1
+        private const val REQ_UPDATE = 2
         private const val REQ_SOUND = 100
         private const val SYNC_EVERY = 10 * MIN
     }

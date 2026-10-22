@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: match the launcher's own widget corner radius so nothing gets cut off -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:angle="270" android:startColor="#F2241412" android:endColor="#F2100909" />
+    <corners android:radius="@android:dimen/system_app_widget_background_radius" />
+</shape>

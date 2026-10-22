@@ -11,8 +11,8 @@ android {
         applicationId = "com.jaewook.d4timer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 29
-        versionName = "1.0"
+        versionCode = 30
+        versionName = "1.1"
     }
 
     // A fixed key so each new APK installs over the previous one
@@ -32,4 +32,8 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+}
+
+dependencies {
+    implementation("com.google.android.play:app-update:2.1.0")
 }
