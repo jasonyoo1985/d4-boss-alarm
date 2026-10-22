@@ -94,7 +94,7 @@ object Alarms {
         var start = Schedule.nextAlarmStart(e, System.currentTimeMillis(), lead)
         // Skip starts whose alarm would ring during quiet hours (a day holds at most ~60 legion cycles)
         var guard = 0
-        while (prefs.isQuiet(start - lead * MIN) && guard++ < 200) start += e.period
+        while ((prefs.isQuiet(start - lead * MIN) || start == prefs.skip(e)) && guard++ < 200) start += e.period
         val at = start - lead * MIN
         val pi = pending(context, e, start)
         if (canExact(context)) {
@@ -104,5 +104,8 @@ object Alarms {
         }
     }
 
-    fun scheduleAll(context: Context) = Schedule.events.forEach { schedule(context, it) }
+    fun scheduleAll(context: Context) {
+        Schedule.events.forEach { schedule(context, it) }
+        BossWidget.refresh(context)
+    }
 }

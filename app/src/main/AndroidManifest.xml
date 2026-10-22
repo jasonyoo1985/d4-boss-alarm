@@ -29,6 +29,18 @@
             android:exported="false" />
 
         <receiver
+            android:name=".BossWidget"
+            android:exported="true"
+            android:label="월드보스 알람">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_boss_info" />
+        </receiver>
+
+        <receiver
             android:name=".BootReceiver"
             android:exported="true">
             <intent-filter>

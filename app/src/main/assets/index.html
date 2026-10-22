@@ -126,6 +126,9 @@ svg{display:block}
 .alarm-btn .s{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .alarm-btn .txt{min-width:0;flex:1}
 .alarm-btn .chev{width:16px;height:16px;color:var(--muted)}
+.skip-btn{margin-top:8px;width:100%;height:34px;border-radius:10px;font-size:13px;color:var(--muted);
+  border:1px dashed rgba(255,255,255,.14);background:rgba(0,0,0,.25)}
+.skip-btn.on{color:var(--c2);border-style:solid;border-color:rgba(var(--rgb),.5)}
 .card.off .count{filter:none;opacity:.75}
 .card.off .alarm-btn{color:var(--muted);border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.03)}
 
@@ -441,6 +444,7 @@ function buildHome() {
       <div class="boss-info" data-r="bossinfo" hidden></div>
       <div class="upcoming" data-r="upcoming"></div>
       <button class="alarm-btn" data-r="alarm"></button>
+      <button class="skip-btn" data-r="skip" hidden></button>
     </article>`).join("");
 
   $("seg").addEventListener("click", ev2 => {
@@ -460,6 +464,13 @@ function buildHome() {
       paintSettings();
     } else if (ev2.target.closest('[data-r="alarm"]')) {
       openSheet(e.key);
+    } else if (ev2.target.closest('[data-r="skip"]')) {
+      const nxt = nextStart(e, Date.now());
+      const skipped = e.skip > Date.now();
+      e.skip = skipped ? 0 : nxt;
+      bridge && bridge.setSkip(e.key, String(e.skip));
+      toast(skipped ? "건너뛰기를 취소했어요" : `${hm(nxt)} 알림은 건너뛸게요`);
+      paintSettings();
     }
   });
 }
@@ -473,6 +484,13 @@ function paintSettings() {
     card.querySelector('[data-r="alarm"]').innerHTML = e.on
       ? `${BELL}<span class="txt"><span class="t">알림: ${leadLabel(e.lead)}</span><div class="s">${esc(e.sound)}${e.repeat ? " · 계속 울림" : ""} · 눌러서 변경</div></span>${CHEV}`
       : `${BELL_OFF}<span class="txt"><span class="t">알림 꺼짐</span><div class="s">스위치를 켜면 알려드려요 · 눌러서 설정</div></span>${CHEV}`;
+    const sk = card.querySelector('[data-r="skip"]');
+    sk.hidden = !e.on;
+    if (e.on) {
+      const skipped = e.skip > Date.now();
+      sk.classList.toggle("on", skipped);
+      sk.textContent = skipped ? `${hm(e.skip)} 알림 건너뜀 · 되돌리기` : `다음 회차(${hm(nextStart(e, Date.now()))}) 알림 건너뛰기`;
+    }
   }
   $("bell-dot").hidden = S.notif && S.exact;
 }

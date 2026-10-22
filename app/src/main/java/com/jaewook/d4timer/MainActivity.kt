@@ -150,7 +150,8 @@ class MainActivity : Activity() {
                     .put("sound", Alarms.soundName(this, e))
                     .put("custom", prefs.hasCustomAnchor(e))
                     .put("repeat", prefs.repeat(e))
-                    .put("synced", prefs.hasSyncAnchor(e)),
+                    .put("synced", prefs.hasSyncAnchor(e))
+                    .put("skip", prefs.skip(e)),
             )
         }
         val notif = getSystemService(NotificationManager::class.java).areNotificationsEnabled()
@@ -177,6 +178,15 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun getState(): String = stateJson()
+
+        /** Skip (or un-skip) the alarm for one start time. */
+        @JavascriptInterface
+        fun setSkip(key: String, start: String) {
+            val e = event(key)
+            Prefs(this@MainActivity).setSkip(e, start.toLongOrNull() ?: 0L)
+            Alarms.schedule(this@MainActivity, e)
+            runOnUiThread { refreshPage() }
+        }
 
         @JavascriptInterface
         fun setOn(key: String, on: Boolean) {

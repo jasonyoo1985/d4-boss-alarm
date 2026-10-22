@@ -62,6 +62,22 @@ class Prefs(context: Context) {
         return if (s < e) m in s until e else m >= s || m < e
     }
 
+    /** A single start time the user chose to skip; alarms resume with the start after it. */
+    fun skip(e: GameEvent) = sp.getLong("skip_${e.key}", 0L)
+    fun setSkip(e: GameEvent, start: Long) = sp.edit().putLong("skip_${e.key}", start).apply()
+
+    /** Name and zone of the world boss spawning at [start], if a sync supplied one. */
+    fun bossAt(start: Long): Pair<String, String>? {
+        val list = runCatching { org.json.JSONArray(bossList()) }.getOrNull() ?: return null
+        for (i in 0 until list.length()) {
+            val o = list.optJSONObject(i) ?: continue
+            if (Math.abs(o.optLong("t") - start) < 5 * MIN && o.optString("name").isNotBlank()) {
+                return o.optString("name") to o.optString("zone")
+            }
+        }
+        return null
+    }
+
     companion object {
         const val SILENT = "silent"
     }
