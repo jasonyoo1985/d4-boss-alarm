@@ -27,7 +27,11 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
         val start = intent.getLongExtra(Alarms.EXTRA_START, 0L)
-        if (!Prefs(context).isQuiet(System.currentTimeMillis())) notify(context, e, start)
+        val prefs = Prefs(context)
+        // A task in the recents list means the user hasn't closed the app
+        val closed = prefs.onlyOpen() &&
+            context.getSystemService(android.app.ActivityManager::class.java).appTasks.isEmpty()
+        if (!closed && !prefs.isQuiet(System.currentTimeMillis())) notify(context, e, start)
         Alarms.schedule(context, e)
         BossWidget.refresh(context)
     }

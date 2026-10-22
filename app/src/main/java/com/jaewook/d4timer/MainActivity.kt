@@ -159,6 +159,7 @@ class MainActivity : Activity() {
         return JSONObject()
             .put("version", version).put("notif", notif).put("exact", Alarms.canExact(this))
             .put("events", events)
+            .put("onlyOpen", prefs.onlyOpen())
             .put("bossList", JSONArray(prefs.bossList()))
             .put(
                 "sync",
@@ -178,6 +179,9 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun getState(): String = stateJson()
+
+        @JavascriptInterface
+        fun setOnlyOpen(on: Boolean) = Prefs(this@MainActivity).setOnlyOpen(on)
 
         /** Skip (or un-skip) the alarm for one start time. */
         @JavascriptInterface

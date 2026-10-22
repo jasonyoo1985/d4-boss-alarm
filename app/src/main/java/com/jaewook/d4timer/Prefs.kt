@@ -62,6 +62,10 @@ class Prefs(context: Context) {
         return if (s < e) m in s until e else m >= s || m < e
     }
 
+    /** Ring only while the app is still in the recent apps list. */
+    fun onlyOpen() = sp.getBoolean("only_open", false)
+    fun setOnlyOpen(on: Boolean) = sp.edit().putBoolean("only_open", on).apply()
+
     /** A single start time the user chose to skip; alarms resume with the start after it. */
     fun skip(e: GameEvent) = sp.getLong("skip_${e.key}", 0L)
     fun setSkip(e: GameEvent, start: Long) = sp.edit().putLong("skip_${e.key}", start).apply()

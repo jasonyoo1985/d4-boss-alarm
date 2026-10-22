@@ -318,6 +318,10 @@ svg{display:block}
     </div>
   </div>
   <div class="info-block">
+    <div class="info-row"><span class="k">앱을 닫으면 알림 안 울림<br><span class="v" style="font-size:12.5px">켜면 최근 앱 목록에 앱이 있을 때만 울려요</span></span>
+      <button class="switch" role="switch" id="only-open" aria-label="앱을 닫으면 알림 안 울림"></button></div>
+  </div>
+  <div class="info-block">
     <div class="info-row"><span class="k">앱 버전</span><span class="v" id="st-ver"></span></div>
     <div class="info-row"><span class="k">계산 방식</span><span class="v">온라인 동기화 + 고정 주기 계산</span></div>
   </div>
@@ -575,6 +579,7 @@ function inQuiet(t) {
 function paintQuiet() {
   const q = S.quiet || { on: false, start: 0, end: 480 };
   $("q-on").setAttribute("aria-checked", q.on);
+  $("only-open").setAttribute("aria-checked", !!S.onlyOpen);
   $("q-start").value = fmtMin(q.start); $("q-end").value = fmtMin(q.end);
   $("q-start").disabled = $("q-end").disabled = !q.on;
   const b = $("quiet-banner");
@@ -586,6 +591,12 @@ function saveQuiet() {
   bridge && bridge.setQuiet(q.on, q.start, q.end);
   paintQuiet();
 }
+$("only-open").onclick = () => {
+  S.onlyOpen = !S.onlyOpen;
+  bridge && bridge.setOnlyOpen(S.onlyOpen);
+  $("only-open").setAttribute("aria-checked", S.onlyOpen);
+  toast(S.onlyOpen ? "앱을 닫으면 알림이 울리지 않아요" : "앱을 닫아도 알림이 울려요");
+};
 $("q-on").onclick = () => {
   S.quiet.on = !S.quiet.on; saveQuiet();
   toast(S.quiet.on ? `방해금지 ${fmtMin(S.quiet.start)} ~ ${fmtMin(S.quiet.end)}` : "방해금지를 껐어요");
