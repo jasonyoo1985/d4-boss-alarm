@@ -30,7 +30,7 @@ SOURCES = {
     },
     "https://ggseason.com/diablo4/": {
         "no": [r"No\.\s*(\d+)", r"Season (\d+)"],
-        "name": [r"(Season of [A-Z][\w' ]+?)\s*(?:[-–—.,(]|has|is|went)"],
+        "name": [],  # its page text runs the name into the next sentence
         "start": [r"went live on " + MDY],
         "end": [r"end (?:around|on) " + MDY, r"ends? on " + MDY],
     },
