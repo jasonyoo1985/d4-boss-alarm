@@ -16,7 +16,6 @@ import java.util.Locale
 object Widgets {
     fun refreshAll(context: Context) {
         BossWidget.refresh(context)
-        AllWidget.refresh(context)
         SmallWidget.refresh(context)
     }
 
@@ -48,49 +47,6 @@ object Widgets {
 
     fun ids(context: Context, cls: Class<*>): IntArray =
         AppWidgetManager.getInstance(context).getAppWidgetIds(ComponentName(context, cls))
-}
-
-/** 4x2 widget: world boss, helltide and legion with their countdowns. */
-class AllWidget : AppWidgetProvider() {
-    override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = refresh(context)
-
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        if (intent.action == ACTION_TICK) refresh(context)
-    }
-
-    companion object {
-        private const val ACTION_TICK = "com.jaewook.d4timer.WIDGET_ALL_TICK"
-        // event key to its name, time and countdown views
-        private val ROWS = listOf(
-            "boss" to intArrayOf(R.id.wa_boss_name, R.id.wa_boss_time, R.id.wa_boss_count),
-            "tide" to intArrayOf(R.id.wa_tide_name, R.id.wa_tide_time, R.id.wa_tide_count),
-            "legion" to intArrayOf(R.id.wa_legion_name, R.id.wa_legion_time, R.id.wa_legion_count),
-        )
-
-        fun refresh(context: Context) {
-            val ids = Widgets.ids(context, AllWidget::class.java)
-            if (ids.isEmpty()) return
-            val prefs = Prefs(context)
-            val now = System.currentTimeMillis()
-            var soonest = Long.MAX_VALUE
-            val views = RemoteViews(context.packageName, R.layout.widget_all)
-            for ((key, v) in ROWS) {
-                val (nameId, timeId, countId) = v.toList()
-                val e = prefs.effective(Schedule.byKey(key))
-                val (live, start, target) = Widgets.next(e, now)
-                soonest = minOf(soonest, target)
-                val boss = if (key == "boss") prefs.bossAt(start) else null
-                val label = e.name + (boss?.let { " · " + Names.ko(it.first) } ?: "")
-                views.setTextViewText(nameId, label)
-                views.setTextViewText(timeId, if (live) "진행 중" else Widgets.hm(start))
-                Widgets.countdown(views, countId, target, now)
-            }
-            views.setOnClickPendingIntent(R.id.wa_root, Widgets.openApp(context))
-            AppWidgetManager.getInstance(context).updateAppWidget(ids, views)
-            Widgets.tickAt(context, AllWidget::class.java, ACTION_TICK, 402, soonest)
-        }
-    }
 }
 
 /** 2x1 widget: just the next world boss countdown. */
