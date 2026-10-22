@@ -16,7 +16,7 @@ object Alarms {
     const val EXTRA_KEY = "event"
     const val EXTRA_START = "start"
 
-    fun channelId(context: Context, e: GameEvent) = "ev_${e.key}_${Prefs(context).channelVersion(e)}"
+    fun channelId(context: Context, e: GameEvent) = "evs_${e.key}_${Prefs(context).channelVersion(e)}"
 
     fun soundUri(context: Context, e: GameEvent): Uri? = when (val s = Prefs(context).sound(e)) {
         null -> Settings.System.DEFAULT_ALARM_ALERT_URI
@@ -41,20 +41,15 @@ object Alarms {
         if (nm.getNotificationChannel(id) != null) return
         // Remove this event's older channels and the single channel from v1.x
         for (ch in nm.notificationChannels) {
-            if (ch.id == "events" || (ch.id.startsWith("ev_${e.key}_") && ch.id != id)) nm.deleteNotificationChannel(ch.id)
+            val old = ch.id.startsWith("ev_${e.key}_") || (ch.id.startsWith("evs_${e.key}_") && ch.id != id)
+            if (ch.id == "events" || old) nm.deleteNotificationChannel(ch.id)
         }
         val ch = NotificationChannel(id, "${e.name} 알림", NotificationManager.IMPORTANCE_HIGH).apply {
             description = "${e.name} 시작 전에 알려줍니다"
             enableVibration(true)
             vibrationPattern = longArrayOf(0, 400, 200, 400)
-            // Alarm usage keeps it audible when the ringer is on vibrate
-            setSound(
-                soundUri(context, e),
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build(),
-            )
+            // The sound is played by AlarmSound on the alarm stream
+            setSound(null, null)
         }
         nm.createNotificationChannel(ch)
     }

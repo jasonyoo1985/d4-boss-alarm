@@ -81,6 +81,8 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        // Opening the app silences a ringing alarm
+        AlarmSound.stop(this)
         Alarms.scheduleAll(this)
         refreshPage()
         if (System.currentTimeMillis() - Prefs(this).syncTime() > SYNC_EVERY) startSync()

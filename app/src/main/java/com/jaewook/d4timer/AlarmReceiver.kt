@@ -15,6 +15,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val key = intent.getStringExtra(Alarms.EXTRA_KEY) ?: return
         val e = Schedule.byKey(key)
         if (intent.action == ACTION_STOP) {
+            AlarmSound.stop(context)
             context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
             return
         }
@@ -22,6 +23,7 @@ class AlarmReceiver : BroadcastReceiver() {
             val prefs = Prefs(context)
             val after = intent.getLongExtra(Alarms.EXTRA_START, 0L)
             prefs.setSkip(e, Schedule.nextStart(prefs.effective(e), after + MIN))
+            AlarmSound.stop(context)
             context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
             Alarms.schedule(context, e)
             return
@@ -40,12 +42,17 @@ class AlarmReceiver : BroadcastReceiver() {
         private const val ACTION_STOP = "com.jaewook.d4timer.STOP"
         private const val ACTION_SKIP_NEXT = "com.jaewook.d4timer.SKIP_NEXT"
 
-        // Safety net so a repeating alarm on an unattended phone doesn't ring forever
-        private const val REPEAT_LIMIT_MS = 5 * MIN
-
-        private fun notificationId(e: GameEvent) = Schedule.events.indexOfFirst { it.key == e.key } + 1
+        fun notificationId(e: GameEvent) = Schedule.events.indexOfFirst { it.key == e.key } + 1
 
         fun notify(context: Context, e: GameEvent, start: Long) {
+            if (Alarms.soundUri(context, e) != null) {
+                AlarmSound.start(context, e, start)
+            } else {
+                context.getSystemService(NotificationManager::class.java).notify(notificationId(e), build(context, e, start))
+            }
+        }
+
+        fun build(context: Context, e: GameEvent, start: Long): Notification {
             Alarms.ensureChannel(context, e)
             val repeat = Prefs(context).repeat(e)
             val left = ((start - System.currentTimeMillis() + 30_000) / MIN).coerceAtLeast(0)
@@ -79,11 +86,8 @@ class AlarmReceiver : BroadcastReceiver() {
                 .setCategory(if (repeat) Notification.CATEGORY_ALARM else Notification.CATEGORY_REMINDER)
                 .addAction(Notification.Action.Builder(null, "소리 끄기", stop).build())
                 .addAction(Notification.Action.Builder(null, "다음 회차 건너뛰기", skip).build())
-            if (repeat) builder.setTimeoutAfter(REPEAT_LIMIT_MS)
-            val n = builder.build()
-            // Insistent: the sound loops until the notification is dismissed or stopped
-            if (repeat) n.flags = n.flags or Notification.FLAG_INSISTENT
-            context.getSystemService(NotificationManager::class.java).notify(notificationId(e), n)
+                .setDeleteIntent(stop)
+            return builder.build()
         }
     }
 }
