@@ -283,6 +283,14 @@ class MainActivity : Activity() {
             startActivityForResult(intent, REQ_SOUND + Schedule.events.indexOf(e))
         }
 
+        /** Opens a page in the phone's browser (helltides.com for checking times). */
+        @JavascriptInterface
+        fun openUrl(url: String) = runOnUiThread {
+            if (url.startsWith("https://helltides.com/")) {
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+            }
+        }
+
         @JavascriptInterface
         fun openNotifSettings() = runOnUiThread {
             startActivity(

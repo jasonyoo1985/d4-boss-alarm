@@ -187,7 +187,6 @@ svg{display:block}
 .boss-info b{color:#fff}
 .boss-info svg{width:14px;height:14px;color:var(--c)}
 .row .sub{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:1px}
-.raw{margin:0;padding:12px 16px;max-height:240px;overflow:auto;font:12px/1.5 ui-monospace,monospace;color:#cbbfb7;white-space:pre-wrap;word-break:break-all;border-top:1px solid var(--line)}
 .btn-ghost{height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--line);color:#d7ccc4;font-size:13px;font-weight:700;background:#1a1312}
 .en{font-family:"Barlow Condensed",var(--body);font-weight:600;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);opacity:.8}
 .en.b{display:block;margin-top:1px}
@@ -229,6 +228,9 @@ svg{display:block}
   font-family:var(--num);font-weight:700;font-size:22px;text-align:center}
 .calib input:focus{outline:none;border-color:var(--c)}
 .calib .u{color:var(--muted);font-size:14px}
+.calib input.t{width:128px}
+.ext-link{display:block;width:100%;height:40px;margin-bottom:10px;border-radius:10px;border:1px dashed rgba(var(--rgb),.6);color:var(--c2,#fff);font-size:13.5px;background:transparent}
+.fix-link{display:block;margin:8px auto 0;font-size:12.5px;color:var(--muted);text-decoration:underline;background:none}
 .calib .save{margin-left:auto;height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--c);color:#fff;font-weight:700;background:rgba(var(--rgb),.22)}
 .hint{font-size:12.5px;color:var(--dim);margin:0 0 16px;line-height:1.5}
 .hint button{color:var(--c);text-decoration:underline;font-size:12.5px}
@@ -316,11 +318,7 @@ svg{display:block}
   <div class="info-block">
     <div class="info-row"><span class="k">온라인 일정 동기화<span class="en b">Online sync</span><span class="v" style="font-size:12.5px" id="sync-st"></span></span>
       <button class="fix" id="sync-now">지금</button></div>
-    <div class="info-row"><span class="k v" style="font-size:12.5px" id="sync-msg"></span><button class="btn-ghost" id="sync-raw-btn">받아온 내용</button></div>
-    <div id="sync-raw-wrap" hidden>
-      <pre class="raw" id="sync-raw"></pre>
-      <div class="info-row"><span class="k v" style="font-size:12.5px">이 내용을 복사해서 보내주시면 맞춰드려요</span><button class="fix" id="sync-copy">복사</button></div>
-    </div>
+    <div class="info-row"><span class="k v" style="font-size:12.5px" id="sync-msg"></span></div>
   </div>
   <div class="info-block">
     <div class="info-row"><span class="k">방해금지 시간<span class="en b">Quiet hours</span><span class="v" style="font-size:12.5px">이 시간에는 알림이 울리지 않아요</span></span>
@@ -368,11 +366,16 @@ svg{display:block}
       <button data-r="1">끌 때까지 계속</button>
     </div>
     <p class="hint">계속 울림은 알림의 "소리 끄기"를 누르거나 알림을 지울 때까지 반복돼요 (최대 5분).</p>
-    <p class="lbl">시간 보정 <span class="en">Adjust</span> <span style="font-weight:400">· 게임 지도에 표시된 다음 시작까지 남은 시간</span></p>
+    <p class="lbl" id="cal-lbl">시간 보정 <span class="en">Adjust</span> <span style="font-weight:400">· 둘 중 편한 쪽으로 입력</span></p>
+    <button class="ext-link" id="cal-site">helltides.com에서 시간 확인하기 ↗</button>
     <div class="calib">
       <input id="cal-h" type="number" inputmode="numeric" min="0" max="23" placeholder="0" aria-label="시간"><span class="u">시간</span>
       <input id="cal-m" type="number" inputmode="numeric" min="0" max="59" placeholder="0" aria-label="분"><span class="u">분 후 시작</span>
       <button class="save" id="cal-save">맞추기</button>
+    </div>
+    <div class="calib">
+      <input id="cal-t" class="t" type="time" aria-label="시작 시각"><span class="u">에 시작</span>
+      <button class="save" id="cal-save2">맞추기</button>
     </div>
     <p class="hint" id="cal-hint"></p>
     <button class="primary" id="sh-test">이 소리로 테스트 알림 보내기</button>
@@ -469,6 +472,7 @@ function buildHome() {
       <div class="upcoming" data-r="upcoming"></div>
       <button class="alarm-btn" data-r="alarm"></button>
       <button class="skip-btn" data-r="skip" hidden></button>
+      <button class="fix-link" data-r="fix">시간이 안 맞나요? 직접 맞추기</button>
     </article>`).join("");
 
   $("seg").addEventListener("click", ev2 => {
@@ -488,6 +492,9 @@ function buildHome() {
       paintSettings();
     } else if (ev2.target.closest('[data-r="alarm"]')) {
       openSheet(e.key);
+    } else if (ev2.target.closest('[data-r="fix"]')) {
+      openSheet(e.key);
+      setTimeout(() => $("cal-lbl").scrollIntoView({ block: "start", behavior: "smooth" }), 250);
     } else if (ev2.target.closest('[data-r="skip"]')) {
       const nxt = nextStart(e, Date.now());
       const skipped = e.skip > Date.now();
@@ -587,27 +594,19 @@ const PIN = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0
 
 /* ---------- sync status ---------- */
 function paintSync() {
+  // Neutral wording only: a failed check never shows as an error, the timers run on their own anyway
   const y = S.sync || {};
-  let st;
-  if (y.running) st = "받아오는 중…";
-  else if (!y.time) st = "아직 동기화 안 됨";
-  else st = (y.ok ? "성공 · " : "실패 · ") + new Date(y.time).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
-  $("sync-st").textContent = st;
-  $("sync-st").className = y.time && !y.running ? (y.ok ? "ok" : "bad") : "";
-  $("sync-msg").textContent = (y.msg || "helltides.com에서 최신 일정을 받아 기준 시각을 맞춰요. 실패해도 자체 계산으로 동작해요.");
+  $("sync-st").textContent = y.running ? "확인하는 중…" : y.time ? "마지막 확인 · " + relativePast(Date.now() - y.time) : "";
+  $("sync-msg").textContent = "보스 이름·지역은 helltides.com에서 받아와요. 시간은 앱이 직접 계산해서 인터넷이 없어도 맞아요.";
 }
-$("sync-now").onclick = () => { if (bridge) { bridge.syncNow(); toast("일정을 받아오는 중이에요"); } else toast("앱에서 동작해요"); };
-$("sync-raw-btn").onclick = () => {
-  const w = $("sync-raw-wrap"); w.hidden = !w.hidden;
-  if (!w.hidden) $("sync-raw").textContent = (bridge ? bridge.getSyncRaw() : "{ \"sample\": true }") || "아직 받아온 내용이 없어요";
-};
-$("sync-copy").onclick = () => {
-  const text = $("sync-raw").textContent;
-  navigator.clipboard.writeText(text).then(() => toast("복사했어요"), () => {
-    const r = document.createRange(); r.selectNodeContents($("sync-raw"));
-    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("길게 눌러 복사해 주세요");
-  });
-};
+function relativePast(ms) {
+  const m = Math.round(ms / MIN);
+  if (m < 1) return "방금";
+  if (m < 60) return `${m}분 전`;
+  if (m < 24 * 60) return `${Math.floor(m / 60)}시간 전`;
+  return `${Math.floor(m / (24 * 60))}일 전`;
+}
+$("sync-now").onclick = () => { if (bridge) { bridge.syncNow(); toast("확인하는 중이에요"); } else toast("앱에서 동작해요"); };
 
 /* ---------- quiet hours ---------- */
 const MOON = '<svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>';
@@ -714,7 +713,7 @@ function paintSheet() {
   $("sh-leads").innerHTML = LEADS.map(m => `<button data-m="${m}" aria-pressed="${e.leads.includes(m)}">${leadLabel(m)}</button>`).join("");
   $("sh-sound-name").textContent = e.sound;
   for (const b of $("sh-repeat").children) b.setAttribute("aria-pressed", (b.dataset.r === "1") === !!e.repeat);
-  $("cal-h").value = ""; $("cal-m").value = "";
+  $("cal-h").value = ""; $("cal-m").value = ""; $("cal-t").value = "";
   $("cal-hint").innerHTML = e.custom
     ? `직접 맞춘 시간을 쓰는 중이에요 · <button id="cal-reset">기본값으로 되돌리기</button>`
     : "게임과 시간이 다르면 여기서 맞춰주세요. 다음 일정이 모두 함께 바뀌어요.";
@@ -751,15 +750,27 @@ $("sh-repeat").addEventListener("click", e2 => {
   paintSheet(); paintSettings();
   toast(e.repeat ? "끌 때까지 계속 울려요" : "한 번만 울려요");
 });
+const SITE = { boss: "https://helltides.com/worldboss", tide: "https://helltides.com/", legion: "https://helltides.com/" };
+$("cal-site").onclick = () => { const u = SITE[sheetKey] || SITE.tide; if (bridge && bridge.openUrl) bridge.openUrl(u); else window.open(u); };
+$("cal-save2").onclick = () => {
+  const v = $("cal-t").value;
+  if (!/^\d{2}:\d{2}$/.test(v)) { toast("시작 시각을 입력해 주세요"); return; }
+  const d = new Date(); d.setHours(+v.slice(0, 2), +v.slice(3), 0, 0);
+  // A time earlier than now means tomorrow, unless it only just started
+  if (d.getTime() < Date.now() - ev(sheetKey).duration) d.setDate(d.getDate() + 1);
+  calibrate(d.getTime());
+};
 $("cal-save").onclick = () => {
   const h = parseInt($("cal-h").value || "0", 10), m = parseInt($("cal-m").value || "0", 10);
   if (isNaN(h) || isNaN(m) || h < 0 || m < 0 || h * 60 + m === 0) { toast("남은 시간을 입력해 주세요"); return; }
+  calibrate(Math.round((Date.now() + (h * 60 + m) * MIN) / MIN) * MIN);
+};
+function calibrate(start) {
   const e = ev(sheetKey);
-  const start = Math.round((Date.now() + (h * 60 + m) * MIN) / MIN) * MIN;
   if (bridge) bridge.setAnchor(e.key, String(start)); else { e.anchor = start; e.custom = true; }
   document.activeElement && document.activeElement.blur();
   refresh(); toast(`${e.name} 다음 시작을 ${hm(start)}로 맞췄어요`);
-};
+}
 $("sh-test").onclick = () => { bridge && bridge.test(sheetKey); toast("테스트 알림을 보냈어요"); };
 
 /* ---------- navigation ---------- */
