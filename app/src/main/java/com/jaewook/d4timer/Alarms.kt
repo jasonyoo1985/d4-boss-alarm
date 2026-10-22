@@ -16,7 +16,11 @@ object Alarms {
     const val EXTRA_KEY = "event"
     const val EXTRA_START = "start"
 
-    fun channelId(context: Context, e: GameEvent) = "evs_${e.key}_${Prefs(context).channelVersion(e)}"
+    fun channelId(context: Context, e: GameEvent) = "evv_${e.key}_${Prefs(context).channelVersion(e)}"
+
+    /** World boss buzzes long and hard; the frequent events stay short. */
+    fun vibration(e: GameEvent): LongArray =
+        if (e.key == "boss") longArrayOf(0, 900, 300, 900, 300, 900, 300, 900) else longArrayOf(0, 400, 200, 400)
 
     fun soundUri(context: Context, e: GameEvent): Uri? = when (val s = Prefs(context).sound(e)) {
         null -> Settings.System.DEFAULT_ALARM_ALERT_URI
@@ -41,13 +45,14 @@ object Alarms {
         if (nm.getNotificationChannel(id) != null) return
         // Remove this event's older channels and the single channel from v1.x
         for (ch in nm.notificationChannels) {
-            val old = ch.id.startsWith("ev_${e.key}_") || (ch.id.startsWith("evs_${e.key}_") && ch.id != id)
+            val old = ch.id.startsWith("ev_${e.key}_") || ch.id.startsWith("evs_${e.key}_") ||
+                (ch.id.startsWith("evv_${e.key}_") && ch.id != id)
             if (ch.id == "events" || old) nm.deleteNotificationChannel(ch.id)
         }
         val ch = NotificationChannel(id, "${e.name} 알림", NotificationManager.IMPORTANCE_HIGH).apply {
             description = "${e.name} 시작 전에 알려줍니다"
             enableVibration(true)
-            vibrationPattern = longArrayOf(0, 400, 200, 400)
+            vibrationPattern = vibration(e)
             // The sound is played by AlarmSound on the alarm stream
             setSound(null, null)
         }
@@ -66,11 +71,12 @@ object Alarms {
         return context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
     }
 
-    private fun pending(context: Context, e: GameEvent, start: Long): PendingIntent {
+    private fun pending(context: Context, e: GameEvent, start: Long, slot: Int): PendingIntent {
         val intent = Intent(context, AlarmReceiver::class.java)
             .putExtra(EXTRA_KEY, e.key)
             .putExtra(EXTRA_START, start)
-        val requestCode = Schedule.events.indexOfFirst { it.key == e.key }
+        // Slot 0 keeps the pre-1.2 request code so an alarm set by the old version is replaced
+        val requestCode = Schedule.events.indexOfFirst { it.key == e.key } + 10 * slot
         return PendingIntent.getBroadcast(
             context, requestCode, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
@@ -81,21 +87,24 @@ object Alarms {
         val prefs = Prefs(context)
         val e = prefs.effective(base)
         val am = context.getSystemService(AlarmManager::class.java)
-        if (!prefs.isOn(e)) {
-            am.cancel(pending(context, e, 0))
-            return
-        }
-        val lead = prefs.lead(e)
-        var start = Schedule.nextAlarmStart(e, System.currentTimeMillis(), lead)
-        // Skip starts whose alarm would ring during quiet hours (a day holds at most ~60 legion cycles)
-        var guard = 0
-        while ((prefs.isQuiet(start - lead * MIN) || start == prefs.skip(e)) && guard++ < 200) start += e.period
-        val at = start - lead * MIN
-        val pi = pending(context, e, start)
-        if (canExact(context)) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
-        } else {
-            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+        val leads = if (prefs.isOn(e)) prefs.leads(e) else emptyList()
+        for (slot in 0 until Prefs.MAX_LEADS) {
+            val lead = leads.getOrNull(slot)
+            if (lead == null) {
+                am.cancel(pending(context, e, 0, slot))
+                continue
+            }
+            var start = Schedule.nextAlarmStart(e, System.currentTimeMillis(), lead)
+            // Skip starts whose alarm would ring during quiet hours (a day holds at most ~60 legion cycles)
+            var guard = 0
+            while ((prefs.isQuiet(start - lead * MIN) || start == prefs.skip(e)) && guard++ < 200) start += e.period
+            val at = start - lead * MIN
+            val pi = pending(context, e, start, slot)
+            if (canExact(context)) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+            } else {
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+            }
         }
     }
 

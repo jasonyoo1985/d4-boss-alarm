@@ -174,6 +174,9 @@ svg{display:block}
   color:#cfc6ff;background:rgba(143,125,255,.1);border:1px solid rgba(143,125,255,.35)}
 .quiet-banner svg,.row .moon{width:18px;height:18px;flex:none;color:#a99bff}
 .quiet-banner b{color:#fff}
+.season{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:9px 14px;border-radius:12px;font-size:13px;color:#d8cdc4;background:#1a1312;border:1px solid var(--line)}
+.season b{color:#fff;font-size:15px}
+.season .en{margin-left:auto}
 .row.muted{opacity:.55}
 .boss-info{margin-top:4px;display:flex;align-items:center;gap:6px;font-size:13.5px;color:#f0d6c8;text-shadow:0 1px 4px #000}
 .boss-info b{color:#fff}
@@ -243,7 +246,7 @@ svg{display:block}
     <div class="brand">
       <div class="emblem" role="img" aria-label="앱 아이콘"></div>
       <div class="wordmark">WORLD BOSS<br>ALARM</div>
-      <div class="tagline">디아블로4 월드보스 출현 일정 및 알림 앱<span class="en b">Diablo IV event timer &amp; alerts</span></div>
+      <div class="tagline">디아4 월드보스 출현 일정 및 알림 앱<span class="en b">Diablo IV event timer &amp; alerts</span></div>
     </div>
     <div class="sign" aria-label="by Jason Yoo">
       <svg class="sigil" viewBox="0 0 300 300" aria-hidden="true">
@@ -278,7 +281,7 @@ svg{display:block}
   </header>
 
   <nav class="seg" role="tablist" id="seg"></nav>
-  <div class="page"><div class="quiet-banner" id="quiet-banner" hidden></div><div class="cards" id="cards"></div></div>
+  <div class="page"><div class="quiet-banner" id="quiet-banner" hidden></div><div class="season" id="season" hidden></div><div class="cards" id="cards"></div></div>
 </section>
 
 <!-- ================= 전체 일정 ================= -->
@@ -346,7 +349,7 @@ svg{display:block}
   <div class="sheet" id="sheet" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <h2 id="sh-title"></h2>
-    <p class="lbl">언제 알려드릴까요? <span class="en">Remind me</span></p>
+    <p class="lbl">언제 알려드릴까요? <span style="font-weight:400">· 최대 3개까지 고를 수 있어요</span> <span class="en">Remind me</span></p>
     <div class="leads" id="sh-leads"></div>
     <p class="lbl">알람음 <span class="en">Sound</span></p>
     <button class="sound-row" id="sh-sound">
@@ -385,6 +388,9 @@ const BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 const BELL_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13.7 21a2 2 0 0 1-3.4 0M18.6 13A17 17 0 0 1 18 8M6.3 6.3A6 6 0 0 0 6 8c0 7-3 9-3 9h14M18 8a6 6 0 0 0-9.3-5M2 2l20 20"/></svg>';
 const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
 const LEADS = [0, 1, 3, 5, 10, 15];
+const MAX_LEADS = 3;
+// Season end: Blizzard hasn't announced it yet, so this is the community estimate (update each season; hidden once past)
+const SEASON = { name: "시즌 15", end: Date.UTC(2026, 11, 2, 17, 0), estimate: true };
 const GUIDE = {
   boss: { cycle: "3시간 30분마다", cycleEn: "Every 3h 30m", dur: "약 15분", durEn: "About 15 min", text: "여러 지역 중 한 곳에 거대한 보스가 나타납니다. 다른 플레이어와 함께 제한 시간 안에 처치하면 보상 상자를 열 수 있어요. 시작 몇 분 전에 미리 이동해 두세요." },
   tide: { cycle: "매시 정각 시작", cycleEn: "Every hour on the hour", dur: "55분 진행, 5분 휴식", durEn: "55 min on, 5 min off", text: "지옥물결 지역에서 몬스터를 처치해 잉걸불을 모으고, 고통의 상자를 열어 보상을 받습니다. 매시 55분에 끝나고 정각에 다시 시작해요." },
@@ -405,9 +411,9 @@ function loadState() {
       { t: Date.UTC(2026,9,22,3,0), name: "Avarice", zone: "Scosglen" }
     ],
     events: [
-      { key: "boss", name: "월드보스", anchor: Date.UTC(2026,9,21,13,0), period: 210*MIN, duration: 15*MIN, on: true, lead: 1, sound: "Morning Flower", repeat: true },
-      { key: "tide", name: "지옥물결", anchor: Date.UTC(2026,9,21,0,0), period: 60*MIN, duration: 55*MIN, on: true, lead: 5, sound: "기본 알림음" },
-      { key: "legion", name: "군단", anchor: Date.UTC(2026,9,21,13,35), period: 25*MIN, duration: 4*MIN, on: false, lead: 5, sound: "기본 알림음" }
+      { key: "boss", name: "월드보스", anchor: Date.UTC(2026,9,21,13,0), period: 210*MIN, duration: 15*MIN, on: true, leads: [10, 1], sound: "Morning Flower", repeat: true },
+      { key: "tide", name: "지옥물결", anchor: Date.UTC(2026,9,21,0,0), period: 60*MIN, duration: 55*MIN, on: true, leads: [5], sound: "기본 알림음" },
+      { key: "legion", name: "군단", anchor: Date.UTC(2026,9,21,13,35), period: 25*MIN, duration: 4*MIN, on: false, leads: [5], sound: "기본 알림음" }
     ]
   };
 }
@@ -422,6 +428,7 @@ const hm = t => { const d = new Date(t); return pad(d.getHours()) + ":" + pad(d.
 const EN = { boss: "World Boss", tide: "Helltide", legion: "Legion" };
 const enOf = n => ko(n) !== n ? ` <span class="en">${esc(n)}</span>` : "";
 const leadLabel = m => m === 0 ? "시작할 때" : `시작 ${m}분 전`;
+const leadsLabel = ls => ls.length === 1 ? leadLabel(ls[0]) : ls.map(m => m === 0 ? "시작할 때" : `${m}분 전`).join(" · ");
 function splitHMS(ms) { const s = Math.max(0, Math.floor(ms / 1000)); return [Math.floor(s / 3600), Math.floor(s % 3600 / 60), s % 60].map(pad); }
 function relative(ms) {
   const m = Math.round(ms / MIN);
@@ -493,7 +500,7 @@ function paintSettings() {
     card.classList.toggle("off", !e.on);
     card.querySelector('[data-r="switch"]').setAttribute("aria-checked", e.on);
     card.querySelector('[data-r="alarm"]').innerHTML = e.on
-      ? `${BELL}<span class="txt"><span class="t">알림: ${leadLabel(e.lead)}</span><div class="s">${esc(e.sound)}${e.repeat ? " · 계속 울림" : ""} · 눌러서 변경</div></span>${CHEV}`
+      ? `${BELL}<span class="txt"><span class="t">알림: ${leadsLabel(e.leads)}</span><div class="s">${esc(e.sound)}${e.repeat ? " · 계속 울림" : ""} · 눌러서 변경</div></span>${CHEV}`
       : `${BELL_OFF}<span class="txt"><span class="t">알림 꺼짐</span><div class="s">스위치를 켜면 알려드려요 · 눌러서 설정</div></span>${CHEV}`;
     const sk = card.querySelector('[data-r="skip"]');
     sk.hidden = !e.on;
@@ -507,7 +514,16 @@ function paintSettings() {
 }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
+function paintSeason(t) {
+  const el = $("season"), left = SEASON.end - t;
+  el.hidden = left <= 0;
+  if (left <= 0) return;
+  const d = new Date(SEASON.end), days = ["일", "월", "화", "수", "목", "금", "토"];
+  const dd = Math.ceil(left / (24 * 60 * MIN));
+  el.innerHTML = `${SEASON.name} 종료까지 <b>D-${dd}</b> · ${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})${SEASON.estimate ? " 예상" : ""}<span class="en">Season ends</span>`;
+}
 function tickHome(t) {
+  paintSeason(t);
   for (const e of S.events) {
     const card = $("card-" + e.key);
     const live = isLive(e, t), next = nextStart(e, t);
@@ -635,7 +651,7 @@ function renderSchedule(t) {
   for (const { e, s } of items) {
     const d = new Date(s), day = `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
     if (day !== lastDay) { html += `<div class="day">${day}</div>`; lastDay = day; }
-    const live = s <= t, quiet = !live && inQuiet(s - e.lead * MIN);
+    const live = s <= t, quiet = !live && inQuiet(s - e.leads[0] * MIN);
     html += `<div class="row${live ? " live" : ""}${quiet ? " muted" : ""}" data-k="${e.key}"><span class="bar"></span><span class="tm">${hm(s)}</span>
       <span class="nm">${e.name}<span class="en">${EN[e.key]}</span>${(() => { const b = e.key === "boss" && bossAt(s); return b ? `<span class="sub">${esc(ko(b.name))}${b.zone ? " · " + esc(ko(b.zone)) : ""}</span>` : ""; })()}</span>${quiet ? MOON : ""}<span class="in">${live ? "진행 중" : relative(s - t)}</span></div>`;
   }
@@ -676,7 +692,7 @@ function openSheet(k) {
 function paintSheet() {
   if (!sheetKey) return;
   const e = ev(sheetKey);
-  $("sh-leads").innerHTML = LEADS.map(m => `<button data-m="${m}" aria-pressed="${m === e.lead}">${leadLabel(m)}</button>`).join("");
+  $("sh-leads").innerHTML = LEADS.map(m => `<button data-m="${m}" aria-pressed="${e.leads.includes(m)}">${leadLabel(m)}</button>`).join("");
   $("sh-sound-name").textContent = e.sound;
   for (const b of $("sh-repeat").children) b.setAttribute("aria-pressed", (b.dataset.r === "1") === !!e.repeat);
   $("cal-h").value = ""; $("cal-m").value = "";
@@ -695,11 +711,18 @@ function closeSheet() { $("sheet-wrap").classList.remove("open"); sheetKey = nul
 $("scrim").onclick = closeSheet;
 $("sh-leads").addEventListener("click", e2 => {
   const b = e2.target.closest("button"); if (!b) return;
-  const e = ev(sheetKey); e.lead = +b.dataset.m;
+  const e = ev(sheetKey), m = +b.dataset.m;
+  if (e.leads.includes(m)) {
+    if (e.leads.length === 1) { toast("알림은 하나 이상 있어야 해요"); return; }
+    e.leads = e.leads.filter(x => x !== m);
+  } else {
+    if (e.leads.length >= MAX_LEADS) { toast(`알림은 ${MAX_LEADS}개까지 고를 수 있어요`); return; }
+    e.leads = [...e.leads, m].sort((a, b) => b - a);
+  }
   if (!e.on) { e.on = true; bridge && bridge.setOn(e.key, true); }
-  bridge && bridge.setLead(e.key, e.lead);
+  bridge && bridge.setLeads(e.key, e.leads.join(","));
   paintSheet(); paintSettings();
-  toast(`${e.name}: ${leadLabel(e.lead)} 알려드려요`);
+  toast(`${e.name}: ${leadsLabel(e.leads)} 알려드려요`);
 });
 $("sh-sound").onclick = () => { if (bridge) bridge.pickSound(sheetKey); else toast("앱에서 벨소리 목록이 열려요"); };
 $("sh-repeat").addEventListener("click", e2 => {
