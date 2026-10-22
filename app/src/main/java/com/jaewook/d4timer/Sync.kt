@@ -51,6 +51,7 @@ object Sync {
     /** Blocking; call off the main thread. Returns true when at least one event was updated. */
     fun run(context: Context): Boolean {
         fetchConfig(context)
+        Feedback.sync(context)
         val prefs = Prefs(context)
         val log = StringBuilder()
         val notes = mutableListOf<String>()

@@ -197,11 +197,27 @@ svg{display:block}
 .ev-name .en{display:block;margin-top:1px;font-size:11.5px;text-shadow:none}
 .row .nm .en{display:block;margin:1px 0 0;font-size:11px}
 .guide h3 .en{margin-left:6px;font-size:12px;text-shadow:none}
+.fb-stars{display:flex;justify-content:space-between;padding:4px 6px 0}
+.fb-stars button{font-size:34px;line-height:1;color:#3a2f2c;background:none;padding:4px}
+.fb-stars button.on{color:var(--boss);text-shadow:0 0 10px rgba(255,59,47,.6)}
+.fb-ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--dim);padding:2px 8px 4px}
+.fb-text{width:100%;min-height:130px;resize:vertical;border-radius:12px;background:#1a1413;border:1px solid var(--line);color:#efe3d3;font:inherit;font-size:14.5px;line-height:1.6;padding:12px}
+.fb-send{width:100%;height:48px;border-radius:14px;margin:4px 0 10px;background:linear-gradient(180deg,#e0443a,#b52a22);color:#fff;font-size:16px;font-weight:800}
+.fb-send:disabled{opacity:.45}
+.fb-done{text-align:center;font-size:14px;color:#ffb3aa;padding:6px 0 10px}
+.fb-list-title{font-size:13px;color:var(--muted);margin:22px 4px 8px}
+.fb-item{border-radius:14px;background:#0f0b0a;border:1px solid var(--line);padding:12px 14px;margin-bottom:10px}
+.fb-meta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--dim);margin-bottom:6px}
+.fb-meta .st{color:#e0564b;letter-spacing:1px}
+.fb-q{font-size:14px;color:#efe3d3;line-height:1.55;white-space:pre-wrap;word-break:break-all}
+.fb-a{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(255,59,47,.08);border-left:3px solid var(--boss);font-size:13.5px;line-height:1.55;color:#f3d9d4;white-space:pre-wrap;word-break:break-all}
+.fb-a b{display:block;font-size:11.5px;color:#ffb3aa;margin-bottom:3px}
+.nav .dot{position:absolute;top:4px;right:calc(50% - 18px);width:8px;height:8px;border-radius:50%;background:var(--boss);box-shadow:0 0 6px var(--boss)}
 .note{font-size:12.5px;line-height:1.7;color:var(--dim);padding:2px 4px}
 
 /* ---------- bottom nav ---------- */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:6px 8px calc(6px + var(--sab));
-  display:grid;grid-template-columns:repeat(4,1fr);background:rgba(8,6,6,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+  display:grid;grid-template-columns:repeat(5,1fr);background:rgba(8,6,6,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
 .nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 8px;color:var(--dim);font-size:12px;font-weight:600;position:relative}
 .nav svg{width:26px;height:26px}
 .nav button[aria-current=page]{color:var(--boss)}
@@ -344,11 +360,31 @@ svg{display:block}
   <p class="note">이 앱은 팬이 만든 비공식 도구이며 Blizzard Entertainment와 관련이 없습니다. 게임 업데이트로 주기가 바뀌면 시간이 어긋날 수 있습니다.<br>Unofficial fan-made app, not affiliated with Blizzard Entertainment. Times may drift if a game update changes the cycle.</p>
 </section>
 
+<!-- ================= 의견 ================= -->
+<section id="p-feedback" class="page" hidden>
+  <h1 class="page-title">FEEDBACK</h1>
+  <p class="page-sub">원하는 기능, 불편한 점, 버그 무엇이든 알려주세요<span class="en b">Ideas, problems, bugs</span></p>
+  <div class="info-block" style="padding:14px 14px 8px">
+    <div class="k" style="font-size:15px">앱은 전체적으로 어떠세요? <span class="v" style="font-size:12.5px">(선택)</span></div>
+    <div class="fb-stars" id="fb-stars"></div>
+    <div class="fb-ends"><span>별로예요</span><span>최고예요</span></div>
+  </div>
+  <div class="info-block" style="padding:14px">
+    <div class="k" style="font-size:15px;margin-bottom:10px">하고 싶은 말</div>
+    <textarea class="fb-text" id="fb-text" maxlength="2000" placeholder="예) 지옥물결 알림은 저녁에만 받고 싶어요"></textarea>
+  </div>
+  <button class="fb-send" id="fb-send" disabled>보내기</button>
+  <p class="fb-done" id="fb-done" hidden></p>
+  <p class="note">익명으로 전달되며 개발자만 볼 수 있어요. 몇 번이든 다시 보낼 수 있어요. 고칠 때 참고하도록 앱 버전과 폰 기종만 함께 보내요. 개발자가 답을 남기면 아래에 표시돼요.</p>
+  <div id="fb-list"></div>
+</section>
+
 <nav class="nav" id="nav">
   <button data-go="home" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 2.5l3.2 4.3C7.8 5.7 9.8 5 12 5s4.2.7 5.8 1.8L21 2.5l-.6 6.3c.9 1.3 1.4 2.8 1.4 4.4 0 2.8-1.6 5.2-4 6.6V22h-2.6v-1.9h-1.9V22h-2.6v-1.9H8.8V22H6.2v-2.2c-2.4-1.4-4-3.8-4-6.6 0-1.6.5-3.1 1.4-4.4L3 2.5zm5.3 9.2c-1.2 0-2.1.9-2.1 2s1 2 2.4 2c1.1 0 1.8-.6 1.8-1.3 0-1.4-.9-2.7-2.1-2.7zm7.4 0c-1.2 0-2.1 1.3-2.1 2.7 0 .7.7 1.3 1.8 1.3 1.4 0 2.4-.9 2.4-2s-.9-2-2.1-2zM12 15.6l-1.2 2.2h2.4L12 15.6z"/></svg>알림</button>
   <button data-go="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01" stroke-width="2.6"/></svg>전체 일정</button>
   <button data-go="guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>가이드</button>
   <button data-go="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><path d="M12 7.5h.01" stroke-width="2.6"/></svg>정보</button>
+  <button data-go="feedback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/><path d="M8.5 8.5h7M8.5 11.5h4.5"/></svg>의견</button>
 </nav>
 
 <div id="sheet-wrap">
@@ -416,6 +452,10 @@ function loadState() {
   if (bridge) return JSON.parse(bridge.getState());
   return {
     version: "미리보기", notif: true, exact: true, quiet: { on: true, start: 0, end: 480 },
+    feedback: [
+      { code: "K7Q2M", stars: 4, text: "지옥물결 알림은 자는 시간엔 안 받고 싶어요", time: Date.now() - 26 * 60 * MIN, sent: true, answer: "이미 있어요! 정보 탭 → 방해금지 시간을 켜면 그 시간엔 안 울려요.", seen: false },
+      { code: "P3XA9", stars: 0, text: "위젯 글씨가 조금 더 컸으면 좋겠어요", time: Date.now() - 2 * MIN, sent: false }
+    ],
     sync: { ok: true, msg: "helltides.com/api/schedule에서 일정을 맞췄어요 (월드보스, 지옥물결, 군단)", time: Date.now() - 3 * MIN, running: false },
     bossList: [
       { t: Date.UTC(2026,9,21,16,30), name: "Wandering Death", zone: "" },
@@ -735,7 +775,7 @@ function paintSheet() {
     refresh(); toast("기본 일정으로 되돌렸어요");
   };
 }
-function refresh() { if (bridge) S = loadState(); paintSettings(); paintSheet(); paintInfo(); paintQuiet(); paintSync(); if (page === "schedule") renderSchedule(Date.now()); }
+function refresh() { if (bridge) S = loadState(); paintSettings(); paintSheet(); paintInfo(); paintQuiet(); paintSync(); paintFeedback(); if (page === "schedule") renderSchedule(Date.now()); }
 function closeSheet() { $("sheet-wrap").classList.remove("open"); sheetKey = null; }
 $("scrim").onclick = closeSheet;
 $("sh-leads").addEventListener("click", e2 => {
@@ -784,8 +824,42 @@ function calibrate(start) {
 }
 $("sh-test").onclick = () => { bridge && bridge.test(sheetKey); toast("테스트 알림을 보냈어요"); };
 
+
+/* ---------- feedback ---------- */
+let fbStars = 0;
+function paintStars() {
+  $("fb-stars").innerHTML = [1, 2, 3, 4, 5].map(n => `<button data-s="${n}" class="${n <= fbStars ? "on" : ""}" aria-label="${n}점">★</button>`).join("");
+}
+$("fb-stars").onclick = e2 => { const b = e2.target.closest("[data-s]"); if (!b) return; fbStars = fbStars === +b.dataset.s ? 0 : +b.dataset.s; paintStars(); };
+$("fb-text").oninput = () => { $("fb-send").disabled = !$("fb-text").value.trim(); $("fb-done").hidden = true; };
+$("fb-send").onclick = () => {
+  const text = $("fb-text").value.trim(); if (!text) return;
+  if (bridge && bridge.sendFeedback) bridge.sendFeedback(fbStars, text);
+  else (S.feedback = S.feedback || []).push({ code: "", stars: fbStars, text, time: Date.now(), sent: false });
+  $("fb-done").textContent = "보내주셔서 고마워요! 다음 업데이트에 참고할게요.";
+  $("fb-done").hidden = false;
+  $("fb-text").value = ""; fbStars = 0; paintStars(); $("fb-send").disabled = true;
+  paintFeedback();
+};
+// What this phone sent, newest first, with the developer's reply when there is one
+function paintFeedback() {
+  const list = (S.feedback || []).slice().reverse();
+  $("fb-list").innerHTML = list.length ? `<div class="fb-list-title">내가 보낸 의견</div>` + list.map(f => {
+    const d = new Date(f.time), when = `${d.getMonth() + 1}월 ${d.getDate()}일`;
+    const stars = f.stars ? "★".repeat(f.stars) : "";
+    return `<div class="fb-item"><div class="fb-meta"><span>${when} · ${f.sent ? "전달됨" : "보내는 중"}</span><span class="st">${stars}</span></div>
+      <div class="fb-q">${esc(f.text)}</div>${f.answer ? `<div class="fb-a"><b>개발자 답변</b>${esc(f.answer)}</div>` : ""}</div>`;
+  }).join("") : "";
+  const unread = (S.feedback || []).some(f => f.answer && !f.seen);
+  const tab = document.querySelector('[data-go="feedback"]');
+  let dot = tab.querySelector(".dot");
+  if (unread && !dot) { dot = document.createElement("i"); dot.className = "dot"; tab.appendChild(dot); }
+  if (!unread && dot) dot.remove();
+}
+paintStars(); paintFeedback();
+
 /* ---------- navigation ---------- */
-const PAGES = ["home", "schedule", "guide", "info"];
+const PAGES = ["home", "schedule", "guide", "info", "feedback"];
 let page = "home";
 function go(p) {
   page = p;
@@ -795,6 +869,10 @@ function go(p) {
   }
   if (p === "schedule") renderSchedule(Date.now());
   if (p === "info") paintInfo();
+  if (p === "feedback" && (S.feedback || []).some(f => f.answer && !f.seen)) {
+    if (bridge && bridge.markFeedbackSeen) bridge.markFeedbackSeen(); else S.feedback.forEach(f => f.seen = true);
+    paintFeedback();
+  }
   window.scrollTo(0, 0);
 }
 document.addEventListener("click", e2 => { const b = e2.target.closest("[data-go]"); if (b) go(b.dataset.go); });

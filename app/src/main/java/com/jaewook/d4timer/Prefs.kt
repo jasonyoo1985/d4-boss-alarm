@@ -41,6 +41,10 @@ class Prefs(context: Context) {
     /** season.json from GitHub (season info, plus an optional hand-edited schedule override). */
     fun remoteConfig(): String = sp.getString("remote_cfg", "") ?: ""
     fun setRemoteConfig(json: String) = sp.edit().putString("remote_cfg", json).apply()
+    /** Feedback the user wrote, newest last, with send state and any reply; see [Feedback]. */
+    fun feedback(): org.json.JSONArray = runCatching { org.json.JSONArray(sp.getString("feedback", "[]")) }.getOrDefault(org.json.JSONArray())
+    fun setFeedback(list: org.json.JSONArray) = sp.edit().putString("feedback", list.toString()).apply()
+
     fun remoteSeason(): org.json.JSONObject? =
         runCatching { org.json.JSONObject(remoteConfig()).getJSONObject("season") }.getOrNull()
 
