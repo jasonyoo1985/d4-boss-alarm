@@ -181,6 +181,10 @@ svg{display:block}
 .row .sub{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:1px}
 .raw{margin:0;padding:12px 16px;max-height:240px;overflow:auto;font:12px/1.5 ui-monospace,monospace;color:#cbbfb7;white-space:pre-wrap;word-break:break-all;border-top:1px solid var(--line)}
 .btn-ghost{height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--line);color:#d7ccc4;font-size:13px;font-weight:700;background:#1a1312}
+.en{font-family:"Barlow Condensed",var(--body);font-weight:600;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);opacity:.8}
+.en.b{display:block;margin-top:1px}
+.ev-name .en{display:block;margin-top:1px;font-size:11.5px;text-shadow:none}
+.guide h3 .en,.row .nm .en{margin-left:6px;font-size:12px;text-shadow:none}
 .note{font-size:12.5px;line-height:1.7;color:var(--dim);padding:2px 4px}
 
 /* ---------- bottom nav ---------- */
@@ -238,7 +242,7 @@ svg{display:block}
     <div class="brand">
       <div class="emblem" role="img" aria-label="앱 아이콘"></div>
       <div class="wordmark">WORLD BOSS<br>ALARM</div>
-      <div class="tagline">디아블로4 월드보스 출현 일정 및 알림 앱</div>
+      <div class="tagline">디아블로4 월드보스 출현 일정 및 알림 앱<span class="en b">Diablo IV event timer &amp; alerts</span></div>
     </div>
     <div class="sign" aria-label="by Jason Yoo">
       <svg class="sigil" viewBox="0 0 300 300" aria-hidden="true">
@@ -279,7 +283,7 @@ svg{display:block}
 <!-- ================= 전체 일정 ================= -->
 <section id="p-schedule" class="page" hidden>
   <h1 class="page-title">SCHEDULE</h1>
-  <p class="page-sub">앞으로 24시간 동안의 이벤트 일정</p>
+  <p class="page-sub">앞으로 24시간 동안의 이벤트 일정<span class="en b">Next 24 hours</span></p>
   <div class="filters" id="filters"></div>
   <div id="sched-list"></div>
 </section>
@@ -287,21 +291,21 @@ svg{display:block}
 <!-- ================= 가이드 ================= -->
 <section id="p-guide" class="page" hidden>
   <h1 class="page-title">GUIDE</h1>
-  <p class="page-sub">이벤트별 주기와 진행 시간</p>
+  <p class="page-sub">이벤트별 주기와 진행 시간<span class="en b">Cycle and duration of each event</span></p>
   <div id="guides"></div>
 </section>
 
 <!-- ================= 정보 ================= -->
 <section id="p-info" class="page" hidden>
   <h1 class="page-title">SETTINGS</h1>
-  <p class="page-sub">알림이 제때 울리도록 권한을 확인하세요</p>
+  <p class="page-sub">알림이 제때 울리도록 권한을 확인하세요<span class="en b">Check permissions so alerts ring on time</span></p>
   <div class="info-block">
-    <div class="info-row"><span class="k">알림 허용</span><span class="v" id="st-notif"></span><button class="fix" id="fix-notif" hidden>켜기</button></div>
-    <div class="info-row"><span class="k">정확한 시간에 알람</span><span class="v" id="st-exact"></span><button class="fix" id="fix-exact" hidden>켜기</button></div>
-    <div class="info-row"><span class="k">테스트 알림</span><button class="fix" id="btn-test2">보내기</button></div>
+    <div class="info-row"><span class="k">알림 허용<span class="en b">Notifications</span></span><span class="v" id="st-notif"></span><button class="fix" id="fix-notif" hidden>켜기</button></div>
+    <div class="info-row"><span class="k">정확한 시간에 알람<span class="en b">Exact alarms</span></span><span class="v" id="st-exact"></span><button class="fix" id="fix-exact" hidden>켜기</button></div>
+    <div class="info-row"><span class="k">테스트 알림<span class="en b">Test alert</span></span><button class="fix" id="btn-test2">보내기</button></div>
   </div>
   <div class="info-block">
-    <div class="info-row"><span class="k">온라인 일정 동기화<br><span class="v" style="font-size:12.5px" id="sync-st"></span></span>
+    <div class="info-row"><span class="k">온라인 일정 동기화<span class="en b">Online sync</span><span class="v" style="font-size:12.5px" id="sync-st"></span></span>
       <button class="fix" id="sync-now">지금</button></div>
     <div class="info-row"><span class="k v" style="font-size:12.5px" id="sync-msg"></span><button class="btn-ghost" id="sync-raw-btn">받아온 내용</button></div>
     <div id="sync-raw-wrap" hidden>
@@ -310,7 +314,7 @@ svg{display:block}
     </div>
   </div>
   <div class="info-block">
-    <div class="info-row"><span class="k">방해금지 시간<br><span class="v" style="font-size:12.5px">이 시간에는 알림이 울리지 않아요</span></span>
+    <div class="info-row"><span class="k">방해금지 시간<span class="en b">Quiet hours</span><span class="v" style="font-size:12.5px">이 시간에는 알림이 울리지 않아요</span></span>
       <button class="switch quiet-sw" role="switch" id="q-on" aria-label="방해금지 시간"></button></div>
     <div class="info-row quiet-times">
       <input class="time-in" type="time" id="q-start" aria-label="시작"><span class="u">부터</span>
@@ -318,15 +322,15 @@ svg{display:block}
     </div>
   </div>
   <div class="info-block">
-    <div class="info-row"><span class="k">앱을 닫으면 알림 안 울림<br><span class="v" style="font-size:12.5px">켜면 최근 앱 목록에 앱이 있을 때만 울려요</span></span>
+    <div class="info-row"><span class="k">앱을 닫으면 알림 안 울림<span class="en b">Only while app is open</span><span class="v" style="font-size:12.5px">켜면 최근 앱 목록에 앱이 있을 때만 울려요</span></span>
       <button class="switch" role="switch" id="only-open" aria-label="앱을 닫으면 알림 안 울림"></button></div>
   </div>
   <div class="info-block">
-    <div class="info-row"><span class="k">앱 버전</span><span class="v" id="st-ver"></span></div>
-    <div class="info-row"><span class="k">계산 방식</span><span class="v">온라인 동기화 + 고정 주기 계산</span></div>
+    <div class="info-row"><span class="k">앱 버전<span class="en b">Version</span></span><span class="v" id="st-ver"></span></div>
+    <div class="info-row"><span class="k">계산 방식<span class="en b">Method</span></span><span class="v">온라인 동기화 + 고정 주기 계산</span></div>
   </div>
   <p class="note" id="anchor-note"></p>
-  <p class="note">이 앱은 팬이 만든 비공식 도구이며 Blizzard Entertainment와 관련이 없습니다. 게임 업데이트로 주기가 바뀌면 시간이 어긋날 수 있습니다.</p>
+  <p class="note">이 앱은 팬이 만든 비공식 도구이며 Blizzard Entertainment와 관련이 없습니다. 게임 업데이트로 주기가 바뀌면 시간이 어긋날 수 있습니다.<br>Unofficial fan-made app, not affiliated with Blizzard Entertainment. Times may drift if a game update changes the cycle.</p>
 </section>
 
 <nav class="nav" id="nav">
@@ -341,21 +345,21 @@ svg{display:block}
   <div class="sheet" id="sheet" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <h2 id="sh-title"></h2>
-    <p class="lbl">언제 알려드릴까요?</p>
+    <p class="lbl">언제 알려드릴까요? <span class="en">Remind me</span></p>
     <div class="leads" id="sh-leads"></div>
-    <p class="lbl">알람음</p>
+    <p class="lbl">알람음 <span class="en">Sound</span></p>
     <button class="sound-row" id="sh-sound">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
       <span class="txt"><span class="t">벨소리 선택</span><br><span class="s" id="sh-sound-name"></span></span>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--muted)"><path d="M9 6l6 6-6 6"/></svg>
     </button>
-    <p class="lbl">울림 방식</p>
+    <p class="lbl">울림 방식 <span class="en">Ring mode</span></p>
     <div class="leads" id="sh-repeat" style="grid-template-columns:1fr 1fr;margin-bottom:6px">
       <button data-r="0">한 번만 울림</button>
       <button data-r="1">끌 때까지 계속</button>
     </div>
     <p class="hint">계속 울림은 알림의 "소리 끄기"를 누르거나 알림을 지울 때까지 반복돼요 (최대 5분).</p>
-    <p class="lbl">시간 보정 <span style="font-weight:400">· 게임 지도에 표시된 다음 시작까지 남은 시간</span></p>
+    <p class="lbl">시간 보정 <span class="en">Adjust</span> <span style="font-weight:400">· 게임 지도에 표시된 다음 시작까지 남은 시간</span></p>
     <div class="calib">
       <input id="cal-h" type="number" inputmode="numeric" min="0" max="23" placeholder="0" aria-label="시간"><span class="u">시간</span>
       <input id="cal-m" type="number" inputmode="numeric" min="0" max="59" placeholder="0" aria-label="분"><span class="u">분 후 시작</span>
@@ -381,9 +385,9 @@ const BELL_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
 const LEADS = [0, 1, 3, 5, 10, 15];
 const GUIDE = {
-  boss: { cycle: "3시간 30분마다", dur: "약 15분", text: "여러 지역 중 한 곳에 거대한 보스가 나타납니다. 다른 플레이어와 함께 제한 시간 안에 처치하면 보상 상자를 열 수 있어요. 시작 몇 분 전에 미리 이동해 두세요." },
-  tide: { cycle: "매시 정각 시작", dur: "55분 진행, 5분 휴식", text: "지옥물결 지역에서 몬스터를 처치해 잉걸불을 모으고, 고통의 상자를 열어 보상을 받습니다. 매시 55분에 끝나고 정각에 다시 시작해요." },
-  legion: { cycle: "25분마다", dur: "약 4분", text: "군단 소집 이벤트입니다. 몰려오는 악마 무리를 막아내고 마지막 우두머리를 처치하면 보상을 받습니다." }
+  boss: { cycle: "3시간 30분마다", cycleEn: "Every 3h 30m", dur: "약 15분", durEn: "About 15 min", text: "여러 지역 중 한 곳에 거대한 보스가 나타납니다. 다른 플레이어와 함께 제한 시간 안에 처치하면 보상 상자를 열 수 있어요. 시작 몇 분 전에 미리 이동해 두세요." },
+  tide: { cycle: "매시 정각 시작", cycleEn: "Every hour on the hour", dur: "55분 진행, 5분 휴식", durEn: "55 min on, 5 min off", text: "지옥물결 지역에서 몬스터를 처치해 잉걸불을 모으고, 고통의 상자를 열어 보상을 받습니다. 매시 55분에 끝나고 정각에 다시 시작해요." },
+  legion: { cycle: "25분마다", cycleEn: "Every 25 min", dur: "약 4분", durEn: "About 4 min", text: "군단 소집 이벤트입니다. 몰려오는 악마 무리를 막아내고 마지막 우두머리를 처치하면 보상을 받습니다." }
 };
 
 // When opened outside the app (e.g. a browser preview), use sample state
@@ -414,6 +418,8 @@ const lastStart = (e, t) => nextStart(e, t) - e.period;
 const isLive = (e, t) => t < lastStart(e, t) + e.duration;
 const pad = n => String(n).padStart(2, "0");
 const hm = t => { const d = new Date(t); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+const EN = { boss: "World Boss", tide: "Helltide", legion: "Legion" };
+const enOf = n => ko(n) !== n ? ` <span class="en">${esc(n)}</span>` : "";
 const leadLabel = m => m === 0 ? "시작할 때" : `시작 ${m}분 전`;
 function splitHMS(ms) { const s = Math.max(0, Math.floor(ms / 1000)); return [Math.floor(s / 3600), Math.floor(s % 3600 / 60), s % 60].map(pad); }
 function relative(ms) {
@@ -438,7 +444,7 @@ function buildHome() {
       <div class="card-art" style="background-image:url(img/${e.key}.jpg)"></div>
       <div class="card-head">
         <span class="ev-icon">${ICONS[e.key]}</span>
-        <span class="ev-name">${e.name}</span>
+        <span class="ev-name">${e.name}<span class="en">${EN[e.key]}</span></span>
         <span class="chip" data-r="chip"></span>
         <span class="spacer"></span>
         <button class="switch" role="switch" data-r="switch" aria-label="${e.name} 알림"></button>
@@ -512,13 +518,13 @@ function tickHome(t) {
     chip.textContent = live ? "진행 중" : soon ? "곧 시작" : "대기";
     chip.className = "chip" + (live ? " live" : soon ? " soon" : "");
     card.querySelector('[data-r="caption"]').innerHTML = live
-      ? `종료까지 남은 시간 · <b>${hm(lastStart(e, t) + e.duration)}</b> 종료`
-      : `<b>${hm(next)}</b> 시작`;
+      ? `종료까지 남은 시간 · <b>${hm(lastStart(e, t) + e.duration)}</b> 종료 <span class="en">Ends</span>`
+      : `<b>${hm(next)}</b> 시작 <span class="en">Starts</span>`;
     const bi = card.querySelector('[data-r="bossinfo"]');
     const b = e.key === "boss" ? bossAt(live ? lastStart(e, t) : next) : null;
     bi.hidden = !b;
     if (b) {
-      const html = `${PIN}<b>${esc(ko(b.name))}</b>${b.zone ? " · " + esc(ko(b.zone)) : ""}`;
+      const html = `${PIN}<b>${esc(ko(b.name))}</b>${enOf(b.name)}${b.zone ? " · " + esc(ko(b.zone)) : ""}`;
       if (bi.innerHTML !== html) bi.innerHTML = html;
     }
     const first = live ? 0 : 1, list = [];
@@ -630,7 +636,7 @@ function renderSchedule(t) {
     if (day !== lastDay) { html += `<div class="day">${day}</div>`; lastDay = day; }
     const live = s <= t, quiet = !live && inQuiet(s - e.lead * MIN);
     html += `<div class="row${live ? " live" : ""}${quiet ? " muted" : ""}" data-k="${e.key}"><span class="bar"></span><span class="tm">${hm(s)}</span>
-      <span class="nm">${e.name}${(() => { const b = e.key === "boss" && bossAt(s); return b ? `<span class="sub">${esc(ko(b.name))}${b.zone ? " · " + esc(ko(b.zone)) : ""}</span>` : ""; })()}</span>${quiet ? MOON : ""}<span class="in">${live ? "진행 중" : relative(s - t)}</span></div>`;
+      <span class="nm">${e.name}<span class="en">${EN[e.key]}</span>${(() => { const b = e.key === "boss" && bossAt(s); return b ? `<span class="sub">${esc(ko(b.name))}${b.zone ? " · " + esc(ko(b.zone)) : ""}</span>` : ""; })()}</span>${quiet ? MOON : ""}<span class="in">${live ? "진행 중" : relative(s - t)}</span></div>`;
   }
   $("sched-list").innerHTML = html;
 }
@@ -639,8 +645,8 @@ function renderSchedule(t) {
 function buildGuide() {
   $("guides").innerHTML = S.events.map(e => `
     <div class="guide" data-k="${e.key}">
-      <h3>${ICONS[e.key]}${e.name}</h3>
-      <dl><dt>주기</dt><dd>${GUIDE[e.key].cycle}</dd><dt>진행</dt><dd>${GUIDE[e.key].dur}</dd></dl>
+      <h3>${ICONS[e.key]}${e.name}<span class="en">${EN[e.key]}</span></h3>
+      <dl><dt>주기</dt><dd>${GUIDE[e.key].cycle}<span class="en b">${GUIDE[e.key].cycleEn}</span></dd><dt>진행</dt><dd>${GUIDE[e.key].dur}<span class="en b">${GUIDE[e.key].durEn}</span></dd></dl>
       <p>${GUIDE[e.key].text}</p>
     </div>`).join("");
 }
