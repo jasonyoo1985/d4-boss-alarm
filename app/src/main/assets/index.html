@@ -167,9 +167,10 @@ svg{display:block}
 .time-in{height:38px;border-radius:9px;border:1px solid var(--line);background:#1a1312;color:#fff;padding:0 8px;
   font-family:var(--num);font-weight:700;font-size:18px;color-scheme:dark}
 .time-in:disabled{opacity:.4}
-.quiet-times{display:flex;align-items:center;gap:8px}
-.quiet-times .u{color:var(--muted);font-size:14px;white-space:nowrap}
-.quiet-times .time-in{flex:1;min-width:0}
+.quiet-times{display:flex;align-items:center;gap:6px}
+.quiet-times .u{color:var(--muted);font-size:13px;white-space:nowrap}
+/* Android shows "오전 08:00" plus a clock icon, so keep the text small enough to fit narrow phones */
+.quiet-times .time-in{flex:1;min-width:0;font-size:15px;padding:0 4px}
 .quiet-banner{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:12px;font-size:13.5px;
   color:#cfc6ff;background:rgba(143,125,255,.1);border:1px solid rgba(143,125,255,.35)}
 .quiet-banner svg,.row .moon{width:18px;height:18px;flex:none;color:#a99bff}
@@ -602,6 +603,8 @@ function paintSync() {
   // Neutral wording only: a failed check never shows as an error, the timers run on their own anyway
   const y = S.sync || {};
   $("sync-st").textContent = y.running ? "확인하는 중…" : y.time ? "마지막 확인 · " + relativePast(Date.now() - y.time) : "";
+  // Green on success; a failure just stays grey
+  $("sync-st").classList.toggle("ok", !y.running && !!y.time && !!y.ok);
   $("sync-msg").textContent = "보스 이름·지역은 helltides.com에서 받아와요. 시간은 앱이 직접 계산해서 인터넷이 없어도 맞아요.";
 }
 function relativePast(ms) {
