@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.view.WindowManager
+import android.window.OnBackInvokedDispatcher
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -36,6 +37,10 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Schedule.events.forEach { Alarms.ensureChannel(this, it) }
+        // Android 13+ with predictive back never calls onBackPressed, so route back through the page here too
+        if (Build.VERSION.SDK_INT >= 33) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { handleBack() }
+        }
 
         // Draw behind the status and navigation bars; the page pads itself with the insets
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
@@ -139,10 +144,12 @@ class MainActivity : Activity() {
     }
 
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
+    override fun onBackPressed() = handleBack()
+
+    /** Closes an open sheet or returns to the home tab; on the home tab the app goes to the background. */
+    private fun handleBack() {
         web.evaluateJavascript("window.handleBack ? handleBack() : false") { handled ->
-            @Suppress("DEPRECATION")
-            if (handled != "true") super.onBackPressed()
+            if (handled != "true") moveTaskToBack(true)
         }
     }
 
