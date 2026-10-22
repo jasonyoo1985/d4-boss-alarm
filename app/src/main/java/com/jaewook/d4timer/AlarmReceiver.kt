@@ -35,7 +35,7 @@ class AlarmReceiver : BroadcastReceiver() {
             context.getSystemService(android.app.ActivityManager::class.java).appTasks.isEmpty()
         if (!closed && !prefs.isQuiet(System.currentTimeMillis())) notify(context, e, start)
         Alarms.schedule(context, e)
-        BossWidget.refresh(context)
+        Widgets.refreshAll(context)
     }
 
     companion object {

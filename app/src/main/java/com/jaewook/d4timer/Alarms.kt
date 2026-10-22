@@ -110,6 +110,6 @@ object Alarms {
 
     fun scheduleAll(context: Context) {
         Schedule.events.forEach { schedule(context, it) }
-        BossWidget.refresh(context)
+        Widgets.refreshAll(context)
     }
 }

@@ -4,4 +4,6 @@
     <!-- Home screen label: short enough to fit under the icon -->
     <string name="launcher_name">디아4보스알람</string>
     <string name="widget_desc">다음 월드보스 시간과 남은 시간</string>
+    <string name="widget_all_desc">월드보스·지옥물결·군단 한눈에 보기</string>
+    <string name="widget_small_desc">다음 월드보스 남은 시간 (작게)</string>
 </resources>
