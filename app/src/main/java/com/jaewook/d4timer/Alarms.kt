@@ -97,7 +97,7 @@ object Alarms {
             var start = Schedule.nextAlarmStart(e, System.currentTimeMillis(), lead)
             // Skip starts whose alarm would ring during quiet hours (a day holds at most ~60 legion cycles)
             var guard = 0
-            while ((prefs.isQuiet(start - lead * MIN) || start == prefs.skip(e)) && guard++ < 200) start += e.period
+            while ((prefs.isQuiet(start - lead * MIN, e) || start == prefs.skip(e)) && guard++ < 200) start += e.period
             val at = start - lead * MIN
             val pi = pending(context, e, start, slot)
             if (canExact(context)) {
