@@ -324,10 +324,10 @@ class MainActivity : Activity() {
             startActivityForResult(intent, REQ_SOUND + Schedule.events.indexOf(e))
         }
 
-        /** Opens a page in the phone's browser (helltides.com for checking times). */
+        /** Opens a page in the phone's browser (helltides.com for checking times, the developer's site). */
         @JavascriptInterface
         fun openUrl(url: String) = runOnUiThread {
-            if (url.startsWith("https://helltides.com/")) {
+            if (url.startsWith("https://helltides.com/") || url == "https://stackupinfra.com") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
             }
         }

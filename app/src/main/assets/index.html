@@ -214,6 +214,7 @@ svg{display:block}
 .fb-a b{display:block;font-size:11.5px;color:#ffb3aa;margin-bottom:3px}
 .nav .dot{position:absolute;top:4px;right:calc(50% - 18px);width:8px;height:8px;border-radius:50%;background:var(--boss);box-shadow:0 0 6px var(--boss)}
 .note{font-size:12.5px;line-height:1.7;color:var(--dim);padding:2px 4px}
+.dev-site{margin-top:6px;opacity:.75}.dev-site a{color:inherit;text-decoration:underline}
 
 /* ---------- bottom nav ---------- */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:6px 8px calc(6px + var(--sab));
@@ -362,6 +363,7 @@ svg{display:block}
   </div>
   <p class="note" id="anchor-note"></p>
   <p class="note">이 앱은 팬이 만든 비공식 도구이며 Blizzard Entertainment와 관련이 없습니다. 게임 업데이트로 주기가 바뀌면 시간이 어긋날 수 있습니다.<br>Unofficial fan-made app, not affiliated with Blizzard Entertainment. Times may drift if a game update changes the cycle.</p>
+  <p class="note dev-site">만든 사람이 운영하는 IT 인프라 입문 사이트 · <a href="#" id="dev-site">stackupinfra.com</a></p>
 </section>
 
 <!-- ================= 의견 ================= -->
@@ -665,6 +667,7 @@ function relativePast(ms) {
   if (m < 24 * 60) return `${Math.floor(m / 60)}시간 전`;
   return `${Math.floor(m / (24 * 60))}일 전`;
 }
+$("dev-site").onclick = ev => { ev.preventDefault(); if (bridge && bridge.openUrl) bridge.openUrl("https://stackupinfra.com"); };
 $("pc-share").onclick = () => { if (bridge && bridge.sharePcLink) bridge.sharePcLink(); else toast("앱에서 동작해요"); };
 $("sync-now").onclick = () => { if (bridge) { bridge.syncNow(); toast("확인하는 중이에요"); } else toast("앱에서 동작해요"); };
 
