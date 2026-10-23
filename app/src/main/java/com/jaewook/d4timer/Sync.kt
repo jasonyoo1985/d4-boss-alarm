@@ -221,7 +221,7 @@ object Sync {
             old!!.optJSONObject(i)?.let { Found("boss", it.optLong("t"), it.optString("name"), it.optString("zone")) }
         }.filter { it.time > now - 15 * MIN && !it.name.isNullOrBlank() }
         val list = JSONArray()
-        (fresh + kept).sortedBy { it.time }.distinctBy { it.time }.take(12)
+        (fresh + kept).sortedBy { it.time }.distinctBy { it.time to it.name?.lowercase() }.take(12)
             .forEach { list.put(JSONObject().put("t", it.time).put("name", it.name ?: "").put("zone", it.zone ?: "")) }
         prefs.setBossList(list.toString())
         return true
@@ -315,7 +315,7 @@ object Sync {
             applied += e.name
             if (e.key == "boss") {
                 val list = JSONArray()
-                mine.filter { it.time > now - e.duration }.distinctBy { it.time }.take(12).forEach {
+                mine.filter { it.time > now - e.duration }.distinctBy { it.time to it.name?.lowercase() }.take(12).forEach {
                     list.put(JSONObject().put("t", it.time).put("name", it.name ?: "").put("zone", it.zone ?: ""))
                 }
                 prefs.setBossList(list.toString())

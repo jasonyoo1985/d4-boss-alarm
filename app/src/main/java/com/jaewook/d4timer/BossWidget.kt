@@ -35,14 +35,10 @@ class BossWidget : AppWidgetProvider() {
             val live = Schedule.isLive(e, now)
             val start = if (live) Schedule.lastStart(e, now) else Schedule.nextStart(e, now)
             val target = if (live) start + e.duration else start
-            val boss = prefs.bossAt(start)
             val views = RemoteViews(context.packageName, R.layout.widget_boss).apply {
                 setTextViewText(R.id.w_label, if (live) "월드보스 진행 중" else "다음 월드보스")
                 setTextViewText(R.id.w_time, SimpleDateFormat("HH:mm", Locale.KOREA).format(Date(start)))
-                setTextViewText(
-                    R.id.w_name,
-                    boss?.let { (n, z) -> Names.ko(n) + (if (z.isNotBlank()) " · " + Names.ko(z) else "") } ?: "",
-                )
+                setTextViewText(R.id.w_name, Names.bosses(prefs.bossesAt(start)) ?: "")
                 setChronometer(R.id.w_count, SystemClock.elapsedRealtime() + (target - now), null, true)
                 setChronometerCountDown(R.id.w_count, true)
                 setOnClickPendingIntent(

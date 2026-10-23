@@ -10,4 +10,8 @@ object Names {
 
     fun ko(s: String) = s.split(Regex("\\s*,\\s*")).filter { it.isNotBlank() }
         .joinToString(", ") { KO[it.lowercase().removePrefix("the ")] ?: it }
+
+    /** "보스 · 지역" for each boss, joined for a double spawn; null when no name is known. */
+    fun bosses(list: List<Pair<String, String>>): String? = list.takeIf { it.isNotEmpty() }
+        ?.joinToString(" / ") { (n, z) -> ko(n) + (if (z.isNotBlank()) " · " + ko(z) else "") }
 }

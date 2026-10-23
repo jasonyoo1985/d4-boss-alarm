@@ -637,7 +637,11 @@ const KO = {
 };
 const ko = s => (s || "").split(/\s*,\s*/).filter(Boolean).map(x => KO[x.toLowerCase().replace(/^the /, "")] || x).join(", ");
 function bossAt(t) {
-  return (S.bossList || []).find(b => Math.abs(b.t - t) < 5 * MIN) || null;
+  // A double spawn lists two bosses at the same time; show both
+  const all = (S.bossList || []).filter(b => Math.abs(b.t - t) < 5 * MIN && b.name);
+  const seen = new Set(), list = all.filter(b => !seen.has(b.name.toLowerCase()) && seen.add(b.name.toLowerCase()));
+  if (!list.length) return null;
+  return { t, name: list.map(b => b.name).join(", "), zone: [...new Set(list.map(b => b.zone).filter(Boolean))].join(", ") };
 }
 const PIN = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
 
