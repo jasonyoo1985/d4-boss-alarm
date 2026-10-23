@@ -31,6 +31,10 @@ button.ghost{background:#2a2323;color:var(--text)}
 .row{display:flex;gap:10px;margin-bottom:12px}
 .note{color:var(--sub);font-size:13px;line-height:1.6}
 .ok{color:#7ad48a}
+.setup{border-color:#6b2a24;background:#221413}
+.setup b{color:var(--text)}
+.setup ol{margin:8px 0 0;padding-left:20px;line-height:1.8;font-size:14px;color:var(--sub)}
+.setup .st{font-size:15px;font-weight:700;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -38,12 +42,11 @@ button.ghost{background:#2a2323;color:var(--text)}
   <h1>디아4 월드보스 알람 · PC</h1>
   <p class="lead">이 탭을 열어 두면 시간에 맞춰 PC 알림과 소리로 알려 드려요. 설치는 필요 없어요.</p>
 
+  <div class="card setup" id="setup"></div>
   <div class="row">
-    <button id="perm">PC 알림 허용하기</button>
-    <button id="test" class="ghost">알림 테스트</button>
+    <button id="test" class="ghost">알림 테스트 (소리·알림 확인)</button>
   </div>
   <div id="list"></div>
-  <p class="note" id="permst"></p>
   <p class="note">
     · 이 탭(창)을 닫으면 알림이 오지 않아요. 다른 탭을 보고 있어도 괜찮아요.<br>
     · 설정은 이 PC 브라우저에만 저장돼요. 어떤 정보도 보내지 않아요.<br>
@@ -115,9 +118,20 @@ function tick() {
   }
 }
 
+// Browsers only allow sound after the user has clicked the page once
+let ctx = null, audioOn = false;
+function unlockAudio() {
+  try {
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    audioOn = true;
+  } catch (_) {}
+}
+document.addEventListener("click", () => { if (!audioOn) { unlockAudio(); paintPerm(); } });
+
 function beep() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!ctx) unlockAudio();
     [0, 0.35, 0.7].forEach(d => {
       const o = ctx.createOscillator(), g = ctx.createGain();
       o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
@@ -139,15 +153,27 @@ function alarm(title, body) {
 
 function paintPerm() {
   const p = "Notification" in window ? Notification.permission : "none";
-  document.getElementById("permst").innerHTML =
-    p === "granted" ? '<span class="ok">● PC 알림이 켜져 있어요.</span>' :
-    p === "denied" ? "PC 알림이 차단돼 있어요. 주소창 왼쪽 자물쇠 아이콘 → 알림 → 허용으로 바꿔 주세요. (소리는 계속 울려요)" :
-    p === "none" ? "이 브라우저는 PC 알림을 지원하지 않아요. 소리로만 알려 드려요." :
-    "위 [PC 알림 허용하기]를 누르고 '허용'을 선택해 주세요.";
-  document.getElementById("perm").style.display = p === "default" ? "" : "none";
+  const box = document.getElementById("setup");
+  if (p === "granted" && audioOn) { box.style.display = "none"; return; }
+  box.style.display = "";
+  const sound = audioOn ? "" : `<div class="st">🔊 먼저 아래 버튼을 한 번 눌러 주세요</div>
+    <p class="note" style="margin:0 0 10px">브라우저는 화면을 한 번 눌러야 소리를 낼 수 있어요.</p>`;
+  const perm =
+    p === "default" ? `<button id="perm">PC 알림 허용하기</button>
+      <p class="note" style="margin:10px 0 0">누르면 주소창 아래에 창이 떠요 → <b>허용</b>을 눌러 주세요.</p>` :
+    p === "denied" ? `<div class="st">PC 알림이 꺼져 있어요 (소리만 울려요)</div>
+      <ol><li>주소창 왼쪽 <b>자물쇠(또는 설정) 아이콘</b> 누르기</li>
+      <li><b>알림</b> 항목을 <b>허용</b>으로 바꾸기</li>
+      <li>이 페이지 <b>새로고침</b>(F5)</li></ol>` :
+    p === "none" ? `<p class="note" style="margin:0">이 브라우저는 PC 알림을 지원하지 않아요. 소리로만 알려 드려요.</p>` :
+    `<div class="ok">● PC 알림이 켜져 있어요.</div>`;
+  box.innerHTML = (audioOn ? "" : sound + (p === "default" ? "" : `<button id="snd">소리 켜기</button><div style="height:12px"></div>`)) + perm;
+  const pb = document.getElementById("perm");
+  if (pb) pb.onclick = () => { unlockAudio(); try { Notification.requestPermission().then(paintPerm); } catch (_) { paintPerm(); } };
+  const sb = document.getElementById("snd");
+  if (sb) sb.onclick = () => { unlockAudio(); paintPerm(); };
 }
-document.getElementById("perm").onclick = () => { try { Notification.requestPermission().then(paintPerm); } catch (_) {} };
-document.getElementById("test").onclick = () => alarm("알림 테스트", "이렇게 알려 드려요");
+document.getElementById("test").onclick = () => unlockAudio() || alarm("알림 테스트", "이렇게 알려 드려요");
 
 // Optional schedule override from the app's season.json; any failure keeps the built-in cycle
 fetch("https://raw.githubusercontent.com/jasonyoo1985/d4-boss-alarm/main/season.json", { cache: "no-store" })
