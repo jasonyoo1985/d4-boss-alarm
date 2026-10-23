@@ -16,11 +16,11 @@ object Alarms {
     const val EXTRA_KEY = "event"
     const val EXTRA_START = "start"
 
-    fun channelId(context: Context, e: GameEvent) = "evv_${e.key}_${Prefs(context).channelVersion(e)}"
+    fun channelId(context: Context, e: GameEvent) = "evw_${e.key}_${Prefs(context).channelVersion(e)}"
 
-    /** World boss buzzes long and hard; the frequent events stay short. */
-    fun vibration(e: GameEvent): LongArray =
-        if (e.key == "boss") longArrayOf(0, 900, 300, 900, 300, 900, 300, 900) else longArrayOf(0, 400, 200, 400)
+    /** Every event buzzes long and hard (same as the world boss). */
+    @Suppress("UNUSED_PARAMETER")
+    fun vibration(e: GameEvent): LongArray = longArrayOf(0, 900, 300, 900, 300, 900, 300, 900)
 
     fun soundUri(context: Context, e: GameEvent): Uri? = when (val s = Prefs(context).sound(e)) {
         null -> Settings.System.DEFAULT_ALARM_ALERT_URI
@@ -46,7 +46,7 @@ object Alarms {
         // Remove this event's older channels and the single channel from v1.x
         for (ch in nm.notificationChannels) {
             val old = ch.id.startsWith("ev_${e.key}_") || ch.id.startsWith("evs_${e.key}_") ||
-                (ch.id.startsWith("evv_${e.key}_") && ch.id != id)
+                ch.id.startsWith("evv_${e.key}_") || (ch.id.startsWith("evw_${e.key}_") && ch.id != id)
             if (ch.id == "events" || old) nm.deleteNotificationChannel(ch.id)
         }
         val ch = NotificationChannel(id, "${e.name} 알림", NotificationManager.IMPORTANCE_HIGH).apply {
