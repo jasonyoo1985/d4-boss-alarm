@@ -52,7 +52,7 @@ class AlarmSound : Service() {
         handler.removeCallbacksAndMessages(null)
         val uri = Alarms.soundUri(this, e) ?: run { stop(); return }
         val repeat = Prefs(this).repeat(e)
-        applyVolume()
+        applyVolume(e)
         player = try {
             MediaPlayer().apply {
                 setAudioAttributes(
@@ -75,8 +75,8 @@ class AlarmSound : Service() {
         handler.postDelayed({ stop() }, if (repeat) REPEAT_LIMIT_MS else ONCE_LIMIT_MS)
     }
 
-    private fun applyVolume() {
-        val v = Prefs(this).alarmVolume()
+    private fun applyVolume(e: GameEvent) {
+        val v = Prefs(this).alarmVolume(e)
         if (v < 0) return
         try {
             val am = getSystemService(AudioManager::class.java)
