@@ -12,7 +12,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 40
-        versionName = "1.9"
+        versionName = "1.8"
     }
 
     // A fixed key so each new APK installs over the previous one
