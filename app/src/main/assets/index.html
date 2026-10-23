@@ -368,6 +368,18 @@ svg{display:block}
         <p class="muted">메뉴 이름은 One UI 버전마다 조금 달라요. 안 보이면 설정 맨 위 검색창에 "팝업 스타일"을 쳐 보세요.</p>
       </div>
     </div>
+    <div class="tip" id="tip-watch">
+      <div class="tip-h"><span>갤럭시워치에서 알림 받기<span class="en b">Galaxy Watch alerts</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="tip-b">
+        <p>따로 설치할 건 없어요. 폰 알림이 워치로 같이 와요.</p>
+        <ol>
+          <li>폰에서 <b>Galaxy Wearable</b> 앱 열기</li>
+          <li><b>시계 설정</b> → <b>알림</b></li>
+          <li><b>앱 알림 관리</b>(또는 <b>더보기</b>)에서 <b>디아4 월드보스 알람</b> 켜기</li>
+        </ol>
+        <p class="muted">폰을 쓰는 중에는 워치로 안 올 수 있어요. 알림 화면의 <b>휴대전화 사용 중에도 시계에 알림 표시</b>를 켜면 항상 와요. 워치에서도 알림 버튼을 쓸 수 있어요.</p>
+      </div>
+    </div>
     <div class="info-row"><span class="k">정확한 시간에 알람<span class="en b">Exact alarms</span></span><span class="v" id="st-exact"></span><button class="fix" id="fix-exact" hidden>켜기</button></div>
     <div class="info-row"><span class="k">테스트 알림<span class="en b">Test alert</span></span><button class="fix" id="btn-test2">보내기</button></div>
   </div>
@@ -646,7 +658,7 @@ function paintSeason(t) {
   }
   if (el.innerHTML !== html) el.innerHTML = html;
 }
-$("tip-popup").onclick = () => $("tip-popup").classList.toggle("open");
+for (const id of ["tip-popup", "tip-watch"]) $(id).onclick = () => $(id).classList.toggle("open");
 $("season").onclick = () => { seasonOpen = !seasonOpen; paintSeason(Date.now()); };
 function tickHome(t) {
   paintSeason(t);
