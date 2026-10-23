@@ -214,7 +214,14 @@ svg{display:block}
 .fb-a b{display:block;font-size:11.5px;color:#ffb3aa;margin-bottom:3px}
 .nav .dot{position:absolute;top:4px;right:calc(50% - 18px);width:8px;height:8px;border-radius:50%;background:var(--boss);box-shadow:0 0 6px var(--boss)}
 .note{font-size:12.5px;line-height:1.7;color:var(--dim);padding:2px 4px}
-.dev-site{margin-top:6px;opacity:.75}.dev-site a{color:inherit;text-decoration:underline}
+.dev-card{display:flex;align-items:center;gap:14px;margin:14px 0 6px;padding:16px;border-radius:16px;text-decoration:none;color:inherit;
+  background:linear-gradient(135deg,rgba(64,140,255,.16),rgba(64,200,220,.08));border:1px solid rgba(90,170,255,.35)}
+.dev-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none;background:rgba(90,170,255,.18);color:#8cc4ff}
+.dev-ic svg{width:24px;height:24px}
+.dev-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.dev-k{font-size:15px;font-weight:700}
+.dev-v{font-size:13.5px;color:#8cc4ff}
+.dev-go{font-size:26px;color:#8cc4ff;line-height:1}
 
 /* ---------- bottom nav ---------- */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:6px 8px calc(6px + var(--sab));
@@ -363,7 +370,11 @@ svg{display:block}
   </div>
   <p class="note" id="anchor-note"></p>
   <p class="note">이 앱은 팬이 만든 비공식 도구이며 Blizzard Entertainment와 관련이 없습니다. 게임 업데이트로 주기가 바뀌면 시간이 어긋날 수 있습니다.<br>Unofficial fan-made app, not affiliated with Blizzard Entertainment. Times may drift if a game update changes the cycle.</p>
-  <p class="note dev-site">개발자 운영 사이트 · <a href="#" id="dev-site">stackupinfra.com</a> (IT 인프라 입문)</p>
+  <a href="#" class="dev-card" id="dev-site">
+    <span class="dev-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r=".9" fill="currentColor"/><circle cx="7" cy="17" r=".9" fill="currentColor"/></svg></span>
+    <span class="dev-tx"><span class="dev-k">개발자 운영 사이트<span class="en b">Developer's site</span></span><span class="dev-v">IT 인프라 입문 · stackupinfra.com</span></span>
+    <span class="dev-go">›</span>
+  </a>
 </section>
 
 <!-- ================= 의견 ================= -->
