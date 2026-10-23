@@ -181,6 +181,7 @@ svg{display:block}
   color:#cfc6ff;background:rgba(143,125,255,.1);border:1px solid rgba(143,125,255,.35)}
 .quiet-banner svg,.row .moon{width:18px;height:18px;flex:none;color:#a99bff}
 .quiet-banner b{color:#fff}
+.qb-t{flex:1;min-width:0;white-space:nowrap}
 .season{margin:0 0 12px;padding:9px 14px;border-radius:12px;font-size:13px;color:#d8cdc4;background:#1a1312;border:1px solid var(--line);cursor:pointer}
 .season .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
 .season b{color:#fff}
@@ -693,7 +694,7 @@ function relativePast(ms) {
 }
 document.querySelectorAll(".dev-card").forEach(a => a.onclick = ev => { ev.preventDefault(); if (bridge && bridge.openUrl) bridge.openUrl("https://stackupinfra.com"); });
 // 큰 글씨 설정에서도 한 줄에 들어가게 글자 크기를 줄임
-addEventListener("resize", () => fitDev());
+addEventListener("resize", () => { fitDev(); fitQuiet(); });
 function fitDev() {
   document.querySelectorAll(".dev-k, .dev-v").forEach(el => {
     el.style.fontSize = "";
@@ -721,7 +722,16 @@ function paintQuiet() {
   $("q-start").disabled = $("q-end").disabled = !q.on;
   const b = $("quiet-banner");
   b.hidden = !q.on || q.start === q.end;
-  b.innerHTML = `${MOON}<span>방해금지 <b>${fmtMin(q.start)} ~ ${fmtMin(q.end)}</b> · 이 시간엔 알림이 울리지 않아요</span>`;
+  b.innerHTML = `${MOON}<span class="qb-t">방해금지 <b>${fmtMin(q.start)} ~ ${fmtMin(q.end)}</b> · 알림이 울리지 않아요</span>`;
+  // 항상 한 줄: 넘치면 글자를 조금 줄임
+  requestAnimationFrame(fitQuiet);
+}
+function fitQuiet() {
+  const t = $("quiet-banner").querySelector(".qb-t");
+  if (!t || !t.offsetParent) return;
+  t.style.fontSize = "";
+  let fs = parseFloat(getComputedStyle(t).fontSize);
+  while (t.scrollWidth > t.clientWidth && fs > 10) t.style.fontSize = (fs -= 0.5) + "px";
 }
 function saveQuiet() {
   const q = S.quiet;
@@ -914,7 +924,7 @@ function go(p) {
   }
   if (p === "schedule") renderSchedule(Date.now());
   if (p === "info") paintInfo();
-  fitDev();
+  fitDev(); fitQuiet();
   if (p === "feedback" && (S.feedback || []).some(f => f.answer && !f.seen)) {
     if (bridge && bridge.markFeedbackSeen) bridge.markFeedbackSeen(); else S.feedback.forEach(f => f.seen = true);
     paintFeedback();
