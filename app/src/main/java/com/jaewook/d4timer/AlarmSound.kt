@@ -6,11 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import kotlin.math.roundToInt
 
 /**
  * Plays the alarm sound on the alarm stream, like a clock app. Samsung mutes notification
@@ -18,6 +20,9 @@ import android.os.Looper
  */
 class AlarmSound : Service() {
     private var player: MediaPlayer? = null
+    // Phone alarm volume before we raised it, and the level we set; restored when the sound stops
+    private var savedVolume = -1
+    private var setVolume = -1
     private val handler = Handler(Looper.getMainLooper())
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -47,6 +52,7 @@ class AlarmSound : Service() {
         handler.removeCallbacksAndMessages(null)
         val uri = Alarms.soundUri(this, e) ?: run { stop(); return }
         val repeat = Prefs(this).repeat(e)
+        applyVolume()
         player = try {
             MediaPlayer().apply {
                 setAudioAttributes(
@@ -69,10 +75,40 @@ class AlarmSound : Service() {
         handler.postDelayed({ stop() }, if (repeat) REPEAT_LIMIT_MS else ONCE_LIMIT_MS)
     }
 
+    private fun applyVolume() {
+        val v = Prefs(this).alarmVolume()
+        if (v < 0) return
+        try {
+            val am = getSystemService(AudioManager::class.java)
+            val max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            val target = (max * v / 100.0).roundToInt().coerceIn(1, max)
+            if (savedVolume < 0) savedVolume = am.getStreamVolume(AudioManager.STREAM_ALARM)
+            am.setStreamVolume(AudioManager.STREAM_ALARM, target, 0)
+            setVolume = target
+        } catch (_: Exception) {
+            // Do Not Disturb or the OEM may refuse; keep the phone's volume
+        }
+    }
+
+    private fun restoreVolume() {
+        if (savedVolume < 0) return
+        try {
+            val am = getSystemService(AudioManager::class.java)
+            // Leave it alone if the user changed the volume while it was ringing
+            if (am.getStreamVolume(AudioManager.STREAM_ALARM) == setVolume) {
+                am.setStreamVolume(AudioManager.STREAM_ALARM, savedVolume, 0)
+            }
+        } catch (_: Exception) {
+        }
+        savedVolume = -1
+        setVolume = -1
+    }
+
     private fun stop(): Int {
         handler.removeCallbacksAndMessages(null)
         player?.release()
         player = null
+        restoreVolume()
         // Leave the notification in place; only the sound stops
         if (Build.VERSION.SDK_INT >= 24) stopForeground(STOP_FOREGROUND_DETACH)
         stopSelf()
@@ -83,6 +119,7 @@ class AlarmSound : Service() {
         handler.removeCallbacksAndMessages(null)
         player?.release()
         player = null
+        restoreVolume()
         super.onDestroy()
     }
 
