@@ -177,6 +177,7 @@ svg{display:block}
 .fix{height:32px;padding:0 12px;border-radius:9px;background:rgba(255,59,47,.18);border:1px solid rgba(255,59,47,.6);color:#ffb3aa;font-size:13px;font-weight:700}
 .quiet-sw{--c:#8f7dff;--rgb:143,125,255}
 .vol-row{display:flex;align-items:center;gap:12px;margin:0 0 14px}.vol-row input{flex:1;accent-color:var(--c,#8f7dff);height:28px}.vol-val{width:44px;text-align:right;font-weight:700;color:#fff}
+.vol-play{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;background:rgba(var(--rgb,143,125,255),.85)}.vol-play svg{width:15px;height:15px}
 .quiet-banner.vol-banner{cursor:pointer;background:rgba(255,154,31,.1);border-color:rgba(255,154,31,.45)}.quiet-banner.vol-banner svg{color:#ffb35c}
 .time-in{height:38px;border-radius:9px;border:1px solid var(--line);background:#1a1312;color:#fff;padding:0 8px;
   font-family:var(--num);font-weight:700;font-size:18px;color-scheme:dark}
@@ -184,6 +185,10 @@ svg{display:block}
 .quiet-times{display:flex;align-items:center;gap:6px}
 .quiet-times .u{color:var(--muted);font-size:13px;white-space:nowrap}
 /* Android shows "오전 08:00" plus a clock icon, so keep the text small enough to fit narrow phones */
+.q-evs{display:flex;align-items:center;gap:8px}.q-evs .u{color:var(--muted);font-size:13px;white-space:nowrap}
+.q-chips{display:flex;gap:6px;flex:1;min-width:0}.q-chips button{flex:1;min-width:0;height:32px;border-radius:9px;font-size:13px;white-space:nowrap;color:var(--muted);border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03)}
+.q-chips button[aria-pressed="true"]{color:#fff;border-color:rgba(143,125,255,.7);background:rgba(143,125,255,.22)}
+.q-chips:has(button:disabled){opacity:.45}
 .quiet-times .time-in{flex:1;min-width:0;font-size:15px;padding:0 4px}
 .quiet-banner{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:12px;font-size:13.5px;
   color:#cfc6ff;background:rgba(143,125,255,.1);border:1px solid rgba(143,125,255,.35)}
@@ -407,6 +412,7 @@ svg{display:block}
       <input class="time-in" type="time" id="q-start" aria-label="시작"><span class="u">부터</span>
       <input class="time-in" type="time" id="q-end" aria-label="끝"><span class="u">까지</span>
     </div>
+    <div class="info-row q-evs"><span class="u">적용</span><div class="q-chips" id="q-evs"></div></div>
   </div>
   <div class="info-block">
     <div class="info-row"><span class="k">앱을 닫으면 알림 안 울림<span class="en b">Only while app is open</span><span class="v" style="font-size:12.5px">켜면 최근 앱 목록에 앱이 있을 때만 울려요</span></span>
@@ -475,13 +481,15 @@ svg{display:block}
       <button data-v="0">폰 음량 그대로</button>
       <button data-v="1">직접 정하기</button>
     </div>
-    <div class="vol-row" id="sh-vol-row" hidden><input type="range" id="sh-vol" min="10" max="100" step="10" aria-label="알람 음량"><span class="vol-val" id="sh-vol-val"></span></div>
+    <div class="vol-row" id="sh-vol-row" hidden><input type="range" id="sh-vol" min="10" max="100" step="10" aria-label="알람 음량"><span class="vol-val" id="sh-vol-val"></span><button class="vol-play" id="sh-vol-play" aria-label="이 크기로 들어보기"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg></button></div>
+    <p class="hint" id="sh-vol-hint" hidden style="margin-top:-8px">막대에서 손을 떼면 그 크기로 잠깐 들려드려요</p>
     <p class="lbl">울림 방식 <span class="en">Ring mode</span></p>
     <div class="leads" id="sh-repeat" style="grid-template-columns:1fr 1fr;margin-bottom:6px">
       <button data-r="0">한 번만 울림</button>
       <button data-r="1">끌 때까지 계속</button>
     </div>
     <p class="hint">계속 울림은 알림의 "소리 끄기"를 누르거나 알림을 지울 때까지 반복돼요 (최대 5분).</p>
+    <button class="primary" id="sh-test" style="margin:0 0 18px">이 설정으로 테스트 알림 보내기</button>
     <p class="lbl" id="cal-lbl">시간 보정 <span class="en">Adjust</span> <span style="font-weight:400">· 둘 중 편한 쪽으로 입력</span></p>
     <button class="ext-link" id="cal-site">helltides.com에서 시간 확인하기 ↗</button>
     <div class="calib">
@@ -494,7 +502,6 @@ svg{display:block}
       <button class="save" id="cal-save2">맞추기</button>
     </div>
     <p class="hint" id="cal-hint"></p>
-    <button class="primary" id="sh-test">이 소리로 테스트 알림 보내기</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -757,8 +764,8 @@ $("sync-now").onclick = () => { if (bridge) { bridge.syncNow(); toast("확인하
 const MOON = '<svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>';
 const fmtMin = m => pad(Math.floor(m / 60)) + ":" + pad(m % 60);
 const parseMin = v => { const [h, m] = (v || "0:0").split(":").map(Number); return h * 60 + m; };
-function inQuiet(t) {
-  const q = S.quiet; if (!q || !q.on || q.start === q.end) return false;
+function inQuiet(t, e) {
+  const q = S.quiet; if (!q || !q.on || q.start === q.end || (e && e.quiet === false)) return false;
   const d = new Date(t), m = d.getHours() * 60 + d.getMinutes();
   return q.start < q.end ? m >= q.start && m < q.end : m >= q.start || m < q.end;
 }
@@ -768,6 +775,7 @@ function paintQuiet() {
   $("only-open").setAttribute("aria-checked", !!S.onlyOpen);
   $("q-start").value = fmtMin(q.start); $("q-end").value = fmtMin(q.end);
   $("q-start").disabled = $("q-end").disabled = !q.on;
+  $("q-evs").innerHTML = S.events.map(e => `<button data-k="${e.key}" aria-pressed="${e.quiet !== false}"${q.on ? "" : " disabled"}>${e.quiet !== false ? "✓ " : ""}${e.name}</button>`).join("");
   const b = $("quiet-banner");
   b.hidden = !q.on || q.start === q.end;
   b.innerHTML = `${MOON}<span class="qb-t">방해금지 <b>${fmtMin(q.start)} ~ ${fmtMin(q.end)}</b> · 알림이 울리지 않아요</span>`;
@@ -794,8 +802,9 @@ $("sh-vol-mode").addEventListener("click", e2 => {
   setVol(b.dataset.v === "1" ? Number($("sh-vol").value) : -1);
   toast(b.dataset.v === "1" ? `${ev(sheetKey).name} 알람은 ${$("sh-vol").value}% 크기로 울려요` : "폰 알람 음량 그대로 울려요");
 });
+$("sh-vol-play").onclick = () => { bridge && bridge.previewVolume && bridge.previewVolume(sheetKey, Number($("sh-vol").value)); };
 $("sh-vol").oninput = () => { $("sh-vol-val").textContent = $("sh-vol").value + "%"; };
-$("sh-vol").onchange = () => setVol(Number($("sh-vol").value));
+$("sh-vol").onchange = () => { const v = Number($("sh-vol").value); setVol(v); bridge && bridge.previewVolume && bridge.previewVolume(sheetKey, v); };
 function fitQuiet() {
   const t = $("quiet-banner").querySelector(".qb-t");
   if (!t || !t.offsetParent) return;
@@ -818,6 +827,13 @@ $("q-on").onclick = () => {
   S.quiet.on = !S.quiet.on; saveQuiet();
   toast(S.quiet.on ? `방해금지 ${fmtMin(S.quiet.start)} ~ ${fmtMin(S.quiet.end)}` : "방해금지를 껐어요");
 };
+$("q-evs").addEventListener("click", e2 => {
+  const b = e2.target.closest("button"); if (!b || b.disabled) return;
+  const e = ev(b.dataset.k); e.quiet = e.quiet === false;
+  bridge && bridge.setQuietFor(e.key, e.quiet);
+  paintQuiet(); paintSettings();
+  toast(e.quiet ? `${e.name}: 방해금지 시간엔 안 울려요` : `${e.name}: 방해금지 시간에도 울려요`);
+});
 $("q-start").onchange = () => { S.quiet.start = parseMin($("q-start").value); saveQuiet(); };
 $("q-end").onchange = () => { S.quiet.end = parseMin($("q-end").value); saveQuiet(); };
 
@@ -845,7 +861,7 @@ function renderSchedule(t) {
   for (const { e, s } of items) {
     const d = new Date(s), day = `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
     if (day !== lastDay) { html += `<div class="day">${day}</div>`; lastDay = day; }
-    const live = s <= t, quiet = !live && inQuiet(s - e.leads[0] * MIN);
+    const live = s <= t, quiet = !live && inQuiet(s - e.leads[0] * MIN, e);
     html += `<div class="row${live ? " live" : ""}${quiet ? " muted" : ""}" data-k="${e.key}"><span class="bar"></span><span class="tm">${hm(s)}</span>
       <span class="nm">${e.name}<span class="en">${EN[e.key]}</span>${(() => { const b = e.key === "boss" && bossAt(s); return b ? `<span class="sub">${esc(ko(b.name))}${b.zone ? " · " + esc(ko(b.zone)) : ""}</span>` : ""; })()}</span>${quiet ? MOON : ""}<span class="in">${live ? "진행 중" : relative(s - t)}</span></div>`;
   }
@@ -891,7 +907,7 @@ function paintSheet() {
   for (const b of $("sh-repeat").children) b.setAttribute("aria-pressed", (b.dataset.r === "1") === !!e.repeat);
   const vOn = e.vol >= 0;
   for (const b of $("sh-vol-mode").children) b.setAttribute("aria-pressed", (b.dataset.v === "1") === vOn);
-  $("sh-vol-row").hidden = !vOn;
+  $("sh-vol-row").hidden = $("sh-vol-hint").hidden = !vOn;
   $("sh-vol").value = vOn ? e.vol : 70;
   $("sh-vol-val").textContent = $("sh-vol").value + "%";
   $("cal-h").value = ""; $("cal-m").value = ""; $("cal-t").value = "";
@@ -952,7 +968,7 @@ function calibrate(start) {
   document.activeElement && document.activeElement.blur();
   refresh(); toast(`${e.name} 다음 시작을 ${hm(start)}로 맞췄어요`);
 }
-$("sh-test").onclick = () => { bridge && bridge.test(sheetKey); toast("테스트 알림을 보냈어요"); };
+$("sh-test").onclick = () => { bridge && bridge.test(sheetKey); toast(`${ev(sheetKey).name} 테스트 알림을 보냈어요`); };
 
 
 /* ---------- feedback ---------- */

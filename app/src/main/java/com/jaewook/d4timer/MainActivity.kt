@@ -108,6 +108,11 @@ class MainActivity : Activity() {
         }
     }
 
+    override fun onPause() {
+        VolumePreview.stop(this)
+        super.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
         // Opening the app silences a ringing alarm
@@ -193,6 +198,7 @@ class MainActivity : Activity() {
                     .put("custom", prefs.hasCustomAnchor(e))
                     .put("repeat", prefs.repeat(e))
                     .put("vol", prefs.alarmVolume(e))
+                    .put("quiet", prefs.quietFor(e))
                     .put("synced", prefs.hasSyncAnchor(e))
                     .put("skip", prefs.skip(e)),
             )
@@ -318,6 +324,17 @@ class MainActivity : Activity() {
             Prefs(this@MainActivity).setQuiet(on, start, end)
             Alarms.scheduleAll(this@MainActivity)
         }
+
+        @JavascriptInterface
+        fun setQuietFor(key: String, on: Boolean) {
+            val e = event(key)
+            Prefs(this@MainActivity).setQuietFor(e, on)
+            Alarms.schedule(this@MainActivity, e)
+        }
+
+        /** Plays this event's sound for a moment at the given volume (percent). */
+        @JavascriptInterface
+        fun previewVolume(key: String, v: Int) = runOnUiThread { VolumePreview.play(this@MainActivity, event(key), v) }
 
         @JavascriptInterface
         fun test(key: String) {

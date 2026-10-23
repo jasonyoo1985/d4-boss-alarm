@@ -57,7 +57,7 @@ class AlarmReceiver : BroadcastReceiver() {
         // A task in the recents list means the user hasn't closed the app
         val closed = prefs.onlyOpen() &&
             context.getSystemService(android.app.ActivityManager::class.java).appTasks.isEmpty()
-        if (!closed && !prefs.isQuiet(System.currentTimeMillis())) notify(context, e, start)
+        if (!closed && !prefs.isQuiet(System.currentTimeMillis(), e)) notify(context, e, start)
         Alarms.schedule(context, e)
         Widgets.refreshAll(context)
     }

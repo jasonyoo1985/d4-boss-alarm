@@ -81,8 +81,13 @@ class Prefs(context: Context) {
     fun setQuiet(on: Boolean, start: Int, end: Int) =
         sp.edit().putBoolean("quiet_on", on).putInt("quiet_start", start).putInt("quiet_end", end).apply()
 
-    fun isQuiet(time: Long): Boolean {
+    /** Whether quiet hours apply to this event (all events by default). */
+    fun quietFor(e: GameEvent) = sp.getBoolean("quiet_ev_${e.key}", true)
+    fun setQuietFor(e: GameEvent, on: Boolean) = sp.edit().putBoolean("quiet_ev_${e.key}", on).apply()
+
+    fun isQuiet(time: Long, e: GameEvent? = null): Boolean {
         if (!quietOn()) return false
+        if (e != null && !quietFor(e)) return false
         val s = quietStart()
         val e = quietEnd()
         if (s == e) return false
