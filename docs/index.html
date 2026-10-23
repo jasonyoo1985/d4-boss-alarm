@@ -43,6 +43,15 @@ button.ghost{background:#2a2323;color:var(--text)}
   <p class="lead">이 탭을 열어 두면 시간에 맞춰 PC 알림과 소리로 알려 드려요. 설치는 필요 없어요.</p>
 
   <div class="card setup" id="setup"></div>
+  <div class="card">
+    <div class="opts" style="margin:0;padding:0;border:0">
+      <span style="color:var(--text);font-weight:700">알림 소리</span>
+      <select id="snd-pick"></select>
+      <button id="snd-play" class="ghost" style="width:auto;padding:8px 14px">▶ 미리 듣기</button>
+      <input type="file" id="snd-file" accept="audio/*" hidden>
+    </div>
+    <p class="note" id="snd-note" style="margin:10px 0 0">'내 파일 선택'으로 PC에 있는 mp3 등 원하는 소리를 쓸 수 있어요.</p>
+  </div>
   <div class="row">
     <button id="test" class="ghost">알림 테스트 (소리·알림 확인)</button>
   </div>
@@ -129,18 +138,62 @@ function unlockAudio() {
 }
 document.addEventListener("click", () => { if (!audioOn) { unlockAudio(); paintPerm(); } });
 
+// Built-in sounds are synthesized, so the page needs no audio files
+const SOUNDS = {
+  chime: { name: "띵동 차임", notes: [[988, 0, .5], [784, .45, .8], [988, 1.6, .5], [784, 2.05, .8]], type: "sine" },
+  bell: { name: "알람 벨", notes: Array.from({ length: 12 }, (_, i) => [1046, i * .22, .16]), type: "square", vol: .12 },
+  horn: { name: "전투 나팔", notes: [[196, 0, .5], [262, .5, .5], [330, 1, .5], [392, 1.5, 1.2]], type: "sawtooth", vol: .14 },
+  melody: { name: "경쾌한 멜로디", notes: [[523, 0, .18], [659, .2, .18], [784, .4, .18], [1046, .6, .4], [784, 1.1, .18], [1046, 1.3, .6]], type: "triangle" },
+};
+function playNotes(snd) {
+  if (!ctx) unlockAudio();
+  const t0 = ctx.currentTime + .05, vol = snd.vol || .3;
+  for (const [f, at, len] of snd.notes) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = snd.type; o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.0001, t0 + at);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + at + .02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + len);
+    o.start(t0 + at); o.stop(t0 + at + len + .05);
+  }
+}
 function beep() {
   try {
-    if (!ctx) unlockAudio();
-    [0, 0.35, 0.7].forEach(d => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
-      g.gain.setValueAtTime(0.25, ctx.currentTime + d);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d + 0.3);
-      o.start(ctx.currentTime + d); o.stop(ctx.currentTime + d + 0.3);
-    });
+    const pick = store.get("sound", "chime");
+    if (pick === "file") {
+      const data = store.get("sound_file", null);
+      if (data) { const a = new Audio(data); a.play().catch(() => playNotes(SOUNDS.chime)); return; }
+    }
+    playNotes(SOUNDS[pick] || SOUNDS.chime);
   } catch (_) {}
 }
+function paintSounds() {
+  const sel = document.getElementById("snd-pick");
+  const has = !!store.get("sound_file", null);
+  sel.innerHTML = Object.entries(SOUNDS).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join("") +
+    (has ? `<option value="file">내 파일: ${store.get("sound_file_name", "")}</option>` : "") +
+    `<option value="pick">내 파일 선택…</option>`;
+  sel.value = store.get("sound", "chime") === "file" && !has ? "chime" : store.get("sound", "chime");
+}
+document.getElementById("snd-pick").onchange = ev => {
+  if (ev.target.value === "pick") { document.getElementById("snd-file").click(); paintSounds(); return; }
+  store.set("sound", ev.target.value); unlockAudio(); beep();
+};
+document.getElementById("snd-play").onclick = () => { unlockAudio(); beep(); };
+document.getElementById("snd-file").onchange = ev => {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  const note = document.getElementById("snd-note");
+  if (f.size > 3 * 1024 * 1024) { note.textContent = "3MB 이하 소리 파일만 쓸 수 있어요. 짧은 mp3를 골라 주세요."; return; }
+  const r = new FileReader();
+  r.onload = () => {
+    try { localStorage.setItem("d4pc_sound_file", JSON.stringify(r.result)); } catch (_) { note.textContent = "파일을 저장하지 못했어요. 더 작은 파일을 골라 주세요."; return; }
+    store.set("sound_file_name", f.name); store.set("sound", "file");
+    note.textContent = "내 파일로 바꿨어요: " + f.name;
+    paintSounds(); unlockAudio(); beep();
+  };
+  r.readAsDataURL(f);
+};
 
 function alarm(title, body) {
   beep();
@@ -205,7 +258,7 @@ try {
   if (used) history.replaceState(null, "", location.pathname);
 } catch (_) {}
 
-render(); paintPerm(); tick(); setInterval(tick, 1000);
+render(); paintSounds(); paintPerm(); tick(); setInterval(tick, 1000);
 </script>
 </body>
 </html>
