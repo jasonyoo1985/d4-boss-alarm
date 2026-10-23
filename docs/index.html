@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>디아4 월드보스 알람 PC</title>
+<style>
+:root{--bg:#0d0b0b;--card:#1a1616;--line:#2c2424;--text:#eee6e2;--sub:#a8998f;--red:#e2483f;--orange:#f08a1c;--purple:#8b6cf0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+main{max-width:640px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}
+.lead{color:var(--sub);font-size:14px;margin:0 0 20px;line-height:1.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:12px}
+.ev{display:flex;align-items:center;gap:14px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.info{flex:1;min-width:0}
+.name{font-weight:700;font-size:17px}
+.when{color:var(--sub);font-size:13px;margin-top:2px}
+.cd{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums}
+.opts{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;color:var(--sub);flex-wrap:wrap}
+select{background:#241e1e;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:14px}
+.sw{position:relative;width:46px;height:26px;flex:none}
+.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:#3a3232;border-radius:13px;cursor:pointer;transition:.2s}
+.sw span:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#ddd;border-radius:50%;transition:.2s}
+.sw input:checked+span{background:var(--red)}
+.sw input:checked+span:before{transform:translateX(20px)}
+button{background:var(--red);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-size:15px;font-weight:700;cursor:pointer;width:100%}
+button.ghost{background:#2a2323;color:var(--text)}
+.row{display:flex;gap:10px;margin-bottom:12px}
+.note{color:var(--sub);font-size:13px;line-height:1.6}
+.ok{color:#7ad48a}
+</style>
+</head>
+<body>
+<main>
+  <h1>디아4 월드보스 알람 · PC</h1>
+  <p class="lead">이 탭을 열어 두면 시간에 맞춰 PC 알림과 소리로 알려 드려요. 설치는 필요 없어요.</p>
+
+  <div class="row">
+    <button id="perm">PC 알림 허용하기</button>
+    <button id="test" class="ghost">알림 테스트</button>
+  </div>
+  <div id="list"></div>
+  <p class="note" id="permst"></p>
+  <p class="note">
+    · 이 탭(창)을 닫으면 알림이 오지 않아요. 다른 탭을 보고 있어도 괜찮아요.<br>
+    · 설정은 이 PC 브라우저에만 저장돼요. 어떤 정보도 보내지 않아요.<br>
+    · 휴대폰 앱: <a href="https://play.google.com/apps/testing/com.jaewook.d4timer" style="color:var(--orange)">디아4 월드보스 알람</a><br>
+    · 팬이 만든 비공식 도구이며 Blizzard Entertainment와 관련이 없습니다.
+  </p>
+</main>
+<script>
+const MIN = 60000;
+// Same cycle as the phone app (Schedule.kt); season.json can override it
+const EVENTS = [
+  { key: "boss", name: "월드보스", anchor: 1792587600000, period: 210 * MIN, duration: 15 * MIN, color: "var(--red)", on: true },
+  { key: "tide", name: "지옥물결", anchor: 1792540800000, period: 60 * MIN, duration: 55 * MIN, color: "var(--orange)", on: false },
+  { key: "legion", name: "군단", anchor: 1792589700000, period: 25 * MIN, duration: 4 * MIN, color: "var(--purple)", on: false },
+];
+const LEADS = [1, 2, 3, 5, 10, 15, 30];
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("d4pc_" + k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
+  set(k, v) { try { localStorage.setItem("d4pc_" + k, JSON.stringify(v)); } catch (_) {} },
+};
+const fired = new Set();
+
+function nextStart(e, now) { return e.anchor + (Math.floor((now - e.anchor) / e.period) + 1) * e.period; }
+function lastStart(e, now) { return nextStart(e, now) - e.period; }
+const pad = n => String(n).padStart(2, "0");
+const hm = t => { const d = new Date(t); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+function clock(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+  return (h ? h + ":" + pad(m) : m) + ":" + pad(s % 60);
+}
+
+function render() {
+  document.getElementById("list").innerHTML = EVENTS.map(e => `
+    <div class="card">
+      <div class="ev">
+        <i class="dot" style="background:${e.color}"></i>
+        <div class="info"><div class="name">${e.name}</div><div class="when" id="w-${e.key}"></div></div>
+        <div class="cd" id="c-${e.key}" style="color:${e.color}"></div>
+      </div>
+      <div class="opts">
+        <label class="sw"><input type="checkbox" id="on-${e.key}" ${store.get("on_" + e.key, e.on) ? "checked" : ""}><span></span></label>
+        <span>알림</span>
+        <select id="lead-${e.key}">${LEADS.map(l => `<option value="${l}" ${l === store.get("lead_" + e.key, 5) ? "selected" : ""}>${l}분 전</option>`).join("")}</select>
+      </div>
+    </div>`).join("");
+  EVENTS.forEach(e => {
+    document.getElementById("on-" + e.key).onchange = ev => store.set("on_" + e.key, ev.target.checked);
+    document.getElementById("lead-" + e.key).onchange = ev => store.set("lead_" + e.key, +ev.target.value);
+  });
+}
+
+function tick() {
+  const now = Date.now();
+  for (const e of EVENTS) {
+    const live = now < lastStart(e, now) + e.duration;
+    const s = live ? lastStart(e, now) : nextStart(e, now);
+    document.getElementById("w-" + e.key).textContent = live ? `진행 중 · ${hm(s)} 시작` : `다음 ${hm(s)}`;
+    document.getElementById("c-" + e.key).textContent = live ? clock(s + e.duration - now) : clock(s - now);
+    // Background tabs may only tick once a minute, so ring if the alert time passed within the last 2 minutes
+    if (!store.get("on_" + e.key, e.on)) continue;
+    const next = nextStart(e, now), at = next - store.get("lead_" + e.key, 5) * MIN, id = e.key + next;
+    if (now >= at && now - at < 2 * MIN && !fired.has(id)) {
+      fired.add(id);
+      alarm(`${e.name} ${Math.max(1, Math.round((next - now) / MIN))}분 전`, `${hm(next)} 시작`);
+    }
+  }
+}
+
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.35, 0.7].forEach(d => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.25, ctx.currentTime + d);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d + 0.3);
+      o.start(ctx.currentTime + d); o.stop(ctx.currentTime + d + 0.3);
+    });
+  } catch (_) {}
+}
+
+function alarm(title, body) {
+  beep();
+  try {
+    if ("Notification" in window && Notification.permission === "granted") new Notification(title, { body, requireInteraction: true });
+  } catch (_) {}
+  document.title = "🔔 " + title;
+  setTimeout(() => { document.title = "디아4 월드보스 알람 PC"; }, 60000);
+}
+
+function paintPerm() {
+  const p = "Notification" in window ? Notification.permission : "none";
+  document.getElementById("permst").innerHTML =
+    p === "granted" ? '<span class="ok">● PC 알림이 켜져 있어요.</span>' :
+    p === "denied" ? "PC 알림이 차단돼 있어요. 주소창 왼쪽 자물쇠 아이콘 → 알림 → 허용으로 바꿔 주세요. (소리는 계속 울려요)" :
+    p === "none" ? "이 브라우저는 PC 알림을 지원하지 않아요. 소리로만 알려 드려요." :
+    "위 [PC 알림 허용하기]를 누르고 '허용'을 선택해 주세요.";
+  document.getElementById("perm").style.display = p === "default" ? "" : "none";
+}
+document.getElementById("perm").onclick = () => { try { Notification.requestPermission().then(paintPerm); } catch (_) {} };
+document.getElementById("test").onclick = () => alarm("알림 테스트", "이렇게 알려 드려요");
+
+// Optional schedule override from the app's season.json; any failure keeps the built-in cycle
+fetch("https://raw.githubusercontent.com/jasonyoo1985/d4-boss-alarm/main/season.json", { cache: "no-store" })
+  .then(r => r.ok ? r.json() : null)
+  .then(cfg => {
+    const sc = cfg && cfg.schedule;
+    if (!sc) return;
+    for (const e of EVENTS) {
+      const o = sc[e.key];
+      const a = o && Date.parse(o.anchor);
+      if (!a || !(o.periodMin > 0)) continue;
+      e.anchor = a; e.period = o.periodMin * MIN;
+      if (o.durationMin > 0) e.duration = o.durationMin * MIN;
+    }
+  }).catch(() => {});
+
+render(); paintPerm(); tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>
