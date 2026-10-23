@@ -170,6 +170,15 @@ class MainActivity : Activity() {
         refreshPage()
     }
 
+    /** Current phone alarm volume in percent. */
+    private fun phoneAlarmVolume(): Int = try {
+        val am = getSystemService(android.media.AudioManager::class.java)
+        val max = am.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM)
+        if (max > 0) am.getStreamVolume(android.media.AudioManager.STREAM_ALARM) * 100 / max else 100
+    } catch (_: Exception) {
+        100
+    }
+
     private fun stateJson(): String {
         val prefs = Prefs(this)
         val events = JSONArray()
@@ -193,6 +202,7 @@ class MainActivity : Activity() {
             .put("version", version).put("notif", notif).put("exact", Alarms.canExact(this))
             .put("events", events)
             .put("onlyOpen", prefs.onlyOpen())
+            .put("vol", JSONObject().put("app", prefs.alarmVolume()).put("phone", phoneAlarmVolume()))
             .put("season", prefs.remoteSeason() ?: JSONObject.NULL)
             .put("bossList", JSONArray(prefs.bossList()))
             .put("feedback", prefs.feedback())
@@ -250,6 +260,10 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun setOnlyOpen(on: Boolean) = Prefs(this@MainActivity).setOnlyOpen(on)
+
+        /** Percent used while this app rings, or -1 to keep the phone's alarm volume. */
+        @JavascriptInterface
+        fun setAlarmVolume(v: Int) = Prefs(this@MainActivity).setAlarmVolume(if (v < 0) -1 else v.coerceIn(10, 100))
 
         /** Skip (or un-skip) the alarm for one start time. */
         @JavascriptInterface

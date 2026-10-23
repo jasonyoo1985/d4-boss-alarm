@@ -170,6 +170,8 @@ svg{display:block}
 .lamp.off{background:#e0564b;box-shadow:0 0 6px #e0564b}.bad{color:#ff6b5e!important}
 .fix{height:32px;padding:0 12px;border-radius:9px;background:rgba(255,59,47,.18);border:1px solid rgba(255,59,47,.6);color:#ffb3aa;font-size:13px;font-weight:700}
 .quiet-sw{--c:#8f7dff;--rgb:143,125,255}
+.vol-row input{flex:1;accent-color:#8f7dff;height:28px}.vol-val{width:44px;text-align:right;font-weight:700;color:#fff}
+.quiet-banner.vol-banner{cursor:pointer;background:rgba(255,154,31,.1);border-color:rgba(255,154,31,.45)}.quiet-banner.vol-banner svg{color:#ffb35c}
 .time-in{height:38px;border-radius:9px;border:1px solid var(--line);background:#1a1312;color:#fff;padding:0 8px;
   font-family:var(--num);font-weight:700;font-size:18px;color-scheme:dark}
 .time-in:disabled{opacity:.4}
@@ -327,7 +329,7 @@ svg{display:block}
   </header>
 
   <nav class="seg" role="tablist" id="seg"></nav>
-  <div class="page"><div class="quiet-banner" id="quiet-banner" hidden></div><div class="season" id="season" hidden></div><div class="cards" id="cards"></div>
+  <div class="page"><div class="quiet-banner" id="quiet-banner" hidden></div><div class="quiet-banner vol-banner" id="vol-banner" hidden></div><div class="season" id="season" hidden></div><div class="cards" id="cards"></div>
   <a href="#" class="dev-card">
     <span class="dev-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r=".9" fill="currentColor"/><circle cx="7" cy="17" r=".9" fill="currentColor"/></svg></span>
     <span class="dev-tx"><span class="dev-k">개발자 운영 사이트<span class="en b">Developer's site</span></span><span class="dev-v">stackupinfra.com (IT 인프라 입문 홈페이지)</span></span>
@@ -381,6 +383,9 @@ svg{display:block}
       </div>
     </div>
     <div class="info-row"><span class="k">정확한 시간에 알람<span class="en b">Exact alarms</span></span><span class="v" id="st-exact"></span><button class="fix" id="fix-exact" hidden>켜기</button></div>
+    <div class="info-row"><span class="k">알람 음량 따로 정하기<span class="en b">Alarm volume</span><span class="v" id="vol-msg" style="font-size:12.5px"></span></span>
+      <button class="switch quiet-sw" role="switch" id="vol-on" aria-label="알람 음량 따로 정하기"></button></div>
+    <div class="info-row vol-row" id="vol-row" hidden><input type="range" id="vol" min="10" max="100" step="10" aria-label="알람 음량"><span class="vol-val" id="vol-val"></span></div>
     <div class="info-row"><span class="k">테스트 알림<span class="en b">Test alert</span></span><button class="fix" id="btn-test2">보내기</button></div>
   </div>
   <div class="info-block">
@@ -513,7 +518,7 @@ const bridge = window.Android || null;
 function loadState() {
   if (bridge) return JSON.parse(bridge.getState());
   return {
-    version: "미리보기", notif: true, exact: true, quiet: { on: true, start: 0, end: 480 },
+    version: "미리보기", notif: true, exact: true, quiet: { on: true, start: 0, end: 480 }, vol: { app: -1, phone: 20 },
     feedback: [
       { code: "K7Q2M", stars: 4, text: "지옥물결 알림은 자는 시간엔 안 받고 싶어요", time: Date.now() - 26 * 60 * MIN, sent: true, answer: "이미 있어요! 정보 탭 → 방해금지 시간을 켜면 그 시간엔 안 울려요.", seen: false },
       { code: "P3XA9", stars: 0, text: "위젯 글씨가 조금 더 컸으면 좋겠어요", time: Date.now() - 2 * MIN, sent: false }
@@ -757,7 +762,31 @@ function paintQuiet() {
   b.innerHTML = `${MOON}<span class="qb-t">방해금지 <b>${fmtMin(q.start)} ~ ${fmtMin(q.end)}</b> · 알림이 울리지 않아요</span>`;
   // 항상 한 줄: 넘치면 글자를 조금 줄임
   requestAnimationFrame(fitQuiet);
+  paintVol();
 }
+const SPEAKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/></svg>';
+function paintVol() {
+  const v = S.vol || { app: -1, phone: 100 }, on = v.app >= 0;
+  $("vol-on").setAttribute("aria-checked", on);
+  $("vol-row").hidden = !on;
+  $("vol").value = on ? v.app : Math.max(10, Math.round(v.phone / 10) * 10);
+  $("vol-val").textContent = $("vol").value + "%";
+  $("vol-msg").textContent = on ? "이 앱 알람만 이 크기로 울려요" : `지금은 폰 알람 음량(${v.phone}%) 그대로`;
+  // 폰 알람 음량이 낮은데 따로 정하지도 않았으면 홈에 한 줄 안내
+  const b = $("vol-banner");
+  b.hidden = on || v.phone >= 30;
+  b.innerHTML = `${SPEAKER}<span class="qb-t">폰 알람 음량이 낮아요 <b>${v.phone}%</b> · 눌러서 조정</span>`;
+}
+$("vol-banner").onclick = () => go("info");
+$("vol-on").onclick = () => {
+  S.vol = S.vol || { app: -1, phone: 100 };
+  S.vol.app = S.vol.app >= 0 ? -1 : Math.max(70, Number($("vol").value));
+  bridge && bridge.setAlarmVolume(S.vol.app);
+  paintVol();
+  toast(S.vol.app >= 0 ? `이 앱 알람은 ${S.vol.app}% 크기로 울려요` : "폰 알람 음량을 그대로 써요");
+};
+$("vol").oninput = () => { $("vol-val").textContent = $("vol").value + "%"; };
+$("vol").onchange = () => { S.vol.app = Number($("vol").value); bridge && bridge.setAlarmVolume(S.vol.app); paintVol(); };
 function fitQuiet() {
   const t = $("quiet-banner").querySelector(".qb-t");
   if (!t || !t.offsetParent) return;
