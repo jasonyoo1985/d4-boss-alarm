@@ -48,6 +48,9 @@ svg{display:block}
 .sign .sigil{position:absolute;inset:0;width:100%;height:100%;opacity:.92}
 .sign .runes{transform-origin:150px 150px;animation:spin 90s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes inL{from{transform:translateX(40px);opacity:.3}to{transform:none;opacity:1}}
+@keyframes inR{from{transform:translateX(-40px);opacity:.3}to{transform:none;opacity:1}}
+.slide-l{animation:inL .22s ease-out}.slide-r{animation:inR .22s ease-out}
 .sign .sig-text{position:absolute;left:50%;top:50%;transform:translate(-56%,-36%) rotate(-7deg);white-space:nowrap;
   font-family:var(--num);font-weight:700;font-size:31px;letter-spacing:.01em;
   background:linear-gradient(180deg,#fff0c4 10%,#ffc860 50%,#e8822a 90%);-webkit-background-clip:text;background-clip:text;color:transparent;
@@ -919,6 +922,22 @@ function go(p) {
   window.scrollTo(0, 0);
 }
 document.addEventListener("click", e2 => { const b = e2.target.closest("[data-go]"); if (b) go(b.dataset.go); });
+// 옆으로 밀어서 탭 이동 (왼쪽으로 밀면 다음 탭). 화면 가장자리(시스템 뒤로가기 제스처)와 가로 스크롤 영역은 제외
+let sw = null;
+document.addEventListener("touchstart", ev => {
+  const t = ev.touches[0], w = innerWidth;
+  sw = ev.touches.length === 1 && t.clientX > 28 && t.clientX < w - 28 && !$("sheet-wrap").classList.contains("open")
+    && !ev.target.closest("input, textarea, select, .switch, .filters") ? { x: t.clientX, y: t.clientY } : null;
+}, { passive: true });
+document.addEventListener("touchend", ev => {
+  if (!sw) return;
+  const t = ev.changedTouches[0], dx = t.clientX - sw.x, dy = t.clientY - sw.y; sw = null;
+  if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+  const i = PAGES.indexOf(page) + (dx < 0 ? 1 : -1);
+  if (i < 0 || i >= PAGES.length) return;
+  go(PAGES[i]);
+  const el = $("p-" + PAGES[i]); el.classList.remove("slide-l", "slide-r"); void el.offsetWidth; el.classList.add(dx < 0 ? "slide-l" : "slide-r");
+}, { passive: true });
 $("btn-test").onclick = () => { if (!S.notif || !S.exact) { go("info"); return; } bridge && bridge.test("boss"); toast("테스트 알림을 보냈어요"); };
 $("btn-test2").onclick = () => { bridge && bridge.test("boss"); toast("테스트 알림을 보냈어요"); };
 $("fix-notif").onclick = () => bridge && bridge.openNotifSettings();
