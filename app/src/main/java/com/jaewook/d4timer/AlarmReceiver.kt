@@ -7,9 +7,6 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.SystemClock
-import android.view.View
-import android.widget.RemoteViews
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -44,6 +41,14 @@ class AlarmReceiver : BroadcastReceiver() {
             Alarms.schedule(context, e)
             return
         }
+        if (intent.action == ACTION_SKIP_NEXT) {
+            val prefs = Prefs(context)
+            prefs.setSkip(e, Schedule.nextStart(prefs.effective(e), start + MIN))
+            AlarmSound.stop(context)
+            context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
+            Alarms.schedule(context, e)
+            return
+        }
         if (intent.action == ACTION_REMIND) {
             if (start > System.currentTimeMillis() - 5 * MIN) notify(context, e, start)
             return
@@ -59,6 +64,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
     companion object {
         private const val ACTION_STOP = "com.jaewook.d4timer.STOP"
+        private const val ACTION_SKIP_NEXT = "com.jaewook.d4timer.SKIP_NEXT"
         private const val ACTION_SNOOZE = "com.jaewook.d4timer.SNOOZE"
         private const val ACTION_DISMISS = "com.jaewook.d4timer.DISMISS"
         private const val ACTION_REMIND = "com.jaewook.d4timer.REMIND"
@@ -111,32 +117,19 @@ class AlarmReceiver : BroadcastReceiver() {
                 Intent(context, AlarmReceiver::class.java).setAction(ACTION_STOP).putExtra(Alarms.EXTRA_KEY, e.key),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-            val view = RemoteViews(context.packageName, R.layout.notif_alarm).apply {
-                setTextViewText(R.id.n_title, title)
-                setTextViewText(R.id.n_text, text)
-                if (start > now) {
-                    setChronometer(R.id.n_count, SystemClock.elapsedRealtime() + (start - now), null, true)
-                    setChronometerCountDown(R.id.n_count, true)
-                } else {
-                    setViewVisibility(R.id.n_count, View.GONE)
-                }
-            }
             val builder = Notification.Builder(context, Alarms.channelId(context, e))
                 .setSmallIcon(R.drawable.ic_notify)
                 .setColor(e.color)
                 .setContentTitle(title)
                 .setContentText(text)
-                .setStyle(Notification.DecoratedCustomViewStyle())
-                .setCustomContentView(view)
-                .setCustomHeadsUpContentView(view)
-                .setCustomBigContentView(view)
                 .setContentIntent(open)
                 .setAutoCancel(true)
                 .setCategory(if (repeat) Notification.CATEGORY_ALARM else Notification.CATEGORY_REMINDER)
                 .setDeleteIntent(stop)
             if (start - now >= SNOOZE_MIN_LEFT) {
-                builder.addAction(Notification.Action.Builder(null, "1분 후 다시 알림", action(context, e, start, ACTION_SNOOZE, 300)).build())
+                builder.addAction(Notification.Action.Builder(null, "1분 후 다시", action(context, e, start, ACTION_SNOOZE, 300)).build())
             }
+            builder.addAction(Notification.Action.Builder(null, "다음 회 건너뛰기", action(context, e, start, ACTION_SKIP_NEXT, 700)).build())
             builder.addAction(Notification.Action.Builder(null, "다시 보지 않기", action(context, e, start, ACTION_DISMISS, 600)).build())
             return builder.build()
         }
