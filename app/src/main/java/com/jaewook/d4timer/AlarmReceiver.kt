@@ -16,13 +16,13 @@ class AlarmReceiver : BroadcastReceiver() {
         val key = intent.getStringExtra(Alarms.EXTRA_KEY) ?: return
         val e = Schedule.byKey(key)
         if (intent.action == ACTION_STOP) {
-            AlarmSound.stop(context)
+            AlarmSound.stop(context, e.key)
             context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
             return
         }
         val start = intent.getLongExtra(Alarms.EXTRA_START, 0L)
         if (intent.action == ACTION_SNOOZE) {
-            AlarmSound.stop(context)
+            AlarmSound.stop(context, e.key)
             context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
             val am = context.getSystemService(AlarmManager::class.java)
             val at = System.currentTimeMillis() + MIN
@@ -36,7 +36,7 @@ class AlarmReceiver : BroadcastReceiver() {
             val prefs = Prefs(context)
             prefs.setSkip(e, start)
             context.getSystemService(AlarmManager::class.java).cancel(snoozeIntent(context, e, start))
-            AlarmSound.stop(context)
+            AlarmSound.stop(context, e.key)
             context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
             Alarms.schedule(context, e)
             return
@@ -44,7 +44,7 @@ class AlarmReceiver : BroadcastReceiver() {
         if (intent.action == ACTION_SKIP_NEXT) {
             val prefs = Prefs(context)
             prefs.setSkip(e, Schedule.nextStart(prefs.effective(e), start + MIN))
-            AlarmSound.stop(context)
+            AlarmSound.stop(context, e.key)
             context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
             Alarms.schedule(context, e)
             return

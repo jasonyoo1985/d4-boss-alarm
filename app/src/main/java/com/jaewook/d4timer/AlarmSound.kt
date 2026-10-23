@@ -43,6 +43,10 @@ class AlarmSound : Service() {
             // Not allowed to run in the foreground right now; still show the alarm
             getSystemService(android.app.NotificationManager::class.java).notify(id, n)
         }
+        // Two events at once: both notifications show, but a more important alarm keeps ringing
+        val cur = playing
+        if (player != null && cur != null && cur != key && rank(cur) < rank(key)) return START_NOT_STICKY
+        playing = key
         play(e)
         return START_NOT_STICKY
     }
@@ -108,6 +112,7 @@ class AlarmSound : Service() {
         handler.removeCallbacksAndMessages(null)
         player?.release()
         player = null
+        playing = null
         restoreVolume()
         // Leave the notification in place; only the sound stops
         if (Build.VERSION.SDK_INT >= 24) stopForeground(STOP_FOREGROUND_DETACH)
@@ -119,6 +124,7 @@ class AlarmSound : Service() {
         handler.removeCallbacksAndMessages(null)
         player?.release()
         player = null
+        playing = null
         restoreVolume()
         super.onDestroy()
     }
@@ -126,6 +132,12 @@ class AlarmSound : Service() {
     companion object {
         private const val REPEAT_LIMIT_MS = 5 * MIN
         private const val ONCE_LIMIT_MS = 30_000L
+
+        /** Event whose sound is playing now (same process as the receiver). */
+        @Volatile private var playing: String? = null
+
+        /** World boss first, then Helltide, then Legion. */
+        private fun rank(key: String) = Schedule.events.indexOfFirst { it.key == key }
 
         fun start(context: Context, e: GameEvent, start: Long) {
             val i = Intent(context, AlarmSound::class.java)
@@ -138,7 +150,10 @@ class AlarmSound : Service() {
             }
         }
 
-        fun stop(context: Context) {
+        /** Stops the sound; with a key, only when that event is the one ringing. */
+        fun stop(context: Context, key: String? = null) {
+            val cur = playing
+            if (key != null && cur != null && cur != key) return
             context.stopService(Intent(context, AlarmSound::class.java))
         }
     }
