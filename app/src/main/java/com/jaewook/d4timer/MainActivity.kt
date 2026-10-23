@@ -352,6 +352,6 @@ class MainActivity : Activity() {
         private const val REQ_UPDATE = 2
         private const val REQ_SOUND = 100
         private const val SYNC_EVERY = 10 * MIN
-        private const val PC_PAGE = "https://jasonyoo1985.github.io/d4-boss-alarm/"
+        private const val PC_PAGE = "https://d4alarm.stackupinfra.com/"
     }
 }
