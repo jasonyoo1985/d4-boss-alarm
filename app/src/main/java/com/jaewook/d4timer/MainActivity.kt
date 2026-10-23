@@ -227,6 +227,21 @@ class MainActivity : Activity() {
             }.start()
         }
 
+        /** Shares the PC alarm page with this phone's alert settings in the link (lead minutes, 0 = off). */
+        @JavascriptInterface
+        fun sharePcLink() {
+            val prefs = Prefs(this@MainActivity)
+            val query = Schedule.events.joinToString("&") { e ->
+                val lead = if (prefs.isOn(e)) prefs.leads(e).minOrNull() ?: 0 else 0
+                "${e.key}=$lead"
+            }
+            val link = "$PC_PAGE?$query"
+            val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+                .putExtra(Intent.EXTRA_SUBJECT, "디아4 월드보스 알람 PC")
+                .putExtra(Intent.EXTRA_TEXT, "PC에서 열면 알림이 울려요 (탭을 열어 두세요)\n$link")
+            runOnUiThread { startActivity(Intent.createChooser(send, "PC로 링크 보내기")) }
+        }
+
         @JavascriptInterface
         fun markFeedbackSeen() {
             Feedback.markSeen(this@MainActivity)
@@ -337,5 +352,6 @@ class MainActivity : Activity() {
         private const val REQ_UPDATE = 2
         private const val REQ_SOUND = 100
         private const val SYNC_EVERY = 10 * MIN
+        private const val PC_PAGE = "https://jasonyoo1985.github.io/d4-boss-alarm/"
     }
 }
