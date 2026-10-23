@@ -202,6 +202,7 @@ svg{display:block}
 .ev-name .en{display:block;margin-top:1px;font-size:11.5px;text-shadow:none}
 .row .nm .en{display:block;margin:1px 0 0;font-size:11px}
 .tip{border-radius:16px;padding:14px 16px;margin-bottom:12px;background:#0f0b0a;border:1px solid var(--line);cursor:pointer}
+.info-block .tip{margin:0;border:0;border-top:1px solid var(--line);border-radius:0;background:none;padding:14px 16px}
 .tip-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:15px}
 .tip .chev{width:20px;height:20px;flex:none;color:var(--muted);transition:transform .2s}.tip.open .chev{transform:rotate(180deg)}
 .tip-b{display:none;margin-top:10px;word-break:keep-all;font-size:13.5px;line-height:1.6;color:#d6ccc4}.tip.open .tip-b{display:block}
@@ -355,20 +356,20 @@ svg{display:block}
   <p class="page-sub">알림이 제때 울리도록 권한을 확인하세요<span class="en b">Check permissions so alerts ring on time</span></p>
   <div class="info-block">
     <div class="info-row"><span class="k">알림 허용<span class="en b">Notifications</span></span><span class="v" id="st-notif"></span><button class="fix" id="fix-notif" hidden>켜기</button></div>
+    <div class="tip" id="tip-popup">
+      <div class="tip-h"><span>알림을 처음부터 크게 보려면<span class="en b">Galaxy: show alerts expanded</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="tip-b">
+        <p>갤럭시는 알림을 작은 알약 모양으로 먼저 띄우고, 화살표를 눌러야 버튼이 보이는 경우가 있어요. 아래처럼 바꾸면 처음부터 [1분 후 다시] [다음 회 건너뛰기] [다시 보지 않기] 버튼까지 크게 보여요.</p>
+        <ol>
+          <li>폰 <b>설정</b> → <b>알림</b></li>
+          <li><b>알림 팝업 스타일</b> 누르기</li>
+          <li><b>간단히</b> 아래의 <b>자세히 표시할 앱</b>(또는 비슷한 이름)에서 <b>디아4 월드보스 알람</b> 켜기<br><span class="muted">모든 앱을 크게 보려면 <b>자세히</b>를 고르면 돼요</span></li>
+        </ol>
+        <p class="muted">메뉴 이름은 One UI 버전마다 조금 달라요. 안 보이면 설정 맨 위 검색창에 "팝업 스타일"을 쳐 보세요.</p>
+      </div>
+    </div>
     <div class="info-row"><span class="k">정확한 시간에 알람<span class="en b">Exact alarms</span></span><span class="v" id="st-exact"></span><button class="fix" id="fix-exact" hidden>켜기</button></div>
     <div class="info-row"><span class="k">테스트 알림<span class="en b">Test alert</span></span><button class="fix" id="btn-test2">보내기</button></div>
-  </div>
-  <div class="tip" id="tip-popup">
-    <div class="tip-h"><span>알림을 처음부터 크게 보려면<span class="en b">Galaxy: show alerts expanded</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
-    <div class="tip-b">
-      <p>갤럭시는 알림을 작은 알약 모양으로 먼저 띄우고, 화살표를 눌러야 버튼이 보이는 경우가 있어요. 아래처럼 바꾸면 처음부터 [1분 후 다시] [다음 회 건너뛰기] [다시 보지 않기] 버튼까지 크게 보여요.</p>
-      <ol>
-        <li>폰 <b>설정</b> → <b>알림</b></li>
-        <li><b>알림 팝업 스타일</b> 누르기</li>
-        <li><b>간단히</b> 아래의 <b>자세히 표시할 앱</b>(또는 비슷한 이름)에서 <b>디아4 월드보스 알람</b> 켜기<br><span class="muted">모든 앱을 크게 보려면 <b>자세히</b>를 고르면 돼요</span></li>
-      </ol>
-      <p class="muted">메뉴 이름은 One UI 버전마다 조금 달라요. 안 보이면 설정 맨 위 검색창에 "팝업 스타일"을 쳐 보세요.</p>
-    </div>
   </div>
   <div class="info-block">
     <div class="info-row"><span class="k">온라인 일정 동기화<span class="en b">Online sync</span><span class="v" style="font-size:12.5px" id="sync-st"></span></span>
