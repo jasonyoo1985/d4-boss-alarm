@@ -163,6 +163,21 @@ fetch("https://raw.githubusercontent.com/jasonyoo1985/d4-boss-alarm/main/season.
     }
   }).catch(() => {});
 
+// A link shared from the phone app carries its settings: ?boss=5&tide=0&legion=0 (minutes before, 0 = off)
+try {
+  const q = new URLSearchParams(location.search);
+  let used = false;
+  for (const e of EVENTS) {
+    if (!q.has(e.key)) continue;
+    const m = parseInt(q.get(e.key), 10);
+    if (isNaN(m)) continue;
+    used = true;
+    store.set("on_" + e.key, m > 0);
+    if (m > 0) store.set("lead_" + e.key, LEADS.reduce((a, b) => Math.abs(b - m) < Math.abs(a - m) ? b : a));
+  }
+  if (used) history.replaceState(null, "", location.pathname);
+} catch (_) {}
+
 render(); paintPerm(); tick(); setInterval(tick, 1000);
 </script>
 </body>

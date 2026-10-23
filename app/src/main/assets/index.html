@@ -341,6 +341,10 @@ svg{display:block}
     <div class="info-row"><span class="k v" style="font-size:12.5px" id="sync-msg"></span></div>
   </div>
   <div class="info-block">
+    <div class="info-row"><span class="k">PC에서도 알림 받기<span class="en b">Alerts on PC</span><span class="v" style="font-size:12.5px">카톡 '나와의 채팅'이나 메일로 링크를 보내고, PC에서 열면 지금 알림 설정 그대로 울려요</span></span>
+      <button class="fix" id="pc-share">링크 보내기</button></div>
+  </div>
+  <div class="info-block">
     <div class="info-row"><span class="k">방해금지 시간<span class="en b">Quiet hours</span><span class="v" style="font-size:12.5px">이 시간에는 알림이 울리지 않아요</span></span>
       <button class="switch quiet-sw" role="switch" id="q-on" aria-label="방해금지 시간"></button></div>
     <div class="info-row quiet-times">
@@ -661,6 +665,7 @@ function relativePast(ms) {
   if (m < 24 * 60) return `${Math.floor(m / 60)}시간 전`;
   return `${Math.floor(m / (24 * 60))}일 전`;
 }
+$("pc-share").onclick = () => { if (bridge && bridge.sharePcLink) bridge.sharePcLink(); else toast("앱에서 동작해요"); };
 $("sync-now").onclick = () => { if (bridge) { bridge.syncNow(); toast("확인하는 중이에요"); } else toast("앱에서 동작해요"); };
 
 /* ---------- quiet hours ---------- */
