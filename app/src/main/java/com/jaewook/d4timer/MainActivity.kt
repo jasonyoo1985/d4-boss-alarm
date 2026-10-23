@@ -192,6 +192,7 @@ class MainActivity : Activity() {
                     .put("sound", Alarms.soundName(this, e))
                     .put("custom", prefs.hasCustomAnchor(e))
                     .put("repeat", prefs.repeat(e))
+                    .put("vol", prefs.alarmVolume(e))
                     .put("synced", prefs.hasSyncAnchor(e))
                     .put("skip", prefs.skip(e)),
             )
@@ -202,7 +203,7 @@ class MainActivity : Activity() {
             .put("version", version).put("notif", notif).put("exact", Alarms.canExact(this))
             .put("events", events)
             .put("onlyOpen", prefs.onlyOpen())
-            .put("vol", JSONObject().put("app", prefs.alarmVolume()).put("phone", phoneAlarmVolume()))
+            .put("phoneVol", phoneAlarmVolume())
             .put("season", prefs.remoteSeason() ?: JSONObject.NULL)
             .put("bossList", JSONArray(prefs.bossList()))
             .put("feedback", prefs.feedback())
@@ -261,9 +262,10 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun setOnlyOpen(on: Boolean) = Prefs(this@MainActivity).setOnlyOpen(on)
 
-        /** Percent used while this app rings, or -1 to keep the phone's alarm volume. */
+        /** Percent used while this event rings, or -1 to keep the phone's alarm volume. */
         @JavascriptInterface
-        fun setAlarmVolume(v: Int) = Prefs(this@MainActivity).setAlarmVolume(if (v < 0) -1 else v.coerceIn(10, 100))
+        fun setAlarmVolume(key: String, v: Int) =
+            Prefs(this@MainActivity).setAlarmVolume(event(key), if (v < 0) -1 else v.coerceIn(10, 100))
 
         /** Skip (or un-skip) the alarm for one start time. */
         @JavascriptInterface

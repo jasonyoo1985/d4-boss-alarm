@@ -95,9 +95,9 @@ class Prefs(context: Context) {
     fun onlyOpen() = sp.getBoolean("only_open", false)
     fun setOnlyOpen(on: Boolean) = sp.edit().putBoolean("only_open", on).apply()
 
-    /** Alarm volume in percent used while this app rings; -1 keeps the phone's alarm volume. */
-    fun alarmVolume() = sp.getInt("alarm_vol", -1)
-    fun setAlarmVolume(v: Int) = sp.edit().putInt("alarm_vol", v).apply()
+    /** Alarm volume in percent used while this event rings; -1 keeps the phone's alarm volume. */
+    fun alarmVolume(e: GameEvent) = sp.getInt("alarm_vol_${e.key}", -1)
+    fun setAlarmVolume(e: GameEvent, v: Int) = sp.edit().putInt("alarm_vol_${e.key}", v).apply()
 
     /** A single start time the user chose to skip; alarms resume with the start after it. */
     fun skip(e: GameEvent) = sp.getLong("skip_${e.key}", 0L)
