@@ -373,7 +373,7 @@ class MainActivity : Activity() {
         /** Opens a page in the phone's browser (helltides.com for checking times, the developer's site). */
         @JavascriptInterface
         fun openUrl(url: String) = runOnUiThread {
-            if (url.startsWith("https://helltides.com/") || url == "https://stackupinfra.com") {
+            if (url.startsWith("https://helltides.com/") || url == "https://www.stackupinfra.com") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
             }
         }
