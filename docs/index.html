@@ -41,6 +41,7 @@ button.ghost{background:#2a2323;color:var(--text)}
 .setup b{color:var(--text)}
 .setup ol{margin:8px 0 0;padding-left:20px;line-height:1.8;font-size:14px;color:var(--sub)}
 .setup .st{font-size:15px;font-weight:700;margin-bottom:10px}
+.vol{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.vol input{width:120px;accent-color:#e2483f}.vol b{width:38px;font-size:13px;color:var(--text)}
 </style>
 </head>
 <body>
@@ -53,6 +54,7 @@ button.ghost{background:#2a2323;color:var(--text)}
     <div class="opts" style="margin:0;padding:0;border:0">
       <span style="color:var(--text);font-weight:700">알림 소리</span>
       <select id="snd-pick"></select>
+      <span class="vol" title="PC 스피커 음량 기준이에요"><span style="color:var(--muted)">음량</span><input type="range" id="snd-vol" min="0" max="100" step="5" aria-label="알림 음량"><b id="snd-vol-v"></b></span>
       <button id="snd-play" class="ghost" style="width:auto;padding:8px 14px">▶ 미리 듣기</button>
       <input type="file" id="snd-file" accept="audio/*" hidden>
     </div>
@@ -157,7 +159,7 @@ const SOUNDS = {
 };
 function playNotes(snd) {
   if (!ctx) unlockAudio();
-  const t0 = ctx.currentTime + .05, vol = snd.vol || .3;
+  const t0 = ctx.currentTime + .05, vol = Math.max(0.0002, (snd.vol || .3) * volPct() / 100);
   for (const [f, at, len] of snd.notes) {
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.type = snd.type; o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
@@ -167,12 +169,15 @@ function playNotes(snd) {
     o.start(t0 + at); o.stop(t0 + at + len + .05);
   }
 }
+// 0~100% of the PC's own speaker volume, remembered on this PC
+const volPct = () => store.get("vol", 100);
 function beep() {
+  if (volPct() <= 0) return;
   try {
     const pick = store.get("sound", "chime");
     if (pick === "file") {
       const data = store.get("sound_file", null);
-      if (data) { const a = new Audio(data); a.play().catch(() => playNotes(SOUNDS.chime)); return; }
+      if (data) { const a = new Audio(data); a.volume = volPct() / 100; a.play().catch(() => playNotes(SOUNDS.chime)); return; }
     }
     playNotes(SOUNDS[pick] || SOUNDS.chime);
   } catch (_) {}
@@ -189,6 +194,11 @@ document.getElementById("snd-pick").onchange = ev => {
   if (ev.target.value === "pick") { document.getElementById("snd-file").click(); paintSounds(); return; }
   store.set("sound", ev.target.value); unlockAudio(); beep();
 };
+const volIn = document.getElementById("snd-vol");
+const paintVol = () => { volIn.value = volPct(); document.getElementById("snd-vol-v").textContent = volPct() + "%"; };
+volIn.oninput = () => { store.set("vol", Number(volIn.value)); paintVol(); };
+volIn.onchange = () => { unlockAudio(); beep(); };
+paintVol();
 document.getElementById("snd-play").onclick = () => { unlockAudio(); beep(); };
 document.getElementById("snd-file").onchange = ev => {
   const f = ev.target.files && ev.target.files[0];
