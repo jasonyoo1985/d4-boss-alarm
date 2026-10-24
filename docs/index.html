@@ -41,7 +41,9 @@ button.ghost{background:#2a2323;color:var(--text)}
 .setup b{color:var(--text)}
 .setup ol{margin:8px 0 0;padding-left:20px;line-height:1.8;font-size:14px;color:var(--sub)}
 .setup .st{font-size:15px;font-weight:700;margin-bottom:10px}
-.vol{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}.vol input{width:120px;accent-color:#e2483f}.vol b{width:38px;font-size:13px;color:var(--text)}
+.vol{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.vol input{width:76px;accent-color:#e2483f}.vol b{width:38px;font-size:13px;color:var(--text)}
+.ring{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9;display:flex;align-items:center;gap:12px;background:#2a1414;border:1px solid var(--red);border-radius:14px;padding:10px 12px 10px 16px;box-shadow:0 8px 30px rgba(0,0,0,.6);font-weight:700;white-space:nowrap;max-width:calc(100% - 32px)}
+.ring span{overflow:hidden;text-overflow:ellipsis}.ring button{width:auto;padding:8px 14px;font-size:14px;flex:none}
 </style>
 </head>
 <body>
@@ -51,11 +53,12 @@ button.ghost{background:#2a2323;color:var(--text)}
 
   <div class="card setup" id="setup"></div>
   <div class="card">
-    <div class="opts" style="margin:0;padding:0;border:0">
+    <div class="opts" style="margin:0;padding:0;border:0;gap:8px">
       <span style="color:var(--text);font-weight:700">알림 소리</span>
-      <select id="snd-pick"></select>
-      <span class="vol" title="PC 스피커 음량 기준이에요"><span style="color:var(--muted)">음량</span><input type="range" id="snd-vol" min="0" max="100" step="5" aria-label="알림 음량"><b id="snd-vol-v"></b></span>
-      <button id="snd-play" class="ghost" style="width:auto;padding:8px 14px">▶ 미리 듣기</button>
+      <select id="snd-pick" style="max-width:120px"></select>
+      <span class="vol" title="음량 (PC 스피커 음량 기준)"><span>🔊</span><input type="range" id="snd-vol" min="0" max="100" step="5" aria-label="알림 음량"><b id="snd-vol-v"></b></span>
+      <select id="snd-mode" aria-label="울림 방식"><option value="1">끌 때까지 계속</option><option value="0">한 번만</option></select>
+      <button id="snd-play" class="ghost" style="width:auto;padding:7px 11px;font-size:14px">▶ 듣기</button>
       <input type="file" id="snd-file" accept="audio/*" hidden>
     </div>
     <p class="note" id="snd-note" style="margin:10px 0 0">'내 파일 선택'으로 PC에 있는 mp3 등 원하는 소리를 쓸 수 있어요.</p>
@@ -171,16 +174,18 @@ function playNotes(snd) {
 }
 // 0~100% of the PC's own speaker volume, remembered on this PC
 const volPct = () => store.get("vol", 100);
-function beep() {
-  if (volPct() <= 0) return;
+// Returns a stopper for looping file sounds
+function beep(loop) {
+  if (volPct() <= 0) return null;
   try {
     const pick = store.get("sound", "chime");
     if (pick === "file") {
       const data = store.get("sound_file", null);
-      if (data) { const a = new Audio(data); a.volume = volPct() / 100; a.play().catch(() => playNotes(SOUNDS.chime)); return; }
+      if (data) { const a = new Audio(data); a.volume = volPct() / 100; a.loop = !!loop; a.play().catch(() => playNotes(SOUNDS.chime)); return () => a.pause(); }
     }
     playNotes(SOUNDS[pick] || SOUNDS.chime);
   } catch (_) {}
+  return null;
 }
 function paintSounds() {
   const sel = document.getElementById("snd-pick");
@@ -199,6 +204,9 @@ const paintVol = () => { volIn.value = volPct(); document.getElementById("snd-vo
 volIn.oninput = () => { store.set("vol", Number(volIn.value)); paintVol(); };
 volIn.onchange = () => { unlockAudio(); beep(); };
 paintVol();
+const modeIn = document.getElementById("snd-mode");
+modeIn.value = store.get("repeat", true) ? "1" : "0";
+modeIn.onchange = () => store.set("repeat", modeIn.value === "1");
 document.getElementById("snd-play").onclick = () => { unlockAudio(); beep(); };
 document.getElementById("snd-file").onchange = ev => {
   const f = ev.target.files && ev.target.files[0];
@@ -215,10 +223,34 @@ document.getElementById("snd-file").onchange = ev => {
   r.readAsDataURL(f);
 };
 
+// "끌 때까지 계속": repeat until the stop button (max 5 minutes), like the phone app
+const RING_MAX = 5 * 60 * 1000;
+let ringStop = null;
+function stopRing() {
+  if (ringStop) { ringStop(); ringStop = null; }
+  const bar = document.getElementById("ring"); if (bar) bar.remove();
+}
 function alarm(title, body) {
-  beep();
+  stopRing();
+  const repeat = store.get("repeat", true);
+  const fileStop = beep(repeat);
+  let timer = null, until = null;
+  if (repeat) {
+    if (!fileStop) timer = setInterval(() => beep(), 4000);
+    until = setTimeout(stopRing, RING_MAX);
+    const bar = document.createElement("div");
+    bar.id = "ring"; bar.className = "ring";
+    bar.innerHTML = `<span>🔔 ${title}</span><button>소리 끄기</button>`;
+    bar.querySelector("button").onclick = stopRing;
+    document.body.appendChild(bar);
+  }
+  ringStop = () => { clearInterval(timer); clearTimeout(until); fileStop && fileStop(); };
   try {
-    if ("Notification" in window && Notification.permission === "granted") new Notification(title, { body, requireInteraction: true });
+    if ("Notification" in window && Notification.permission === "granted") {
+      const n = new Notification(title, { body, requireInteraction: true });
+      n.onclick = () => { window.focus(); stopRing(); n.close(); };
+      n.onclose = stopRing;
+    }
   } catch (_) {}
   document.title = "🔔 " + title;
   setTimeout(() => { document.title = "디아4 월드보스 알람 PC"; }, 60000);
