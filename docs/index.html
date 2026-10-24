@@ -130,7 +130,7 @@ function tick() {
   for (const e of EVENTS) {
     const live = now < lastStart(e, now) + e.duration;
     const s = live ? lastStart(e, now) : nextStart(e, now);
-    document.getElementById("w-" + e.key).textContent = live ? `진행 중 · ${hm(s)} 시작` : `다음 ${hm(s)}`;
+    document.getElementById("w-" + e.key).textContent = live ? `진행 중 · ${hm(s + e.duration)} 종료까지 남은 시간` : `다음 ${hm(s)}`;
     document.getElementById("c-" + e.key).textContent = live ? clock(s + e.duration - now) : clock(s - now);
     // Background tabs may only tick once a minute, so ring if the alert time passed within the last 2 minutes
     if (!store.get("on_" + e.key, e.on)) continue;
