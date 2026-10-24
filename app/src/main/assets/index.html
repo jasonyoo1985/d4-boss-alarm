@@ -406,6 +406,10 @@ svg{display:block}
       <button class="fix" id="pc-share">링크 보내기</button></div>
   </div>
   <div class="info-block">
+    <div class="info-row"><span class="k">시즌 빌드 티어<span class="en b">Build tier list</span><span class="v" style="font-size:12.5px">op.gg에서 레벨링·엔드게임 S티어 빌드 보기</span></span>
+      <button class="fix" id="tier-open">열기</button></div>
+  </div>
+  <div class="info-block">
     <div class="info-row"><span class="k">방해금지 시간<span class="en b">Quiet hours</span><span class="v" style="font-size:12.5px">이 시간에는 알림이 울리지 않아요</span></span>
       <button class="switch quiet-sw" role="switch" id="q-on" aria-label="방해금지 시간"></button></div>
     <div class="info-row quiet-times">
@@ -757,6 +761,7 @@ function fitDev() {
     while (el.scrollWidth > el.clientWidth && fs > 10) el.style.fontSize = (fs -= 0.5) + "px";
   });
 }
+$("tier-open").onclick = () => { const u = "https://op.gg/ko/diablo4/tier-list"; if (bridge && bridge.openUrl) bridge.openUrl(u); else window.open(u); };
 $("pc-share").onclick = () => { if (bridge && bridge.sharePcLink) bridge.sharePcLink(); else toast("앱에서 동작해요"); };
 $("sync-now").onclick = () => { if (bridge) { bridge.syncNow(); toast("확인하는 중이에요"); } else toast("앱에서 동작해요"); };
 
