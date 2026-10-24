@@ -993,7 +993,7 @@ function paintFeedback() {
   $("fb-list").innerHTML = list.length ? `<div class="fb-list-title">내가 보낸 의견</div>` + list.map(f => {
     const d = new Date(f.time), when = `${d.getMonth() + 1}월 ${d.getDate()}일`;
     const stars = f.stars ? "★".repeat(f.stars) : "";
-    return `<div class="fb-item"><div class="fb-meta"><span>${when} · ${f.sent ? "전달됨" : "보내는 중"}</span><span class="st">${stars}</span></div>
+    return `<div class="fb-item"><div class="fb-meta"><span>${when}${f.code ? ` · 번호 ${esc(f.code)}` : ""} · ${f.sent ? "전달됨" : "보내는 중"}</span><span class="st">${stars}</span></div>
       <div class="fb-q">${esc(f.text)}</div>${f.answer ? `<div class="fb-a"><b>개발자 답변</b>${esc(f.answer)}</div>` : ""}</div>`;
   }).join("") : "";
   const unread = (S.feedback || []).some(f => f.answer && !f.seen);
@@ -1016,6 +1016,7 @@ function go(p) {
   if (p === "schedule") renderSchedule(Date.now());
   if (p === "info") paintInfo();
   fitDev(); fitQuiet();
+  if (p === "feedback" && bridge && bridge.checkReplies) bridge.checkReplies();
   if (p === "feedback" && (S.feedback || []).some(f => f.answer && !f.seen)) {
     if (bridge && bridge.markFeedbackSeen) bridge.markFeedbackSeen(); else S.feedback.forEach(f => f.seen = true);
     paintFeedback();

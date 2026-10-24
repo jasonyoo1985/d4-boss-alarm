@@ -123,6 +123,7 @@ class MainActivity : Activity() {
     }
 
     @Volatile private var syncing = false
+    @Volatile private var lastReplyCheck = 0L
 
     private fun startSync() {
         if (syncing) return
@@ -257,6 +258,18 @@ class MainActivity : Activity() {
                 .putExtra(Intent.EXTRA_SUBJECT, "디아4 월드보스 알람 PC")
                 .putExtra(Intent.EXTRA_TEXT, "PC에서 열면 알림이 울려요 (탭을 열어 두세요)\n$link")
             runOnUiThread { startActivity(Intent.createChooser(send, "PC로 링크 보내기")) }
+        }
+
+        /** Opening the feedback tab looks for new replies (at most once a minute). */
+        @JavascriptInterface
+        fun checkReplies() {
+            val now = System.currentTimeMillis()
+            if (now - lastReplyCheck < MIN) return
+            lastReplyCheck = now
+            Thread {
+                Feedback.sync(applicationContext)
+                runOnUiThread { refreshPage() }
+            }.start()
         }
 
         @JavascriptInterface
