@@ -161,6 +161,8 @@ svg{display:block}
 .tier-s{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none;background:rgba(255,154,31,.18);color:#ffb84d;font-size:24px;font-weight:800}
 .tier-v{font-size:13.5px;color:#ffb84d;white-space:nowrap}
 .tier-card .dev-go{color:#ffb84d}
+.tier-s svg{width:24px;height:24px}
+.loot-card{border-color:rgba(255,59,47,.5)}.loot-card .tier-s{background:rgba(255,59,47,.18);color:#ff8a80}.loot-card .tier-v,.loot-card .dev-go{color:#ff8a80}
 .lbl-sm{margin:0 0 8px;font-size:14px;font-weight:700}
 .cls-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .cls{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 2px;border-radius:12px;background:#0f0b0a;border:1px solid var(--line);color:inherit;text-decoration:none;font-size:13.5px;font-weight:700;white-space:nowrap}
@@ -358,8 +360,8 @@ svg{display:block}
 
 <!-- ================= 가이드 ================= -->
 <section id="p-builds" class="page" hidden>
-  <h1 class="page-title">BUILDS</h1>
-  <p class="page-sub">이번 시즌 빌드 티어와 직업별 인기 빌드<span class="en b">Season build tiers and popular builds by class</span></p>
+  <h1 class="page-title">GUIDES</h1>
+  <p class="page-sub">이번 시즌 빌드 티어와 보스별 드롭 아이템<span class="en b">Season build tiers and boss loot</span></p>
   <a href="#" class="tier-card" data-url="https://op.gg/ko/diablo4/tier-list">
     <span class="tier-s">S</span>
     <span class="dev-tx"><span class="dev-k">시즌 빌드 티어 리스트<span class="en b">Build tier list</span></span><span class="tier-v">엔드게임 · 레벨링 · 푸시</span></span>
@@ -367,7 +369,17 @@ svg{display:block}
   </a>
   <p class="lbl-sm">직업별 인기 빌드<span class="en b">Popular builds by class</span></p>
   <div class="cls-grid" id="cls-grid"></div>
+  <a href="#" class="tier-card loot-card" data-url="https://op.gg/ko/diablo4/boss-loot-tables">
+    <span class="tier-s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9H3z"/><path d="M3 12h18M10.5 12v3h3v-3"/></svg></span>
+    <span class="dev-tx"><span class="dev-k">보스 루트 테이블<span class="en b">Boss loot tables</span></span><span class="tier-v">보스별 드롭 · 신화 고유 아이템</span></span>
+    <span class="dev-go">›</span>
+  </a>
   <p class="note">op.gg가 열려요. 뒤로 가기로 앱에 돌아와요.<br>Opens op.gg. Press back to return to the app.</p>
+  <a href="#" class="dev-card">
+    <span class="dev-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r=".9" fill="currentColor"/><circle cx="7" cy="17" r=".9" fill="currentColor"/></svg></span>
+    <span class="dev-tx"><span class="dev-k">개발자 운영 사이트<span class="en b">Developer's site</span></span><span class="dev-v">stackupinfra.com (IT 인프라 입문 홈페이지)</span></span>
+    <span class="dev-go">›</span>
+  </a>
 </section>
 
 <!-- ================= 정보 ================= -->
@@ -465,7 +477,7 @@ svg{display:block}
 <nav class="nav" id="nav">
   <button data-go="home" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 2.5l3.2 4.3C7.8 5.7 9.8 5 12 5s4.2.7 5.8 1.8L21 2.5l-.6 6.3c.9 1.3 1.4 2.8 1.4 4.4 0 2.8-1.6 5.2-4 6.6V22h-2.6v-1.9h-1.9V22h-2.6v-1.9H8.8V22H6.2v-2.2c-2.4-1.4-4-3.8-4-6.6 0-1.6.5-3.1 1.4-4.4L3 2.5zm5.3 9.2c-1.2 0-2.1.9-2.1 2s1 2 2.4 2c1.1 0 1.8-.6 1.8-1.3 0-1.4-.9-2.7-2.1-2.7zm7.4 0c-1.2 0-2.1 1.3-2.1 2.7 0 .7.7 1.3 1.8 1.3 1.4 0 2.4-.9 2.4-2s-.9-2-2.1-2zM12 15.6l-1.2 2.2h2.4L12 15.6z"/></svg>알림</button>
   <button data-go="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01" stroke-width="2.6"/></svg>전체 일정</button>
-  <button data-go="builds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>빌드</button>
+  <button data-go="builds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>공략</button>
   <button data-go="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><path d="M12 7.5h.01" stroke-width="2.6"/></svg>정보</button>
   <button data-go="feedback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/><path d="M8.5 8.5h7M8.5 11.5h4.5"/></svg>의견</button>
 </nav>
