@@ -370,11 +370,17 @@ class MainActivity : Activity() {
             startActivityForResult(intent, REQ_SOUND + Schedule.events.indexOf(e))
         }
 
-        /** Opens a page in the phone's browser (helltides.com for checking times, the developer's site). */
+        /** Opens a page in the phone's browser (helltides.com for checking times, the developer's site, op.gg builds). */
         @JavascriptInterface
         fun openUrl(url: String) = runOnUiThread {
-            if (url.startsWith("https://helltides.com/") || url == "https://www.stackupinfra.com" || url == "https://op.gg/ko/diablo4/tier-list") {
+            if (url.startsWith("https://helltides.com/") || url == "https://www.stackupinfra.com") {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+            } else if (url.startsWith("https://op.gg/ko/diablo4/")) {
+                // Custom Tab extras without the androidx library: the page opens over the app and back returns here
+                val tab = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    .putExtras(Bundle().apply { putBinder("android.support.customtabs.extra.SESSION", null) })
+                    .putExtra("android.support.customtabs.extra.TOOLBAR_COLOR", 0xFF0F0B0A.toInt())
+                runCatching { startActivity(tab) }
             }
         }
 
