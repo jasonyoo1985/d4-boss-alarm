@@ -52,6 +52,7 @@ object Sync {
     fun run(context: Context): Boolean {
         fetchConfig(context)
         Feedback.sync(context)
+        Clans.sync(context)
         val prefs = Prefs(context)
         val log = StringBuilder()
         val notes = mutableListOf<String>()

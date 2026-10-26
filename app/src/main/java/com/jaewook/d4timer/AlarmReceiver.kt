@@ -118,8 +118,8 @@ class AlarmReceiver : BroadcastReceiver() {
             val title = if (left > 0) "${e.name} ${left}분 전" else "${e.name} 시작!"
             val text = if (who != null) "$who · $time" else "$time 시작"
             val open = PendingIntent.getActivity(
-                context, 100, Intent(context, MainActivity::class.java),
-                PendingIntent.FLAG_IMMUTABLE,
+                context, 100, Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_FROM_ALARM, true),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             val stop = PendingIntent.getBroadcast(
                 context, 200 + notificationId(e),

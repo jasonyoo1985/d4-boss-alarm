@@ -117,6 +117,26 @@ class Prefs(context: Context) {
     fun alarmVolume(e: GameEvent) = sp.getInt("alarm_vol_${e.key}", -1)
     fun setAlarmVolume(e: GameEvent, v: Int) = sp.edit().putInt("alarm_vol_${e.key}", v).apply()
 
+    /** The last good clan list from the sheet; see [Clans]. Empty until the feature is set up. */
+    fun clans(): String = sp.getString("clans", "") ?: ""
+    fun setClans(json: String) = sp.edit().putString("clans", json).apply()
+
+    /** Which approved clan is shown this time; the clans take turns. */
+    fun clanTurn() = sp.getInt("clan_turn", 0)
+    fun setClanTurn(n: Int) = sp.edit().putInt("clan_turn", n).apply()
+
+    /** This phone's secret for the clan it registered, so only it can change that clan. */
+    fun clanToken(): String = sp.getString("clan_token", "") ?: ""
+    fun setClanToken(t: String) = sp.edit().putString("clan_token", t).apply()
+
+    /** Clans the user follows; their events show in the schedule tab. */
+    fun clanFollowing(): Set<String> = sp.getStringSet("clan_following", emptySet()) ?: emptySet()
+    fun setClanFollowing(ids: Set<String>) = sp.edit().putStringSet("clan_following", ids).apply()
+
+    /** "Close" on the clan card hides it for the rest of the day. */
+    fun clanCardClosedToday() = sp.getLong("clan_closed_day", -1) == java.time.LocalDate.now().toEpochDay()
+    fun closeClanCard() = sp.edit().putLong("clan_closed_day", java.time.LocalDate.now().toEpochDay()).apply()
+
     /** A single start time the user chose to skip; alarms resume with the start after it. */
     fun skip(e: GameEvent) = sp.getLong("skip_${e.key}", 0L)
     fun setSkip(e: GameEvent, start: Long) = sp.edit().putLong("skip_${e.key}", start).apply()
