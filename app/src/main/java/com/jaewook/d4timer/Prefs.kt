@@ -105,6 +105,10 @@ class Prefs(context: Context) {
         return if (s < e) m in s until e else m >= s || m < e
     }
 
+    /** Stay silent while the phone's Do Not Disturb is on (see [AlarmReceiver.phoneDnd]). */
+    fun followDnd() = sp.getBoolean("follow_dnd", false)
+    fun setFollowDnd(on: Boolean) = sp.edit().putBoolean("follow_dnd", on).apply()
+
     /** Ring only while the app is still in the recent apps list. */
     fun onlyOpen() = sp.getBoolean("only_open", false)
     fun setOnlyOpen(on: Boolean) = sp.edit().putBoolean("only_open", on).apply()

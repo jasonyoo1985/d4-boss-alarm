@@ -50,14 +50,14 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
         if (intent.action == ACTION_REMIND) {
-            if (start > System.currentTimeMillis() - 5 * MIN) notify(context, e, start)
+            if (start > System.currentTimeMillis() - 5 * MIN && !dndSilenced(context)) notify(context, e, start)
             return
         }
         val prefs = Prefs(context)
         // A task in the recents list means the user hasn't closed the app
         val closed = prefs.onlyOpen() &&
             context.getSystemService(android.app.ActivityManager::class.java).appTasks.isEmpty()
-        if (!closed && !prefs.isQuiet(System.currentTimeMillis(), e)) notify(context, e, start)
+        if (!closed && !prefs.isQuiet(System.currentTimeMillis(), e) && !dndSilenced(context)) notify(context, e, start)
         Alarms.schedule(context, e)
         Widgets.refreshAll(context)
     }
@@ -71,6 +71,15 @@ class AlarmReceiver : BroadcastReceiver() {
 
         /** Snoozing only makes sense while at least two minutes remain before the start. */
         private const val SNOOZE_MIN_LEFT = 2 * MIN
+
+        /** Phone Do Not Disturb is on in any mode (priority only, alarms only, total silence). */
+        fun phoneDnd(context: Context): Boolean {
+            val f = context.getSystemService(NotificationManager::class.java).currentInterruptionFilter
+            return f != NotificationManager.INTERRUPTION_FILTER_ALL && f != NotificationManager.INTERRUPTION_FILTER_UNKNOWN
+        }
+
+        /** The user chose to follow the phone's Do Not Disturb and it is on now; same for every event. */
+        fun dndSilenced(context: Context) = Prefs(context).followDnd() && phoneDnd(context)
 
         fun notificationId(e: GameEvent) = Schedule.events.indexOfFirst { it.key == e.key } + 1
 
