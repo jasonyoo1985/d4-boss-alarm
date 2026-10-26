@@ -251,6 +251,9 @@ class MainActivity : Activity() {
             .put("clanEvents", Clans.events(this))
             .put("clanFollowing", JSONArray(prefs.clanFollowing().toList()))
             .put("clanMine", prefs.clanToken().isNotEmpty())
+            .put("clanMineStatus", Clans.mineStatus(this) ?: JSONObject.NULL)
+            // A one-line notice the developer can post from season.json; the page checks its end date
+            .put("notice", runCatching { JSONObject(prefs.remoteConfig()).getJSONObject("notice") }.getOrNull() ?: JSONObject.NULL)
             // The card only greets someone who came in from an alarm, and only once a day if closed
             .put("fromAlarm", fromAlarm && !prefs.clanCardClosedToday())
             .put("bossList", JSONArray(prefs.bossList()))

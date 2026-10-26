@@ -44,7 +44,15 @@ object Clans {
         val parsed = runCatching { JSONObject(body) }.getOrNull() ?: return
         if (parsed.optJSONArray("featured") == null) return
         Prefs(context).setClans(clean(parsed).toString())
+        // A clan leader sees where their own application stands, including why it was turned down
+        val token = Prefs(context).clanToken()
+        if (token.isNotEmpty()) {
+            runCatching { JSONObject(get("$base?a=mine&token=$token")!!) }.getOrNull()
+                ?.takeIf { it.has("state") }?.let { Prefs(context).setClanMineStatus(it.toString()) }
+        }
     }
+
+    fun mineStatus(context: Context): JSONObject? = runCatching { JSONObject(Prefs(context).clanMineStatus()) }.getOrNull()
 
     /** Keeps only the fields the page uses and drops links that aren't an open chat or Discord invite. */
     private fun clean(o: JSONObject): JSONObject {

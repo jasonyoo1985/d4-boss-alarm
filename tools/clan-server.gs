@@ -72,6 +72,7 @@ function text_(s) {
 /** 앱이 읽어가는 목록. 개인정보나 연락처는 절대 내보내지 않습니다. */
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.a) || 'list';
+  if (action === 'mine') return mine_(String(e.parameter.token || '').trim());
   if (action !== 'list') return text_('');
   rotate_();
   var cfg = config_();
@@ -183,6 +184,20 @@ function apply_(p) {
     chat, discord, String(data.tag || '').slice(0, 40), String(data.contact || '').slice(0, 60), '대기', '', '', 0, 0, '']);
   notify_('새 클랜 신청: ' + name, '앱 관리자 화면에서 승인하거나 거절할 수 있어요.');
   return text_('신청이 접수됐어요. 확인되면 순서대로 노출돼요.');
+}
+
+/** 신청한 폰이 자기 신청의 상태와 거절 사유를 확인합니다 (토큰을 아는 폰만). */
+function mine_(token) {
+  if (token.length < 8) return json_({});
+  var values = sheet_('신청').getDataRange().getValues(), last = null, pos = 0;
+  for (var i = 1; i < values.length; i++) if (String(values[i][1]).trim() === token) last = i;
+  if (last === null) return json_({});
+  var r = values[last], state = String(r[9] || '').trim();
+  if (state === '예약') {
+    for (var k = 1; k <= last; k++) if (String(values[k][9]).trim() === '예약') pos++;
+  }
+  return json_({ name: String(r[2] || ''), state: state, reason: state === '거절' ? String(r[14] || '') : '',
+    pos: pos, ends: r[11] ? new Date(r[11]).getTime() : 0, time: r[0] ? new Date(r[0]).getTime() : 0 });
 }
 
 /** 사용자의 신고. 무료 클랜은 3건이면 저절로 숨고, 노출 중인 클랜은 숨기지 않고 알림만 보냅니다. */
