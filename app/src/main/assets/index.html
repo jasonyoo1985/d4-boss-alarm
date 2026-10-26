@@ -1370,9 +1370,15 @@ $("notice-line").onclick = e2 => {
 function openClan(view) { clanView = view || "list"; clanMsg = ""; paintClanSheet(); $("clan-wrap").classList.add("open"); }
 function closeClan() { $("clan-wrap").classList.remove("open"); clanView = "list"; }
 $("clan-scrim").onclick = closeClan;
-$("clan-line").onclick = () => go("clan");
+// 홈 한 줄이나 알람 카드를 누르면 그 클랜 카드로 바로 가요
+function goClanHero() {
+  go("clan");
+  const id = S.clan && S.clan.id;
+  setTimeout(() => { const el = id && $("hero-" + id); if (el) el.scrollIntoView({ block: "center" }); }, 60);
+}
+$("clan-line").onclick = goClanHero;
 // 카드의 빈 곳을 누르면 다른 클랜도 볼 수 있게 목록이 열려요
-$("clan-card").onclick = e2 => { if (!e2.target.closest("button")) go("clan"); };
+$("clan-card").onclick = e2 => { if (!e2.target.closest("button")) goClanHero(); };
 document.addEventListener("click", e2 => {
   const x = e2.target.closest("#clan-x");
   if (x) { S.fromAlarm = false; bridge && bridge.closeClanCard && bridge.closeClanCard(); paintClan(); return; }
@@ -1408,7 +1414,9 @@ function clanListHtml(cfg) {
     : me.state === "거절" ? `승인되지 않았어요${me.reason ? " · " + me.reason : ""}. 고쳐서 다시 신청할 수 있어요`
     : me.state === "종료" ? "홍보가 끝났어요. 다시 신청하면 대기 맨 뒤로 들어가요" : "";
   const ok = me && (me.state === "예약" || me.state === "노출");
-  let html = meText ? `<div class="clan-me ${ok ? "good" : "red"}"><b>내 신청 · ${esc(me.name || "")}</b>${esc(meText)}</div>` : "";
+  const mine = me && me.state === "노출" ? live.find(c => c.name === me.name) : null;
+  let html = meText ? `<div class="clan-me ${ok ? "good" : "red"}"><b>내 신청 · ${esc(me.name || "")}</b>${esc(meText)}${mine
+    ? `<div class="clan-btns"><button data-share="${esc(mine.id)}">우리 클랜 단톡방에 알리기</button></div>` : ""}</div>` : "";
   html += `<p class="clan-intro">마음에 드는 클랜에 바로 들어가고, 클랜장은 우리 클랜을${cfg.paid ? "" : " 무료로"} 알릴 수 있어요.</p>${clanSteps(cfg)}`;
 
   // 홍보 중인 클랜: 가장 크게, 가장 먼저
@@ -1476,21 +1484,30 @@ const clanSteps = cfg => (cfg.days || 30) === 30
   ? `<div class="clan-tiles"><img src="clan/step1.png" alt="1 앱에서 신청"><img src="clan/step2.png" alt="2 개발자 승인"><img src="clan/step3.png" alt="3 홈에 30일 노출"></div>`
   : `<div class="clan-steps">${["앱에서 신청", "개발자 승인", `홈에 ${cfg.days || 30}일 노출`].map((t, i) =>
   `<span class="orn"><em>${STEP_IC[i]}<i>${i + 1}</i></em>${t}</span>`).join("")}</div>`;
+// 쓰던 신청서는 지워지지 않게 (오류가 나도, 거절 뒤 다시 낼 때도 그대로)
+let clanDraft = (() => { try { return JSON.parse(localStorage.getItem("clanDraft") || "{}"); } catch (e) { return {}; } })();
+const saveDraft = () => { try { localStorage.setItem("clanDraft", JSON.stringify(clanDraft)); } catch (e) {} };
+// 카톡 [링크 복사]로 붙여넣은 긴 문장에서도 주소만 골라내요
+function pickLink(text, kind) {
+  const re = kind === "chat" ? /(?:https?:\/\/)?open\.kakao\.com\/[^\s<>"']+/i : /(?:https?:\/\/)?(?:discord\.gg|discord\.com\/invite)\/[^\s<>"']+/i;
+  const m = String(text || "").match(re);
+  return m ? "https://" + m[0].replace(/^https?:\/\//i, "") : "";
+}
 function clanApplyHtml(cfg) {
-  const days = cfg.days || 30;
+  const days = cfg.days || 30, d = clanDraft;
   return `${clanSteps(cfg)}<p class="note" style="margin-top:0">아래 칸만 채우면 신청 끝이에요. 승인되면 홈 화면과, 알람을 눌러 앱을 열었을 때 보이고 ${days}일 뒤 저절로 내려가요.${cfg.paid ? "" : " 베타 기간에는 무료예요."}</p>
     <div class="clan-lbl">클랜명 (게임에서 검색하기 쉽게 짧게)</div>
-    <input class="clan-in" id="cf-name" maxlength="20" placeholder="예) 대한민국클랜">
+    <input class="clan-in" id="cf-name" value="${esc(d.name || "")}" maxlength="20" placeholder="예) 대한민국클랜">
     <div class="clan-lbl">한 줄 소개</div>
-    <textarea class="clan-in ta" id="cf-line" maxlength="60" placeholder="예) 매일 저녁 월드보스 같이 잡아요. 초보 환영"></textarea>
+    <textarea class="clan-in ta" id="cf-line" maxlength="60" placeholder="예) 매일 저녁 월드보스 같이 잡아요. 초보 환영">${esc(d.line || "")}</textarea>
     <div class="clan-lbl">활동 시간</div>
-    <input class="clan-in" id="cf-when" maxlength="30" placeholder="예) 매일 21:00">
+    <input class="clan-in" id="cf-when" value="${esc(d.when || "")}" maxlength="30" placeholder="예) 매일 21:00">
     <div class="clan-lbl">가입 채널 (하나 이상)</div>
-    <input class="clan-in" id="cf-chat" inputmode="url" placeholder="오픈채팅 링크 (open.kakao.com)">
-    <input class="clan-in" id="cf-discord" inputmode="url" placeholder="디스코드 초대 링크 (discord.gg)">
-    <input class="clan-in" id="cf-tag" maxlength="40" placeholder="클랜장 배틀태그 (예: 홍길동#1234)">
+    <input class="clan-in" id="cf-chat" value="${esc(d.chat || "")}" inputmode="url" placeholder="오픈채팅 링크 (카톡 [링크 복사] 그대로 붙여넣기)">
+    <input class="clan-in" id="cf-discord" value="${esc(d.discord || "")}" inputmode="url" placeholder="디스코드 초대 링크 (discord.gg)">
+    <input class="clan-in" id="cf-tag" value="${esc(d.tag || "")}" maxlength="40" placeholder="클랜장 배틀태그 (예: 홍길동#1234)">
     <div class="clan-lbl">연락받을 곳 (공개되지 않아요)</div>
-    <input class="clan-in" id="cf-contact" maxlength="60" placeholder="이메일이나 오픈채팅 아이디">
+    <input class="clan-in" id="cf-contact" value="${esc(d.contact || "")}" maxlength="60" placeholder="이메일이나 오픈채팅 아이디">
     <div class="clan-q" style="margin-top:12px"><b>승인 기준</b> · 아래를 모두 지키면 <b>신청 순서대로</b> 승인해요<br>
       ${CLAN_RULES.map((r, i) => `${NUM[i]} ${r}`).join("<br>")}<br>
       · 거절되면 몇 번 기준 때문인지 이 화면에 표시돼요. 고쳐서 다음 날 다시 신청할 수 있어요<br>
@@ -1564,11 +1581,14 @@ function clanClick(e2) {
   }
   if (e2.target.closest("#cf-send")) {
     if (!$("cf-ok").checked) { clanMsg = { text: "운영 규칙에 동의해 주세요", bad: true }; paintClanSheet(); return; }
+    const rawChat = $("cf-chat").value.trim(), rawDiscord = $("cf-discord").value.trim();
     const form = {
       name: $("cf-name").value.trim(), line: $("cf-line").value.trim(), when: $("cf-when").value.trim(),
-      chat: $("cf-chat").value.trim(), discord: $("cf-discord").value.trim(),
+      chat: pickLink(rawChat, "chat"), discord: pickLink(rawDiscord, "discord"),
       tag: $("cf-tag").value.trim(), contact: $("cf-contact").value.trim()
     };
+    if (rawChat && !form.chat) { clanMsg = { text: "오픈채팅은 open.kakao.com 주소만 돼요. 카톡 오픈채팅방 → 메뉴 → [링크 복사] 후 붙여넣어 주세요", bad: true }; paintClanSheet(); return; }
+    if (rawDiscord && !form.discord) { clanMsg = { text: "디스코드는 초대 링크(discord.gg/…)만 돼요. 서버 이름 옆 [초대하기] → [링크 복사]", bad: true }; paintClanSheet(); return; }
     if (form.name.length < 2) { clanMsg = { text: "클랜명을 입력해 주세요", bad: true }; paintClanSheet(); return; }
     if (!form.chat && !form.discord && !form.tag) { clanMsg = { text: "가입 채널을 하나 이상 넣어 주세요", bad: true }; paintClanSheet(); return; }
     if (bridge && bridge.applyClan) { bridge.applyClan(JSON.stringify(form)); clanMsg = "보내는 중이에요…"; }
@@ -1604,6 +1624,11 @@ function clanClick(e2) {
   }
 }
 $("clan-body").addEventListener("click", clanClick);
+$("clan-body").addEventListener("input", e2 => {
+  const id = e2.target.id || "";
+  if (!id.startsWith("cf-") || id === "cf-ok") return;
+  clanDraft[id.slice(3)] = e2.target.value; saveDraft();
+});
 $("clan-page").addEventListener("click", clanClick);
 // 앱이 서버의 답을 돌려줘요
 window.clanDone = r => {
@@ -1627,6 +1652,8 @@ $("st-ver").closest(".info-row").onclick = () => {
   verTaps = 0;
   adminData = null;
   openClan("admin");
+  // 이번 실행 중에 한 번 들어왔으면 비밀번호를 다시 묻지 않아요
+  if (adminPw && bridge && bridge.clanAdmin) { bridge.clanAdmin(adminPw, "list", "", ""); clanMsg = "확인하는 중이에요…"; paintClanSheet(); }
 };
 
 /* ---------- navigation ---------- */
