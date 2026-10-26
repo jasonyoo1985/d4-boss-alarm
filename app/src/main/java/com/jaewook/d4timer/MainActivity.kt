@@ -34,10 +34,14 @@ class MainActivity : Activity() {
     private var pendingUpdate: String? = null
     private var updateManager: com.google.android.play.core.appupdate.AppUpdateManager? = null
     private var updateInfo: com.google.android.play.core.appupdate.AppUpdateInfo? = null
+    private var fromAlarm = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        fromAlarm = intent?.getBooleanExtra(EXTRA_FROM_ALARM, false) == true
+        // Each fresh open hands the slot to the next clan, so the approved clans share the exposure
+        Clans.nextTurn(this)
         Schedule.events.forEach { Alarms.ensureChannel(this, it) }
         // Android 13+ with predictive back never calls onBackPressed, so route back through the page here too
         if (Build.VERSION.SDK_INT >= 33) {
@@ -123,6 +127,15 @@ class MainActivity : Activity() {
         if (!pageReady) return
         pendingUpdate = null
         web.evaluateJavascript(js, null)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_FROM_ALARM, false)) {
+            fromAlarm = true
+            Clans.nextTurn(this)
+        }
     }
 
     override fun onPause() {
@@ -233,6 +246,13 @@ class MainActivity : Activity() {
             .put("followDnd", prefs.followDnd()).put("dndNow", AlarmReceiver.phoneDnd(this))
             .put("phoneVol", phoneAlarmVolume())
             .put("season", prefs.remoteSeason() ?: JSONObject.NULL)
+            .put("clan", Clans.featured(this) ?: JSONObject.NULL)
+            .put("clans", Clans.cached(this) ?: JSONObject.NULL)
+            .put("clanEvents", Clans.events(this))
+            .put("clanFollowing", JSONArray(prefs.clanFollowing().toList()))
+            .put("clanMine", prefs.clanToken().isNotEmpty())
+            // The card only greets someone who came in from an alarm, and only once a day if closed
+            .put("fromAlarm", fromAlarm && !prefs.clanCardClosedToday())
             .put("bossList", JSONArray(prefs.bossList()))
             .put("feedback", prefs.feedback())
             .put(
@@ -319,6 +339,68 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun setOnlyOpen(on: Boolean) = Prefs(this@MainActivity).setOnlyOpen(on)
+
+        /** Opens a clan's open chat or Discord invite; any other link is ignored (see [Clans.okLink]). */
+        @JavascriptInterface
+        fun openClanLink(url: String) = runOnUiThread {
+            if (Clans.okLink(url)) runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+        }
+
+        /** Sends the clan's name and how to join to this phone's own chat, to open on the PC. */
+        @JavascriptInterface
+        fun shareClan(name: String, text: String) = runOnUiThread {
+            val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+                .putExtra(Intent.EXTRA_SUBJECT, name)
+                .putExtra(Intent.EXTRA_TEXT, text)
+            runCatching { startActivity(Intent.createChooser(send, "PC로 보내기")) }
+        }
+
+        @JavascriptInterface
+        fun followClan(id: String, on: Boolean) {
+            val prefs = Prefs(this@MainActivity)
+            prefs.setClanFollowing(if (on) prefs.clanFollowing() + id else prefs.clanFollowing() - id)
+            runOnUiThread { refreshPage() }
+        }
+
+        @JavascriptInterface
+        fun closeClanCard() {
+            Prefs(this@MainActivity).closeClanCard()
+            fromAlarm = false
+            runOnUiThread { refreshPage() }
+        }
+
+        /** The page gets the server's answer back through window.clanDone(tag, text). */
+        private fun answer(tag: String, text: String?) = runOnUiThread {
+            refreshPage()
+            val payload = JSONObject().put("tag", tag).put("text", text ?: "")
+            web.evaluateJavascript("window.clanDone && clanDone($payload)", null)
+        }
+
+        @JavascriptInterface
+        fun applyClan(json: String) {
+            Thread {
+                val form = runCatching { JSONObject(json) }.getOrNull() ?: JSONObject()
+                answer("apply", Clans.apply(applicationContext, form))
+            }.start()
+        }
+
+        @JavascriptInterface
+        fun reportClan(id: String, reason: String) {
+            Thread { answer("report", Clans.report(applicationContext, id, reason)) }.start()
+        }
+
+        @JavascriptInterface
+        fun clanAdmin(pw: String, action: String, id: String, extra: String) {
+            Thread { answer("admin", Clans.admin(applicationContext, pw, action, id, extra)) }.start()
+        }
+
+        @JavascriptInterface
+        fun syncClans() {
+            Thread {
+                Clans.sync(applicationContext)
+                runOnUiThread { refreshPage() }
+            }.start()
+        }
 
         @JavascriptInterface
         fun setFollowDnd(on: Boolean) = Prefs(this@MainActivity).setFollowDnd(on)
@@ -442,6 +524,8 @@ class MainActivity : Activity() {
     }
 
     companion object {
+        /** Set on the notification's tap intent so the clan card only greets people coming from an alarm. */
+        const val EXTRA_FROM_ALARM = "from_alarm"
         private const val REQ_NOTIF = 1
         private const val REQ_UPDATE = 2
         private const val REQ_SOUND = 100
