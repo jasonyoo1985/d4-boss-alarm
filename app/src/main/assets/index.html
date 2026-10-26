@@ -309,8 +309,10 @@ svg{display:block}
 .notice-line .nx{flex:none;color:var(--dim);font-size:13px;padding:0 0 0 6px}
 #clan-page .clan-intro{margin-top:-4px}
 .ad-tag{flex:none;font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:1px 5px;border-radius:5px;color:#d9b66c;border:1px solid rgba(217,182,108,.55)}
-.clan-card{position:relative;border-radius:16px;padding:14px;margin:0 0 12px;
-  background:linear-gradient(180deg,#1c1407,#120d08);border:1px solid rgba(217,182,108,.5)}
+.clan-card{position:relative;overflow:hidden;border-radius:18px;padding:14px 14px 13px;margin:0 0 12px;
+  background:radial-gradient(120% 90% at 0% 0%,rgba(226,193,121,.22),transparent 60%),linear-gradient(160deg,#2a1d0a,#140d06 70%);
+  border:1.5px solid rgba(226,193,121,.75);box-shadow:0 8px 28px rgba(217,182,108,.18)}
+.clan-card .crest{width:44px;height:48px}.clan-card .ch-n{font-size:20px}
 .clan-card .cc-h{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .clan-card .cc-h svg,.clan-item .ci-h svg{width:18px;height:18px;flex:none;color:var(--gold)}
 .clan-card .cc-n{font-size:17px;font-weight:800;color:#f5e3bb;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -341,6 +343,54 @@ svg{display:block}
 .clan-lbl{font-size:12.5px;color:var(--muted);margin:10px 0 6px}
 .clan-ok{font-size:13px;color:#9fe0ae;line-height:1.6;padding:4px 2px}
 .clan-bad{color:#ff9c9c}
+/* 클랜 탭: 홍보 중인 클랜이 주인공 */
+.clan-me{font-size:13px;line-height:1.55;color:#d8ccbd;border-radius:12px;padding:10px 13px;margin:0 0 14px;background:rgba(159,224,174,.07);border:1px solid rgba(159,224,174,.3)}
+.clan-me b{display:block;color:#bfeec9;font-size:12.5px;margin-bottom:1px}
+.clan-sec{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:800;color:#f3e6cf;margin:4px 2px 9px}
+.clan-sec span{font-family:var(--cond,inherit);font-size:11px;font-weight:600;letter-spacing:.14em;color:#9c8558}
+.clan-hero{position:relative;overflow:hidden;border-radius:18px;padding:16px 15px 12px;margin:0 0 12px;
+  background:radial-gradient(120% 90% at 0% 0%,rgba(226,193,121,.22),transparent 60%),linear-gradient(160deg,#2a1d0a,#140d06 70%);
+  border:1.5px solid rgba(226,193,121,.75);box-shadow:0 0 0 1px rgba(0,0,0,.4) inset,0 8px 28px rgba(217,182,108,.18)}
+.clan-hero::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,236,190,.13),transparent);transform:skewX(-18deg);animation:shine 5.5s ease-in-out infinite}
+@keyframes shine{0%,60%{left:-60%}100%{left:130%}}
+@media (prefers-reduced-motion:reduce){.clan-hero::after{animation:none;display:none}}
+.ch-top{display:flex;align-items:center;gap:12px}
+.ch-nm{flex:1;min-width:0}
+.ch-n{display:block;font-size:22px;font-weight:900;letter-spacing:-.01em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:linear-gradient(180deg,#fff6dc,#e2c179);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ch-meta{display:flex;gap:6px;margin-top:4px}
+.ch-meta i{font-style:normal;font-size:11.5px;color:#e9d4a4;padding:2px 7px;border-radius:6px;background:rgba(226,193,121,.13)}
+.ch-l{font-size:14.5px;line-height:1.5;color:#f1e4cc;margin:12px 0 2px;padding-left:10px;border-left:2px solid rgba(226,193,121,.6);word-break:keep-all}
+.clan-hero .clan-btns button{height:46px;font-size:15px}
+.ch-sub{display:flex;justify-content:space-between;margin-top:9px}
+.ch-sub button{font-size:12.5px;color:#bfa772;padding:4px 2px}
+.ch-sub button[aria-pressed=true]{color:#f0d48f;font-weight:700}
+.ch-sub button:last-child{color:var(--dim)}
+.crest{position:relative;flex:none;width:50px;height:54px;display:grid;place-items:center}
+.crest svg{position:absolute;inset:0;width:100%;height:100%;fill:#c9a14f;filter:drop-shadow(0 2px 6px rgba(217,182,108,.45))}
+.crest b{position:relative;font-size:21px;font-weight:900;color:#2a1a05;margin-top:-3px}
+.crest.empty svg{fill:none;stroke:rgba(226,193,121,.7);stroke-width:1.2;stroke-dasharray:2.2 1.6;filter:none}
+.crest.empty b{color:#e2c179}
+.clan-slot{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border-radius:18px;padding:13px 15px;margin:0 0 12px;
+  border:1.5px dashed rgba(226,193,121,.55);background:rgba(226,193,121,.05)}
+.cs-t{flex:1;min-width:0;font-size:12.5px;color:#cbb88f;line-height:1.5}
+.cs-t b{display:block;font-size:16px;color:#f5e3bb;margin-bottom:1px}
+.cs-n{flex:none;text-align:center;font-size:12px;font-weight:800;line-height:1.3;color:#1a1208;background:linear-gradient(180deg,#e2c179,#c49e4d);border-radius:10px;padding:7px 9px}
+.clan-qline{font-size:12.5px;line-height:1.7;color:#bfb4a8;padding:0 4px 10px}
+.clan-qline b{color:#f0dcae}
+.clan-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#0f0b0a;border:1px solid var(--line);margin-bottom:7px}
+.cr-t{flex:1;min-width:0;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-t b{color:#efe3d3;font-size:14px;margin-right:7px}
+.clan-row button{flex:none;height:32px;padding:0 12px;border-radius:9px;font-size:13px;font-weight:700;color:#1a1208;background:linear-gradient(180deg,#e2c179,#c49e4d)}
+.clan-row button.ghost{color:#e2c179;background:none;border:1px solid rgba(217,182,108,.45);padding:0 10px}
+.clan-pitch{border-radius:18px;padding:15px;margin:18px 0 10px;background:linear-gradient(180deg,#17110a,#0e0a08);border:1px solid rgba(217,182,108,.3)}
+.cp-h{display:flex;align-items:baseline;gap:8px;font-size:16px;font-weight:800;color:#f5e3bb;margin-bottom:10px}
+.cp-h span{font-size:11px;font-weight:600;letter-spacing:.14em;color:#9c8558}
+.cp-g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.cp-g span{font-size:11.5px;line-height:1.4;color:#bfae8a;padding:9px 8px;border-radius:10px;background:rgba(226,193,121,.07)}
+.cp-g b{display:block;font-size:13px;color:#f3e2bd;margin-bottom:3px}
+.clan-pitch .clan-btns button{height:48px;font-size:15.5px}
 .ad-note{font-size:11.5px;color:var(--dim);padding:2px 4px;line-height:1.6}
 .adm-row{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}
 .adm-row .ar-n{flex:1;min-width:0}
@@ -1192,8 +1242,9 @@ function paintClan() {
   const card = $("clan-card");
   card.hidden = !(c && S.fromAlarm);
   if (!card.hidden) {
-    card.innerHTML = `<div class="cc-h">${SHIELD}<span class="cc-n">${esc(c.name)}</span>${AD}<button class="cc-x" id="clan-x" aria-label="닫기">✕</button></div>
-      ${c.line ? `<div class="cc-l">${esc(c.line)}</div>` : ""}${c.when ? `<div class="cc-w">활동 ${esc(c.when)}</div>` : ""}${clanButtons(c)}`;
+    card.innerHTML = `<div class="ch-top">${crest(c.name)}<div class="ch-nm"><span class="ch-n">${esc(c.name)}</span>
+      <span class="ch-meta">${c.when ? `<i>⏰ ${esc(c.when)}</i>` : ""}<i>오늘의 추천 클랜</i></span></div>${AD}<button class="cc-x" id="clan-x" aria-label="닫기">✕</button></div>
+      ${c.line ? `<div class="ch-l">${esc(c.line)}</div>` : ""}${clanButtons(c)}`;
   }
   requestAnimationFrame(fitClan);
 }
@@ -1257,39 +1308,49 @@ function paintClanPage() {
 }
 function clanListHtml(cfg) {
   const live = cfg.featured || [], queue = cfg.queue || [];
-  const slots = cfg.slots || 3;
+  const slots = cfg.slots || 3, days = cfg.days || 30, free = Math.max(0, slots - live.length);
   const me = S.clanMineStatus;
   const meText = !me || !me.state ? "" : me.state === "대기" ? "확인 중이에요. 신청 순서대로 보고 있어요"
     : me.state === "예약" ? `승인됐어요 · 대기 ${me.pos || 1}번, 자리가 나면 바로 시작돼요`
-    : me.state === "노출" ? `노출 중이에요${me.ends ? " · " + daysLeft(me.ends) : ""}`
+    : me.state === "노출" ? `지금 홍보 중이에요${me.ends ? " · " + daysLeft(me.ends) : ""}`
     : me.state === "거절" ? `승인되지 않았어요${me.reason ? " · " + me.reason : ""}. 고쳐서 다시 신청할 수 있어요`
-    : me.state === "종료" ? "노출이 끝났어요. 다시 신청하면 대기 맨 뒤로 들어가요" : "";
-  let html = (meText ? `<div class="clan-q"><b>내 신청 · ${esc(me.name || "")}</b><br>${esc(meText)}</div>` : "") + `<p class="clan-intro">마음에 드는 클랜에 바로 들어가고, 클랜장은 우리 클랜을${cfg.paid ? "" : " 무료로"} 알릴 수 있어요.</p>${clanSteps(cfg)}<div class="clan-q">`;
-  if (live.length) {
-    html += live.map(c => `지금 노출 중 <b>${esc(c.name)}</b>${c.ends ? ` · ${daysLeft(c.ends)}` : ""}`).join("<br>");
-    if (live.length < slots) html += `<br>남은 자리 <b>${slots - live.length}곳</b> · 승인되면 바로 시작돼요`;
-  } else {
-    html += `홍보 자리 <b>${slots}곳</b>이 비어 있어요 · 승인되면 바로 시작돼요`;
+    : me.state === "종료" ? "홍보가 끝났어요. 다시 신청하면 대기 맨 뒤로 들어가요" : "";
+  let html = meText ? `<div class="clan-me"><b>내 신청 · ${esc(me.name || "")}</b>${esc(meText)}</div>` : "";
+
+  // 홍보 중인 클랜: 가장 크게, 가장 먼저
+  html += `<div class="clan-sec">지금 홍보 중<span>FEATURED</span></div>`;
+  html += live.map(c => `<div class="clan-hero">
+      <div class="ch-top">${crest(c.name)}<div class="ch-nm"><span class="ch-n">${esc(c.name)}</span>
+        <span class="ch-meta">${c.when ? `<i>⏰ ${esc(c.when)}</i>` : ""}${c.ends ? `<i>${daysLeft(c.ends)}</i>` : ""}</span></div>${AD}</div>
+      ${c.line ? `<div class="ch-l">${esc(c.line)}</div>` : ""}
+      ${clanButtons(c)}
+      <div class="ch-sub"><button data-follow="${esc(c.id)}" aria-pressed="${isFollowing(c.id)}">${isFollowing(c.id) ? "✓ 관심 클랜" : "☆ 관심 (일정 받기)"}</button><button data-report="${esc(c.id)}">신고</button></div>
+    </div>`).join("");
+  // 빈 자리: "여기에 우리 클랜을"
+  if (free > 0) html += `<button class="clan-slot" data-view="apply">${crest("?", true)}<span class="cs-t"><b>이 자리에 우리 클랜을</b>홈·알람 화면에 ${days}일${cfg.paid ? "" : " · 베타 무료"}</span><span class="cs-n">${free}자리<br>남음</span></button>`;
+  if (queue.length) html += `<div class="clan-qline">${queue.map((q, i) => `대기 ${i + 1}번 <b>${esc(q.name)}</b>${q.starts ? ` · ${dateShort(q.starts)} 시작 예정` : ""}`).join("<br>")}</div>`;
+
+  // 지난 클랜은 작게
+  const past = clanAll().filter(c => !live.some(f => f.id === c.id));
+  if (past.length) {
+    html += `<div class="clan-sec">다른 클랜<span>MORE CLANS</span></div>` + past.map(c => `<div class="clan-row">
+      <span class="cr-t"><b>${esc(c.name)}</b>${esc(c.line || "")}</span>
+      ${c.chat || c.discord ? `<button data-join="${esc(c.chat || c.discord)}">가입</button>` : ""}
+      <button class="ghost" data-follow="${esc(c.id)}" aria-pressed="${isFollowing(c.id)}">${isFollowing(c.id) ? "✓" : "☆"}</button></div>`).join("");
   }
-  if (queue.length) html += "<br>" + queue.map((q, i) => `대기 ${i + 1}번 <b>${esc(q.name)}</b>${q.starts ? ` · ${dateShort(q.starts)} 시작 예정` : ""}`).join("<br>");
-  html += `</div>`;
-  const all = clanAll();
-  html += all.length
-    ? all.map(c => {
-        const pin = (cfg.featured || []).some(f => f.id === c.id);
-        return `<div class="clan-item${pin ? " pin" : ""}">
-          <div class="ci-h">${pin ? SHIELD : ""}<span class="ci-n">${esc(c.name)}</span>${pin ? AD : ""}
-            <button class="ci-f" data-follow="${esc(c.id)}" aria-pressed="${isFollowing(c.id)}">${isFollowing(c.id) ? "✓ 관심" : "관심"}</button></div>
-          ${c.line ? `<div class="ci-l">${esc(c.line)}</div>` : ""}${c.when ? `<div class="ci-w">활동 ${esc(c.when)}</div>` : ""}
-          ${clanButtons(c)}
-          <div style="text-align:right"><button class="ci-f" style="margin-top:8px" data-report="${esc(c.id)}">신고</button></div>
-        </div>`;
-      }).join("")
-    : `<p class="note">아직 등록된 클랜이 없어요. 첫 번째로 등록해 보세요.</p>`;
-  html += `<div class="clan-btns" style="margin-top:14px"><button data-view="apply">우리 클랜 등록${S.clanMine ? " / 내 클랜" : ""}</button></div>
-    <p class="ad-note">클랜 정보는 클랜장이 직접 올린 내용이에요. 가입은 각 클랜 채널에서 진행돼요.${cfg.paid ? "" : " 베타 기간에는 무료로 노출돼요."}</p>`;
+
+  // 클랜장이 얻는 것
+  html += `<div class="clan-pitch">
+    <div class="cp-h">클랜장이라면<span>FOR CLAN LEADERS</span></div>
+    <div class="cp-g"><span><b>홈 화면 맨 위</b>앱을 열 때마다 우리 클랜 한 줄</span><span><b>알람 화면 카드</b>보스 알람을 누르면 크게</span><span><b>관심 클랜 일정</b>우리 클랜 일정이 일정 탭에</span></div>
+    ${clanSteps(cfg)}
+    <div class="clan-btns"><button data-view="apply">우리 클랜 등록하기${cfg.paid ? "" : " · 베타 무료"}</button></div>
+  </div>
+  <p class="ad-note">클랜 정보는 클랜장이 직접 올린 내용이에요. 가입은 각 클랜 채널에서 진행돼요. 승인 기준은 등록 화면에 공개돼 있어요.</p>`;
   return html;
 }
+// 클랜 문장: 방패 안에 클랜명 첫 글자
+const crest = (name, empty) => `<span class="crest${empty ? " empty" : ""}"><svg viewBox="0 0 24 24"><path d="M12 1.8l8.6 3.2v6.6c0 5.4-3.7 10.1-8.6 11.6C7.1 21.7 3.4 17 3.4 11.6V5L12 1.8z"/></svg><b>${esc(Array.from(String(name || "?").trim())[0] || "?")}</b></span>`;
 const daysLeft = end => {
   const d = Math.ceil((end - Date.now()) / (24 * 60 * MIN));
   return d <= 0 ? "오늘까지" : `${d}일 남음`;
