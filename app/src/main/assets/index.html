@@ -251,7 +251,7 @@ svg{display:block}
 
 /* ---------- bottom nav ---------- */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:6px 8px calc(6px + var(--sab));
-  display:grid;grid-template-columns:repeat(5,1fr);background:rgba(8,6,6,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+  display:grid;grid-template-columns:repeat(6,1fr);background:rgba(8,6,6,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
 .nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 8px;color:var(--dim);font-size:12px;font-weight:600;position:relative}
 .nav svg{width:26px;height:26px}
 .nav button[aria-current=page]{color:var(--boss)}
@@ -307,7 +307,7 @@ svg{display:block}
 .clan-line b{color:#fff}
 .notice-line{color:#e8dccb;background:linear-gradient(90deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border-color:var(--line)}
 .notice-line .nx{flex:none;color:var(--dim);font-size:13px;padding:0 0 0 6px}
-#fb-clan{margin:14px 0 0}
+#clan-page .clan-intro{margin-top:-4px}
 .ad-tag{flex:none;font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:1px 5px;border-radius:5px;color:#d9b66c;border:1px solid rgba(217,182,108,.55)}
 .clan-card{position:relative;border-radius:16px;padding:14px;margin:0 0 12px;
   background:linear-gradient(180deg,#1c1407,#120d08);border:1px solid rgba(217,182,108,.5)}
@@ -445,6 +445,13 @@ svg{display:block}
 </section>
 
 <!-- ================= 정보 ================= -->
+<!-- ================= 클랜 ================= -->
+<section id="p-clan" class="page" hidden style="--c:#d9b66c;--rgb:217,182,108">
+  <h1 class="page-title">CLAN</h1>
+  <p class="page-sub">같이 보스 잡을 클랜 찾기<span class="en b">Find a clan for boss runs</span></p>
+  <div id="clan-page"></div>
+</section>
+
 <section id="p-info" class="page" hidden>
   <h1 class="page-title">SETTINGS</h1>
   <p class="page-sub">알림이 제때 울리도록 권한을 확인하세요<span class="en b">Check permissions so alerts ring on time</span></p>
@@ -533,7 +540,6 @@ svg{display:block}
   <p class="fb-done" id="fb-done" hidden></p>
   <p class="note">익명으로 전달되며 개발자만 볼 수 있어요. 몇 번이든 다시 보낼 수 있어요. 고칠 때 참고하도록 앱 버전과 폰 기종만 함께 보내요. 개발자가 답을 남기면 아래에 표시돼요.</p>
   <div id="fb-list"></div>
-  <button class="clan-line" id="fb-clan" hidden></button>
   <a href="#" class="dev-card">
     <span class="dev-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r=".9" fill="currentColor"/><circle cx="7" cy="17" r=".9" fill="currentColor"/></svg></span>
     <span class="dev-tx"><span class="dev-k">개발자 운영 사이트<span class="en b">Developer's site</span></span><span class="dev-v">stackupinfra.com (IT 인프라 입문 홈페이지)</span></span>
@@ -543,8 +549,9 @@ svg{display:block}
 
 <nav class="nav" id="nav">
   <button data-go="home" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 2.5l3.2 4.3C7.8 5.7 9.8 5 12 5s4.2.7 5.8 1.8L21 2.5l-.6 6.3c.9 1.3 1.4 2.8 1.4 4.4 0 2.8-1.6 5.2-4 6.6V22h-2.6v-1.9h-1.9V22h-2.6v-1.9H8.8V22H6.2v-2.2c-2.4-1.4-4-3.8-4-6.6 0-1.6.5-3.1 1.4-4.4L3 2.5zm5.3 9.2c-1.2 0-2.1.9-2.1 2s1 2 2.4 2c1.1 0 1.8-.6 1.8-1.3 0-1.4-.9-2.7-2.1-2.7zm7.4 0c-1.2 0-2.1 1.3-2.1 2.7 0 .7.7 1.3 1.8 1.3 1.4 0 2.4-.9 2.4-2s-.9-2-2.1-2zM12 15.6l-1.2 2.2h2.4L12 15.6z"/></svg>알림</button>
-  <button data-go="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01" stroke-width="2.6"/></svg>전체 일정</button>
+  <button data-go="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01" stroke-width="2.6"/></svg>일정</button>
   <button data-go="builds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>공략</button>
+  <button data-go="clan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.8l7.5 2.8v5.8c0 4.7-3.2 8.8-7.5 10-4.3-1.2-7.5-5.3-7.5-10V5.6L12 2.8z"/><path d="M8.5 11.5l2.5 2.5 4.5-4.5"/></svg>클랜</button>
   <button data-go="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><path d="M12 7.5h.01" stroke-width="2.6"/></svg>정보</button>
   <button data-go="feedback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/><path d="M8.5 8.5h7M8.5 11.5h4.5"/></svg>의견</button>
 </nav>
@@ -566,7 +573,7 @@ svg{display:block}
   <div class="scrim" id="clan-scrim"></div>
   <div class="sheet" role="dialog" aria-modal="true">
     <div class="grab"></div>
-    <h2>클랜 모집</h2>
+    <h2 id="clan-h">클랜 모집</h2>
     <div id="clan-body"></div>
   </div>
 </div>
@@ -1175,18 +1182,12 @@ function paintClan() {
   // 홈 한 줄: 이번에 보여줄 클랜 하나만
   const c = S.clan;
   const card0 = c && S.fromAlarm;
-  const line = $("clan-line"), cfg = S.clans;
-  // 자리가 비면 클랜장에게 신청 창구를 알려요 (서버가 연결된 폰에서만)
-  const free = cfg ? (cfg.slots || 3) - (cfg.featured || []).length : 0;
-  const beta = cfg && !cfg.paid ? " · 베타 무료" : "";
-  line.hidden = card0 || !(c || free > 0);
-  line.dataset.open = c ? "list" : "apply";
+  const line = $("clan-line");
+  // 홈에는 홍보 중인 클랜 한 줄만 (없으면 아무것도 안 떠요). 나머지는 클랜 탭에 모여요
+  line.hidden = !c || card0;
   if (c) line.innerHTML = `${SHIELD}<span class="cl-t"><b>${esc(c.name)}</b>${c.line ? " · " + esc(c.line) : ""}</span>${AD}${CHEV}`;
-  else if (free > 0) line.innerHTML = `${SHIELD}<span class="cl-t">클랜장이세요? 홍보 자리 <b>${free}곳</b> 비었어요${beta}</span>${CHEV}`;
-  const fb = $("fb-clan");
-  fb.hidden = !cfg;
-  if (cfg) fb.innerHTML = `${SHIELD}<span class="cl-t">클랜장이라면 <b>우리 클랜 홍보 신청</b>${beta}</span>${CHEV}`;
   paintNotice();
+  if (page === "clan") paintClanPage();
   // 알람을 눌러 들어왔을 때만 뜨는 카드
   const card = $("clan-card");
   card.hidden = !(c && S.fromAlarm);
@@ -1197,7 +1198,7 @@ function paintClan() {
   requestAnimationFrame(fitClan);
 }
 function fitClan() {
-  for (const id of ["clan-line", "notice-line", "fb-clan"]) {
+  for (const id of ["clan-line", "notice-line"]) {
     const t = $(id).querySelector(".cl-t");
     if (!t || !t.offsetParent) continue;
     t.style.fontSize = "";
@@ -1219,16 +1220,16 @@ function paintNotice() {
 $("notice-line").onclick = e2 => {
   const n = S.notice; if (!n) return;
   if (e2.target.closest("[data-nx]")) { try { localStorage.setItem(noticeKey(n), "1"); } catch (e) {} $("notice-line").hidden = true; return; }
-  if (n.open === "clan") openClan("apply");
+  if (n.open === "clan") go("clan");
   else if (n.open === "feedback") go("feedback");
 };
-$("fb-clan").onclick = () => openClan("apply");
+
 function openClan(view) { clanView = view || "list"; clanMsg = ""; paintClanSheet(); $("clan-wrap").classList.add("open"); }
 function closeClan() { $("clan-wrap").classList.remove("open"); clanView = "list"; }
 $("clan-scrim").onclick = closeClan;
-$("clan-line").onclick = () => openClan($("clan-line").dataset.open || "list");
+$("clan-line").onclick = () => go("clan");
 // 카드의 빈 곳을 누르면 다른 클랜도 볼 수 있게 목록이 열려요
-$("clan-card").onclick = e2 => { if (!e2.target.closest("button")) openClan("list"); };
+$("clan-card").onclick = e2 => { if (!e2.target.closest("button")) go("clan"); };
 document.addEventListener("click", e2 => {
   const x = e2.target.closest("#clan-x");
   if (x) { S.fromAlarm = false; bridge && bridge.closeClanCard && bridge.closeClanCard(); paintClan(); return; }
@@ -1244,11 +1245,26 @@ document.addEventListener("click", e2 => {
 
 function paintClanSheet() {
   const b = $("clan-body"), cfg = S.clans || {};
-  if (clanView === "apply") { b.innerHTML = clanApplyHtml(cfg); return; }
+  $("clan-h").textContent = clanView === "admin" ? "클랜 관리" : "우리 클랜 홍보 신청";
   if (clanView === "admin") { b.innerHTML = adminHtml(); return; }
+  b.innerHTML = clanApplyHtml(cfg);
+}
+// 클랜 탭: 소개, 내 신청, 자리와 대기 순서, 클랜 목록, 등록 버튼
+function paintClanPage() {
+  const el = $("clan-page");
+  if (!S.clans) { el.innerHTML = `<p class="note">클랜 목록을 불러오는 중이에요. 인터넷에 연결되면 보여요.</p>`; return; }
+  el.innerHTML = clanListHtml(S.clans);
+}
+function clanListHtml(cfg) {
   const live = cfg.featured || [], queue = cfg.queue || [];
   const slots = cfg.slots || 3;
-  let html = `<p class="clan-intro"><b>같이 보스 잡을 클랜을 찾는 곳이에요</b>마음에 드는 클랜에 바로 들어가고, 클랜장은 우리 클랜을${cfg.paid ? "" : " 무료로"} 알릴 수 있어요.</p>${clanSteps(cfg)}<div class="clan-q">`;
+  const me = S.clanMineStatus;
+  const meText = !me || !me.state ? "" : me.state === "대기" ? "확인 중이에요. 신청 순서대로 보고 있어요"
+    : me.state === "예약" ? `승인됐어요 · 대기 ${me.pos || 1}번, 자리가 나면 바로 시작돼요`
+    : me.state === "노출" ? `노출 중이에요${me.ends ? " · " + daysLeft(me.ends) : ""}`
+    : me.state === "거절" ? `승인되지 않았어요${me.reason ? " · " + me.reason : ""}. 고쳐서 다시 신청할 수 있어요`
+    : me.state === "종료" ? "노출이 끝났어요. 다시 신청하면 대기 맨 뒤로 들어가요" : "";
+  let html = (meText ? `<div class="clan-q"><b>내 신청 · ${esc(me.name || "")}</b><br>${esc(meText)}</div>` : "") + `<p class="clan-intro">마음에 드는 클랜에 바로 들어가고, 클랜장은 우리 클랜을${cfg.paid ? "" : " 무료로"} 알릴 수 있어요.</p>${clanSteps(cfg)}<div class="clan-q">`;
   if (live.length) {
     html += live.map(c => `지금 노출 중 <b>${esc(c.name)}</b>${c.ends ? ` · ${daysLeft(c.ends)}` : ""}`).join("<br>");
     if (live.length < slots) html += `<br>남은 자리 <b>${slots - live.length}곳</b> · 승인되면 바로 시작돼요`;
@@ -1272,7 +1288,7 @@ function paintClanSheet() {
     : `<p class="note">아직 등록된 클랜이 없어요. 첫 번째로 등록해 보세요.</p>`;
   html += `<div class="clan-btns" style="margin-top:14px"><button data-view="apply">우리 클랜 등록${S.clanMine ? " / 내 클랜" : ""}</button></div>
     <p class="ad-note">클랜 정보는 클랜장이 직접 올린 내용이에요. 가입은 각 클랜 채널에서 진행돼요.${cfg.paid ? "" : " 베타 기간에는 무료로 노출돼요."}</p>`;
-  b.innerHTML = html;
+  return html;
 }
 const daysLeft = end => {
   const d = Math.ceil((end - Date.now()) / (24 * 60 * MIN));
@@ -1280,6 +1296,15 @@ const daysLeft = end => {
 };
 const dateShort = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}`; };
 
+// 승인 기준: 신청 화면과 관리 화면이 같은 번호를 써요. 기준을 다 지키면 신청 순서대로 승인해요
+const CLAN_RULES = [
+  "가입 채널(오픈채팅·디스코드)이 실제로 열리거나 클랜장 배틀태그가 있어요",
+  "현금·계정 거래, 도박, 욕설·혐오, 성인 내용이 없어요",
+  "다른 앱·사이트·상품 광고나 공식 클랜 사칭이 없어요",
+  "한 클랜은 한 번에 한 건만 (노출·대기 중이면 끝난 뒤 다시)",
+  "신청자에게 게임에서 클랜장이 먼저 초대를 보내요"
+];
+const NUM = ["①", "②", "③", "④", "⑤"];
 // 신청 → 승인 → 노출, 처음 온 사람도 한눈에
 const clanSteps = cfg => `<div class="clan-steps"><span><i>1</i>앱에서 신청</span><span><i>2</i>개발자 승인</span><span><i>3</i>홈에 ${cfg.days || 30}일 노출</span></div>`;
 function clanApplyHtml(cfg) {
@@ -1297,10 +1322,10 @@ function clanApplyHtml(cfg) {
     <input class="clan-in" id="cf-tag" maxlength="40" placeholder="클랜장 배틀태그 (예: 홍길동#1234)">
     <div class="clan-lbl">연락받을 곳 (공개되지 않아요)</div>
     <input class="clan-in" id="cf-contact" maxlength="60" placeholder="이메일이나 오픈채팅 아이디">
-    <div class="clan-q" style="margin-top:12px">운영 규칙에 동의해야 신청할 수 있어요.<br>
-      · 신청자에게 <b>게임에서 클랜장이 먼저 초대</b>를 보내 주세요<br>
-      · 현금거래·계정거래·도박·욕설 클랜은 받지 않아요<br>
-      · 순서는 <b>승인된 순서</b>대로이고, 중간에 바꾸지 않아요<br>
+    <div class="clan-q" style="margin-top:12px"><b>승인 기준</b> · 아래를 모두 지키면 <b>신청 순서대로</b> 승인해요<br>
+      ${CLAN_RULES.map((r, i) => `${NUM[i]} ${r}`).join("<br>")}<br>
+      · 거절되면 몇 번 기준 때문인지 이 화면에 표시돼요. 고쳐서 다음 날 다시 신청할 수 있어요<br>
+      · 노출 순서는 <b>승인된 순서</b>대로이고, 중간에 바꾸지 않아요 (개발자 지인 클랜도 같아요)<br>
       · 노출은 ${days}일이고 끝나면 저절로 내려가요 (연장은 대기 맨 뒤)<br>
       · 가입자 수는 약속하지 않아요. 파는 것은 노출 기간이에요<br>
       · 정식 출시 뒤에는 유료로 바뀔 수 있어요 (그 전까지는 무료)</div>
@@ -1326,7 +1351,7 @@ function adminHtml() {
   const order = { "대기": 0, "노출": 1, "예약": 2, "종료": 3, "거절": 4 };
   items.sort((a, b) => (order[a.state] ?? 9) - (order[b.state] ?? 9) || b.time - a.time);
   let html = `<p class="note" style="margin-top:0">자리 ${adminData.slots}곳 · ${adminData.days}일 · ${adminData.paid ? "유료 모드" : "무료(베타)"} · 설정은 시트에서 바꿔요</p>`;
-  if (items.some(c => c.state === "대기")) html += `<div class="clan-q">승인 전 확인할 것<br>· 클랜명·소개에 <b>현금거래, 도박, 욕설, 광고성 문구</b>가 없는지<br>· <b>[열어보기]</b>로 오픈채팅·디스코드가 실제로 열리는지<br>· 같은 클랜이 이미 노출·대기 중이 아닌지</div>`;
+  if (items.some(c => c.state === "대기")) html += `<div class="clan-q"><b>승인 기준</b> · 모두 맞으면 승인, 하나라도 어기면 그 번호로 거절<br>${CLAN_RULES.slice(0, 4).map((r, i) => `${NUM[i]} ${r}`).join("<br>")}<br>· 오래된 신청부터 처리해요 (공개된 약속이에요)</div>`;
   html += items.map(c => {
     const live = c.state === "노출";
     let btns = "";
@@ -1342,16 +1367,20 @@ function adminHtml() {
   return html;
 }
 
-$("clan-body").addEventListener("click", e2 => {
+function clanClick(e2) {
   const v = e2.target.closest("[data-view]");
-  if (v) { clanView = v.dataset.view; clanMsg = ""; paintClanSheet(); return; }
+  if (v) {
+    if (v.dataset.view === "list") { closeClan(); go("clan"); return; }
+    if (!$("clan-wrap").classList.contains("open")) { openClan(v.dataset.view); return; }
+    clanView = v.dataset.view; clanMsg = ""; paintClanSheet(); return;
+  }
   const f = e2.target.closest("[data-follow]");
   if (f) {
     const id = f.dataset.follow, on = !isFollowing(id);
     S.clanFollowing = on ? [...(S.clanFollowing || []), id] : (S.clanFollowing || []).filter(x => x !== id);
     bridge && bridge.followClan && bridge.followClan(id, on);
-    paintClanSheet();
-    toast(on ? "관심 클랜에 담았어요. 전체 일정에서 이 클랜 일정이 보여요" : "관심을 해제했어요");
+    paintClanPage();
+    toast(on ? "관심 클랜에 담았어요. 일정 탭에서 이 클랜 일정이 보여요" : "관심을 해제했어요");
     return;
   }
   const r = e2.target.closest("[data-report]");
@@ -1390,13 +1419,21 @@ $("clan-body").addEventListener("click", e2 => {
     const act = a.dataset.adm;
     let extra = "";
     if (act === "extend") extra = "7";
-    if (act === "reject") { extra = prompt("거절 사유 (선택)") || ""; }
+    if (act === "reject") {
+      const n = prompt("어긴 기준 번호를 넣어 주세요\n" + CLAN_RULES.map((r, i) => `${i + 1}. ${r}`).join("\n"));
+      if (n === null) return;
+      const i = parseInt(n, 10) - 1;
+      extra = CLAN_RULES[i] ? `${NUM[i]} ${CLAN_RULES[i]}` : n.trim();
+      if (!extra) return;
+    }
     if (act === "stop" && !confirm("지금 바로 내릴까요?")) return;
     bridge && bridge.clanAdmin(adminPw, act, a.dataset.id, extra);
     clanMsg = "처리하는 중이에요…";
     paintClanSheet();
   }
-});
+}
+$("clan-body").addEventListener("click", clanClick);
+$("clan-page").addEventListener("click", clanClick);
 // 앱이 서버의 답을 돌려줘요
 window.clanDone = r => {
   if (r.tag === "admin") {
@@ -1422,7 +1459,7 @@ $("st-ver").closest(".info-row").onclick = () => {
 };
 
 /* ---------- navigation ---------- */
-const PAGES = ["home", "schedule", "builds", "info", "feedback"];
+const PAGES = ["home", "schedule", "builds", "clan", "info", "feedback"];
 let page = "home";
 function go(p) {
   page = p;
@@ -1432,6 +1469,7 @@ function go(p) {
   }
   if (p === "schedule") renderSchedule(Date.now());
   if (p === "info") paintInfo();
+  if (p === "clan") paintClanPage();
   fitDev(); fitQuiet();
   if (p === "feedback" && bridge && bridge.checkReplies) bridge.checkReplies();
   if (p === "feedback" && (S.feedback || []).some(f => f.answer && !f.seen)) {
@@ -1484,8 +1522,8 @@ const WHATS_NEW = {
   "2.5": ["클랜 모집이 생겼어요. 홈의 클랜 줄을 누르면 같이 보스 잡을 클랜을 찾을 수 있어요.",
     "클랜장이라면 [우리 클랜 등록]으로 직접 올릴 수 있어요. 베타 기간에는 무료예요.",
     "관심 클랜을 담으면 그 클랜 일정이 전체 일정에 함께 보여요."],
-  "2.6": ["클랜장이라면 의견 탭에서 언제든 우리 클랜 홍보를 신청할 수 있어요.",
-    "홍보 자리가 비면 홈에 한 줄로 알려드려요."]
+  "2.6": ["아래에 클랜 탭이 생겼어요. 클랜 찾기와 우리 클랜 홍보 신청을 한곳에서 할 수 있어요.",
+    "신청한 클랜장은 클랜 탭에서 승인 상태와 대기 순서를 바로 볼 수 있어요."]
 };
 // 받침 여부로 조사 고르기 (버전 숫자는 마지막 숫자를 읽는 소리로)
 function josa(v, withBatchim, without) { return "013678".includes(String(v).slice(-1)) ? withBatchim : without; }

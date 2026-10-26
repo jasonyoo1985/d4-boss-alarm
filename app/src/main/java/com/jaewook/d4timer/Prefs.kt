@@ -129,6 +129,10 @@ class Prefs(context: Context) {
     fun clanToken(): String = sp.getString("clan_token", "") ?: ""
     fun setClanToken(t: String) = sp.edit().putString("clan_token", t).apply()
 
+    /** The state of this phone's own application (대기/예약/노출/거절 + reason), last good answer. */
+    fun clanMineStatus(): String = sp.getString("clan_mine", "") ?: ""
+    fun setClanMineStatus(json: String) = sp.edit().putString("clan_mine", json).apply()
+
     /** Clans the user follows; their events show in the schedule tab. */
     fun clanFollowing(): Set<String> = sp.getStringSet("clan_following", emptySet()) ?: emptySet()
     fun setClanFollowing(ids: Set<String>) = sp.edit().putStringSet("clan_following", ids).apply()
