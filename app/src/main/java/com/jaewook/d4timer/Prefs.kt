@@ -45,6 +45,15 @@ class Prefs(context: Context) {
     fun feedback(): org.json.JSONArray = runCatching { org.json.JSONArray(sp.getString("feedback", "[]")) }.getOrDefault(org.json.JSONArray())
     fun setFeedback(list: org.json.JSONArray) = sp.edit().putString("feedback", list.toString()).apply()
 
+    /** The version whose "what's new" sheet was already shown. */
+    fun newsSeen(): String = sp.getString("news_seen", "") ?: ""
+    fun setNewsSeen(version: String) = sp.edit().putString("news_seen", version).apply()
+    /** "Later" on the update sheet: hidden for that version code until the next day. */
+    fun updateLaterToday(code: Int) =
+        sp.getInt("update_later_code", 0) == code && sp.getLong("update_later_day", -1) == java.time.LocalDate.now().toEpochDay()
+    fun setUpdateLater(code: Int) = sp.edit().putInt("update_later_code", code)
+        .putLong("update_later_day", java.time.LocalDate.now().toEpochDay()).apply()
+
     fun remoteSeason(): org.json.JSONObject? =
         runCatching { org.json.JSONObject(remoteConfig()).getJSONObject("season") }.getOrNull()
 

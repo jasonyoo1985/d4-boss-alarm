@@ -265,6 +265,14 @@ svg{display:block}
   max-height:calc(100vh - var(--sat) - 16px);overflow-y:auto;
   transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .open .scrim{opacity:1;pointer-events:auto}.open .sheet{transform:none}
+.up-art{height:96px;border-radius:16px;margin:0 0 16px;background:url(img/hero.jpg) center 30%/cover;border:1px solid rgba(255,59,47,.3)}
+.up-sub{margin:-8px 0 12px;font-size:14px;color:var(--muted)}
+.up-notes{margin:0 0 18px;padding-left:20px;font-size:14.5px;line-height:1.6}
+.up-notes:empty{display:none}
+.up-btns{display:flex;justify-content:flex-end;gap:10px}
+.up-btns button{height:44px;padding:0 20px;border-radius:22px;font-size:15px;font-weight:800}
+.up-later{border:1px solid var(--line);color:#d7ccc4;background:#1a1312}
+.up-go{color:#fff;background:linear-gradient(180deg,rgba(255,59,47,.9),rgba(255,59,47,.6));box-shadow:0 0 18px rgba(255,59,47,.35)}
 .grab{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 14px}
 .sheet h2{margin:0 0 16px;font-size:19px;display:flex;align-items:center;gap:10px}
 .sheet h2 svg{width:26px;height:26px;color:var(--c)}
@@ -481,6 +489,18 @@ svg{display:block}
   <button data-go="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><path d="M12 7.5h.01" stroke-width="2.6"/></svg>정보</button>
   <button data-go="feedback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/><path d="M8.5 8.5h7M8.5 11.5h4.5"/></svg>의견</button>
 </nav>
+
+<div id="up-wrap" style="--rgb:255,59,47">
+  <div class="scrim" id="up-scrim"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="grab"></div>
+    <div class="up-art"></div>
+    <h2 id="up-title"></h2>
+    <p class="up-sub" id="up-sub"></p>
+    <ul class="up-notes" id="up-notes"></ul>
+    <div class="up-btns"><button class="up-later" id="up-later">나중에</button><button class="up-go" id="up-go">업데이트</button></div>
+  </div>
+</div>
 
 <div id="sheet-wrap">
   <div class="scrim" id="scrim"></div>
@@ -1067,10 +1087,47 @@ window.setInsets = (top, bottom) => {
 };
 window.onState = refresh;
 window.handleBack = () => {
+  if (upMode) { closeUp(true); return true; }
   if (sheetKey) { closeSheet(); return true; }
   if (page !== "home") { go("home"); return true; }
   return false;
 };
+
+/* ---------- update offer / what's new ---------- */
+// Shown once after updating to this version (bundled, works offline). Add the new version's lines each release.
+const WHATS_NEW = {
+  "2.3": ["업데이트 안내 창이 새로워졌어요. 새 버전이 나오면 바뀐 점을 바로 보여드려요."]
+};
+// 받침 여부로 조사 고르기 (버전 숫자는 마지막 숫자를 읽는 소리로)
+function josa(v, withBatchim, without) { return "013678".includes(String(v).slice(-1)) ? withBatchim : without; }
+let upMode = null;
+function openUp(mode, title, sub, notes) {
+  upMode = mode;
+  $("up-title").textContent = title;
+  $("up-sub").textContent = sub;
+  $("up-notes").innerHTML = (notes || []).map(n => `<li>${esc(n)}</li>`).join("");
+  $("up-later").hidden = mode !== "update";
+  $("up-go").textContent = mode === "update" ? "업데이트" : "확인";
+  $("up-wrap").classList.add("open");
+}
+function closeUp(later) {
+  if (upMode === "update" && later && bridge && bridge.updateLater) bridge.updateLater();
+  upMode = null;
+  $("up-wrap").classList.remove("open");
+}
+window.showUpdate = u => {
+  if (upMode) return;
+  const cur = u.current;
+  openUp("update", u.name ? `새 버전 ${u.name}${josa(u.name, "이", "가")} 나왔어요` : "새 버전이 나왔어요",
+    `지금 쓰는 버전은 ${cur}${josa(cur, "이에요", "예요")}. 업데이트할까요?`, u.notes);
+};
+$("up-later").onclick = () => closeUp(true);
+$("up-scrim").onclick = () => closeUp(true);
+$("up-go").onclick = () => { if (upMode === "update" && bridge && bridge.startUpdate) bridge.startUpdate(); closeUp(false); };
+if (S.whatsNew && WHATS_NEW[S.version]) {
+  openUp("news", `${S.version}에서 바뀐 점`, "이번 업데이트에서 달라졌어요", WHATS_NEW[S.version]);
+  if (bridge && bridge.markNewsSeen) bridge.markNewsSeen();
+}
 
 buildHome(); buildSchedule(); buildBuilds(); paintSettings(); paintInfo(); paintQuiet(); paintSync();
 function loop() {

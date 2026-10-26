@@ -3,7 +3,6 @@ package com.jaewook.d4timer
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.AlertDialog
 import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -32,6 +31,9 @@ class MainActivity : Activity() {
     private var insetTop = 0
     private var insetBottom = 0
     private var pageReady = false
+    private var pendingUpdate: String? = null
+    private var updateManager: com.google.android.play.core.appupdate.AppUpdateManager? = null
+    private var updateInfo: com.google.android.play.core.appupdate.AppUpdateInfo? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +67,7 @@ class MainActivity : Activity() {
                 override fun onPageFinished(view: WebView, url: String) {
                     pageReady = true
                     pushInsets()
+                    showPendingUpdate()
                 }
             }
         }
@@ -89,23 +92,37 @@ class MainActivity : Activity() {
         checkForUpdate()
     }
 
-    /** Offers a newer Play Store version; the user can always choose "later". Silent outside Play installs. */
+    /**
+     * Offers a newer Play Store version in the page's update sheet; "later" hides it for the rest of the day.
+     * Play only gives the new version code, so its name and change notes come from season.json "release"
+     * when that matches; otherwise the sheet shows without them. Silent outside Play installs.
+     */
     private fun checkForUpdate() {
         val manager = AppUpdateManagerFactory.create(this)
         manager.appUpdateInfo.addOnSuccessListener { info ->
             if (isFinishing || info.updateAvailability() != UpdateAvailability.UPDATE_AVAILABLE ||
                 !info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
             ) return@addOnSuccessListener
-            AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("새 버전이 있어요")
-                .setMessage("더 좋아진 버전으로 업데이트할까요?\nA new version is available.")
-                .setPositiveButton("업데이트") { _, _ ->
-                    @Suppress("DEPRECATION")
-                    manager.startUpdateFlowForResult(info, AppUpdateType.IMMEDIATE, this, REQ_UPDATE)
-                }
-                .setNegativeButton("나중에", null)
-                .show()
+            val code = info.availableVersionCode()
+            if (Prefs(this).updateLaterToday(code)) return@addOnSuccessListener
+            updateManager = manager
+            updateInfo = info
+            val release = runCatching { JSONObject(Prefs(this).remoteConfig()).getJSONObject("release") }.getOrNull()
+                ?.takeIf { it.optInt("code") == code }
+            val offer = JSONObject().put("code", code)
+                .put("current", packageManager.getPackageInfo(packageName, 0).versionName ?: "")
+                .put("name", release?.optString("name") ?: "")
+                .put("notes", release?.optJSONArray("notes") ?: JSONArray())
+            pendingUpdate = "window.showUpdate && showUpdate($offer)"
+            showPendingUpdate()
         }
+    }
+
+    private fun showPendingUpdate() {
+        val js = pendingUpdate ?: return
+        if (!pageReady) return
+        pendingUpdate = null
+        web.evaluateJavascript(js, null)
     }
 
     override fun onPause() {
@@ -205,9 +222,12 @@ class MainActivity : Activity() {
             )
         }
         val notif = getSystemService(NotificationManager::class.java).areNotificationsEnabled()
-        val version = packageManager.getPackageInfo(packageName, 0).versionName
+        val pkg = packageManager.getPackageInfo(packageName, 0)
+        val version = pkg.versionName
+        // "What's new" once after an update; never after a fresh install
+        val whatsNew = prefs.newsSeen() != version && pkg.firstInstallTime != pkg.lastUpdateTime
         return JSONObject()
-            .put("version", version).put("notif", notif).put("exact", Alarms.canExact(this))
+            .put("version", version).put("whatsNew", whatsNew).put("notif", notif).put("exact", Alarms.canExact(this))
             .put("events", events)
             .put("onlyOpen", prefs.onlyOpen())
             .put("phoneVol", phoneAlarmVolume())
@@ -258,6 +278,24 @@ class MainActivity : Activity() {
                 .putExtra(Intent.EXTRA_SUBJECT, "디아4 월드보스 알람 PC")
                 .putExtra(Intent.EXTRA_TEXT, "PC에서 열면 알림이 울려요 (탭을 열어 두세요)\n$link")
             runOnUiThread { startActivity(Intent.createChooser(send, "PC로 링크 보내기")) }
+        }
+
+        @JavascriptInterface
+        fun startUpdate() = runOnUiThread {
+            val manager = updateManager ?: return@runOnUiThread
+            val info = updateInfo ?: return@runOnUiThread
+            @Suppress("DEPRECATION")
+            runCatching { manager.startUpdateFlowForResult(info, AppUpdateType.IMMEDIATE, this@MainActivity, REQ_UPDATE) }
+        }
+
+        @JavascriptInterface
+        fun updateLater() {
+            updateInfo?.let { Prefs(this@MainActivity).setUpdateLater(it.availableVersionCode()) }
+        }
+
+        @JavascriptInterface
+        fun markNewsSeen() {
+            Prefs(this@MainActivity).setNewsSeen(packageManager.getPackageInfo(packageName, 0).versionName ?: "")
         }
 
         /** Opening the feedback tab looks for new replies (at most once a minute). */
