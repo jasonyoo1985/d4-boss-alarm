@@ -347,6 +347,9 @@ svg{display:block}
 .adm-row .ar-n i{display:block;font-style:normal;font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .adm-row button{flex:none;height:30px;padding:0 10px;border-radius:8px;font-size:12.5px;font-weight:700;
   border:1px solid rgba(255,255,255,.18);color:#d7ccc4;background:#1a1312}
+.adm-det{font-size:12.5px;line-height:1.7;color:#cfc4b6;padding:2px 0 11px;border-bottom:1px solid var(--line);margin-top:-4px}
+.adm-det b{color:var(--muted);font-weight:400;display:inline-block;min-width:58px}
+.adm-det button{height:24px;padding:0 8px;margin-left:6px;border-radius:6px;font-size:11.5px;color:#f0dcae;border:1px solid rgba(217,182,108,.45)}
 .adm-row button.go{color:#1a1208;background:#9fe0ae;border-color:transparent}
 .adm-st{flex:none;font-size:11.5px;padding:2px 7px;border-radius:6px;color:var(--muted);border:1px solid rgba(255,255,255,.16)}
 .adm-st.live{color:#1a1208;background:#d9b66c;border-color:transparent;font-weight:700}
@@ -1307,6 +1310,11 @@ function clanApplyHtml(cfg) {
     <div class="clan-btns"><button class="ghost" data-view="list">목록으로</button><button id="cf-send">신청하기</button></div>`;
 }
 
+// 대기 중인 신청은 판단에 필요한 내용을 다 펼쳐 보여요
+function admDetail(c) {
+  const row = (k, v, link) => v ? `<div><b>${k}</b>${esc(v)}${link ? `<button data-join="${esc(v)}">열어보기</button>` : ""}</div>` : "";
+  return `<div class="adm-det">${row("소개", c.line)}${row("활동", c.when)}${row("오픈채팅", c.chat, true)}${row("디스코드", c.discord, true)}${row("배틀태그", c.tag)}${row("연락처", c.contact)}${c.time ? row("신청일", dateShort(c.time)) : ""}</div>`;
+}
 function adminHtml() {
   if (!adminData) {
     return `<p class="note" style="margin-top:0">관리자만 쓰는 화면이에요.</p>
@@ -1318,6 +1326,7 @@ function adminHtml() {
   const order = { "대기": 0, "노출": 1, "예약": 2, "종료": 3, "거절": 4 };
   items.sort((a, b) => (order[a.state] ?? 9) - (order[b.state] ?? 9) || b.time - a.time);
   let html = `<p class="note" style="margin-top:0">자리 ${adminData.slots}곳 · ${adminData.days}일 · ${adminData.paid ? "유료 모드" : "무료(베타)"} · 설정은 시트에서 바꿔요</p>`;
+  if (items.some(c => c.state === "대기")) html += `<div class="clan-q">승인 전 확인할 것<br>· 클랜명·소개에 <b>현금거래, 도박, 욕설, 광고성 문구</b>가 없는지<br>· <b>[열어보기]</b>로 오픈채팅·디스코드가 실제로 열리는지<br>· 같은 클랜이 이미 노출·대기 중이 아닌지</div>`;
   html += items.map(c => {
     const live = c.state === "노출";
     let btns = "";
@@ -1326,7 +1335,7 @@ function adminHtml() {
     else if (c.state === "예약") btns = `<button data-adm="reject" data-id="${c.id}">취소</button>`;
     else if (c.state === "거절") btns = `<button data-adm="restore" data-id="${c.id}">되살리기</button>`;
     return `<div class="adm-row"><span class="ar-n">${esc(c.name)}<i>${esc(c.line || "")}${c.contact ? " · " + esc(c.contact) : ""}${c.reports ? ` · 신고 ${c.reports}` : ""}${live && c.ends ? " · " + daysLeft(c.ends) : ""}</i></span>
-      <span class="adm-st${live ? " live" : ""}">${esc(c.state)}</span>${btns}</div>`;
+      <span class="adm-st${live ? " live" : ""}">${esc(c.state)}</span>${btns}</div>${c.state === "대기" ? admDetail(c) : ""}`;
   }).join("") || `<p class="note">아직 신청이 없어요.</p>`;
   html += `${clanMsg ? `<p class="clan-ok${clanMsg.bad ? " clan-bad" : ""}">${esc(clanMsg.text || clanMsg)}</p>` : ""}
     <div class="clan-btns" style="margin-top:14px"><button class="ghost" data-view="list">닫기</button><button id="ad-re">새로고침</button></div>`;
