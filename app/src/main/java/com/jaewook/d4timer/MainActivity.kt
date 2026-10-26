@@ -230,6 +230,7 @@ class MainActivity : Activity() {
             .put("version", version).put("whatsNew", whatsNew).put("notif", notif).put("exact", Alarms.canExact(this))
             .put("events", events)
             .put("onlyOpen", prefs.onlyOpen())
+            .put("followDnd", prefs.followDnd()).put("dndNow", AlarmReceiver.phoneDnd(this))
             .put("phoneVol", phoneAlarmVolume())
             .put("season", prefs.remoteSeason() ?: JSONObject.NULL)
             .put("bossList", JSONArray(prefs.bossList()))
@@ -318,6 +319,9 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun setOnlyOpen(on: Boolean) = Prefs(this@MainActivity).setOnlyOpen(on)
+
+        @JavascriptInterface
+        fun setFollowDnd(on: Boolean) = Prefs(this@MainActivity).setFollowDnd(on)
 
         /** Percent used while this event rings, or -1 to keep the phone's alarm volume. */
         @JavascriptInterface

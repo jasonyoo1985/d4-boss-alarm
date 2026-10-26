@@ -442,8 +442,12 @@ svg{display:block}
     <div class="info-row q-evs"><span class="u">적용</span><div class="q-chips" id="q-evs"></div></div>
   </div>
   <div class="info-block">
+    <div class="info-row"><span class="k">폰 방해금지 모드 따르기<span class="en b">Follow phone Do Not Disturb</span><span class="v" style="font-size:12.5px">폰이 방해금지일 때 이 앱 알림도 울리지 않아요</span></span>
+      <button class="switch quiet-sw" role="switch" id="follow-dnd" aria-label="폰 방해금지 모드 따르기"></button></div>
+  </div>
+  <div class="info-block">
     <div class="info-row"><span class="k">앱을 닫으면 알림 안 울림<span class="en b">Only while app is open</span><span class="v" style="font-size:12.5px">켜면 최근 앱 목록에 앱이 있을 때만 울려요</span></span>
-      <button class="switch" role="switch" id="only-open" aria-label="앱을 닫으면 알림 안 울림"></button></div>
+      <button class="switch quiet-sw" role="switch" id="only-open" aria-label="앱을 닫으면 알림 안 울림"></button></div>
   </div>
   <div class="info-block">
     <div class="info-row"><span class="k">앱 버전<span class="en b">Version</span></span><span class="v" id="st-ver"></span></div>
@@ -809,12 +813,16 @@ function paintQuiet() {
   const q = S.quiet || { on: false, start: 0, end: 480 };
   $("q-on").setAttribute("aria-checked", q.on);
   $("only-open").setAttribute("aria-checked", !!S.onlyOpen);
+  $("follow-dnd").setAttribute("aria-checked", !!S.followDnd);
   $("q-start").value = fmtMin(q.start); $("q-end").value = fmtMin(q.end);
   $("q-start").disabled = $("q-end").disabled = !q.on;
   $("q-evs").innerHTML = S.events.map(e => `<button data-k="${e.key}" aria-pressed="${e.quiet !== false}"${q.on ? "" : " disabled"}>${e.quiet !== false ? "✓ " : ""}${e.name}</button>`).join("");
   const b = $("quiet-banner");
-  b.hidden = !q.on || q.start === q.end;
-  b.innerHTML = `${MOON}<span class="qb-t">방해금지 <b>${fmtMin(q.start)} ~ ${fmtMin(q.end)}</b> · 알림이 울리지 않아요</span>`;
+  // 폰 방해금지를 따르는 중이고 지금 켜져 있으면 그 안내가 먼저
+  const dnd = S.followDnd && S.dndNow;
+  b.hidden = !dnd && (!q.on || q.start === q.end);
+  b.innerHTML = dnd ? `${MOON}<span class="qb-t"><b>폰 방해금지 중</b> · 알림이 울리지 않아요</span>`
+    : `${MOON}<span class="qb-t">방해금지 <b>${fmtMin(q.start)} ~ ${fmtMin(q.end)}</b> · 알림이 울리지 않아요</span>`;
   // 항상 한 줄: 넘치면 글자를 조금 줄임
   requestAnimationFrame(fitQuiet);
   paintVol();
@@ -853,6 +861,12 @@ function saveQuiet() {
   bridge && bridge.setQuiet(q.on, q.start, q.end);
   paintQuiet();
 }
+$("follow-dnd").onclick = () => {
+  S.followDnd = !S.followDnd;
+  bridge && bridge.setFollowDnd(S.followDnd);
+  paintQuiet();
+  toast(S.followDnd ? "폰이 방해금지일 때 알림이 울리지 않아요" : "폰 방해금지와 상관없이 울려요");
+};
 $("only-open").onclick = () => {
   S.onlyOpen = !S.onlyOpen;
   bridge && bridge.setOnlyOpen(S.onlyOpen);
@@ -1096,7 +1110,8 @@ window.handleBack = () => {
 /* ---------- update offer / what's new ---------- */
 // Shown once after updating to this version (bundled, works offline). Add the new version's lines each release.
 const WHATS_NEW = {
-  "2.3": ["업데이트 안내 창이 새로워졌어요. 새 버전이 나오면 바뀐 점을 바로 보여드려요."]
+  "2.3": ["업데이트 안내 창이 새로워졌어요. 새 버전이 나오면 바뀐 점을 바로 보여드려요."],
+  "2.4": ["정보 탭에 '폰 방해금지 모드 따르기'가 생겼어요. 켜 두면 폰이 방해금지일 때 알림이 울리지 않아요."]
 };
 // 받침 여부로 조사 고르기 (버전 숫자는 마지막 숫자를 읽는 소리로)
 function josa(v, withBatchim, without) { return "013678".includes(String(v).slice(-1)) ? withBatchim : without; }
