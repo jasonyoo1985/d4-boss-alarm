@@ -348,13 +348,14 @@ svg{display:block}
 .clan-me b{display:block;color:#bfeec9;font-size:12.5px;margin-bottom:1px}
 .clan-sec{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:800;color:#f3e6cf;margin:4px 2px 9px}
 .clan-sec span{font-family:var(--cond,inherit);font-size:11px;font-weight:600;letter-spacing:.14em;color:#9c8558}
-.clan-hero{position:relative;overflow:hidden;border-radius:18px;padding:16px 15px 12px;margin:0 0 12px;
+.clan-hero{position:relative;margin-top:16px!important;border-radius:18px;padding:16px 15px 12px;margin:0 0 12px;
   background:radial-gradient(120% 90% at 0% 0%,rgba(226,193,121,.22),transparent 60%),linear-gradient(160deg,#2a1d0a,#140d06 70%);
-  border:1.5px solid rgba(226,193,121,.75);box-shadow:0 0 0 1px rgba(0,0,0,.4) inset,0 8px 28px rgba(217,182,108,.18)}
-.clan-hero::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;pointer-events:none;
+  border:1.5px solid rgba(226,193,121,.8)!important;box-shadow:0 0 0 3px #0d0907,0 0 0 4px rgba(226,193,121,.45),0 8px 28px rgba(217,182,108,.22)!important}
+.clan-hero .shine{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none}
+.clan-hero .shine::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
   background:linear-gradient(100deg,transparent,rgba(255,236,190,.13),transparent);transform:skewX(-18deg);animation:shine 5.5s ease-in-out infinite}
 @keyframes shine{0%,60%{left:-60%}100%{left:130%}}
-@media (prefers-reduced-motion:reduce){.clan-hero::after{animation:none;display:none}}
+@media (prefers-reduced-motion:reduce){.clan-hero .shine{display:none}}
 .ch-top{display:flex;align-items:center;gap:12px}
 .ch-nm{flex:1;min-width:0}
 .ch-n{display:block;font-size:22px;font-weight:900;letter-spacing:-.01em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -391,6 +392,97 @@ svg{display:block}
 .cp-g span{font-size:11.5px;line-height:1.4;color:#bfae8a;padding:9px 8px;border-radius:10px;background:rgba(226,193,121,.07)}
 .cp-g b{display:block;font-size:13px;color:#f3e2bd;margin-bottom:3px}
 .clan-pitch .clan-btns button{height:48px;font-size:15.5px}
+/* 디아블로풍 장식 테두리: 겹 테두리 + 위·아래 보석 */
+.orn{position:relative;border:1px solid rgba(201,161,79,.55);box-shadow:0 0 0 3px #0d0907,0 0 0 4px rgba(201,161,79,.28),0 10px 26px rgba(0,0,0,.5);
+  background:linear-gradient(180deg,#1b1410,#0e0a08)}
+.orn::before,.orn::after{content:"";position:absolute;left:50%;width:9px;height:9px;transform:translateX(-50%) rotate(45deg);
+  background:radial-gradient(circle,#ff4a3a 0 30%,#7a1510 70%);border:1px solid #d9b66c;z-index:1}
+.orn::before{top:-6px}.orn::after{bottom:-6px}
+.orn.red{border-color:rgba(255,70,50,.7);box-shadow:0 0 0 3px #0d0907,0 0 0 4px rgba(201,161,79,.35),0 0 22px rgba(255,40,20,.35),inset 0 0 18px rgba(255,40,20,.15)}
+.orn.good{border-color:rgba(159,224,174,.55)}
+#p-clan .page-title{background:linear-gradient(180deg,#ffd9a0,#d23a22);-webkit-background-clip:text;background-clip:text;color:transparent}
+.clan-me{border-radius:10px;padding:13px 15px;margin:6px 0 16px;font-size:13.5px;line-height:1.55;color:#e4d8c8}
+.clan-me b{display:block;font-size:15px;color:#fff;margin-bottom:2px}
+.clan-me.good b{color:#bfeec9}
+.clan-steps{display:flex;gap:9px;margin:2px 0 18px}
+.clan-steps span{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:12.5px;font-weight:700;color:#f0dcae;
+  padding:10px 4px 9px;border-radius:8px;background:linear-gradient(180deg,#241a12,#110c09)}
+.clan-steps span::before,.clan-steps span::after{display:none}
+.clan-steps em{position:relative;width:38px;height:38px;display:grid;place-items:center}
+.clan-steps em svg{position:absolute;inset:0;width:100%;height:100%}
+.clan-steps em i{position:relative;font-style:normal;font-weight:900;font-size:14px;color:#ffe9c4;text-shadow:0 1px 2px #000}
+.slots{display:flex;gap:10px;margin:4px 0 6px}
+.slot{flex:1;min-width:0;display:flex;flex-direction:column;border-radius:4px;overflow:hidden;
+  border:2px solid #b8924a;box-shadow:0 0 0 2px #0d0907,0 0 0 3px rgba(201,161,79,.35),0 0 18px rgba(217,182,108,.12);background:#0c0907}
+.slot .sf{aspect-ratio:1/0.82;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a2016,#0d0a08 75%);border-bottom:1px solid rgba(201,161,79,.5)}
+.slot .sf i{font-style:normal;font-size:30px;font-weight:300;color:rgba(217,182,108,.45)}
+.slot .sl{padding:6px 4px 7px;text-align:center;font-size:11.5px;color:#a9967a;line-height:1.35}
+.slot .sl b{display:block;font-size:13px;color:#e8d6b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot.on{border-color:#e2c179;box-shadow:0 0 0 2px #0d0907,0 0 0 3px rgba(226,193,121,.6),0 0 22px rgba(226,193,121,.35)}
+.slot.on .sf{background:radial-gradient(circle at 50% 40%,#4a3412,#120c06 75%)}
+.slot.on .sl b{color:#ffe7b0}
+.slot-cap{text-align:center;font-size:12.5px;color:#bfb4a8;margin:4px 0 14px}
+.slot-cap b{color:#f0dcae}
+.cta-red{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;gap:1px;margin:14px 0 10px;padding:13px 10px 11px;border-radius:6px;
+  background:linear-gradient(180deg,#c3261c,#7d120c);border:2px solid #d9b66c;box-shadow:0 0 0 3px #0d0907,0 0 0 4px rgba(217,182,108,.45),0 0 26px rgba(220,40,20,.35)}
+.cta-red::before,.cta-red::after{content:"";position:absolute;top:50%;width:12px;height:12px;transform:translateY(-50%) rotate(45deg);background:#d9b66c;border:2px solid #0d0907}
+.cta-red::before{left:-9px}.cta-red::after{right:-9px}
+.cta-red span{font-size:20px;font-weight:900;color:#fff1d6;letter-spacing:.02em;text-shadow:0 2px 4px rgba(0,0,0,.6)}
+.cta-red small{font-size:12px;color:#ffd9b0}
+/* ===== 클랜 탭: 시안 이미지 조각을 그대로 사용 ===== */
+#p-clan{position:relative;background:radial-gradient(90% 40% at 80% 0%,rgba(90,14,8,.35),transparent 70%),#100c0b;min-height:100vh}
+#p-clan::before{content:"";position:absolute;top:calc(var(--sat) + 4px);right:0;width:62%;aspect-ratio:324/185;background:url(clan/runes.png) center/contain no-repeat;
+  mix-blend-mode:screen;opacity:.85;pointer-events:none;-webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent);mask-image:radial-gradient(closest-side,#000 55%,transparent)}
+#p-clan>*{position:relative}
+.clan-title img{height:27px;display:block;mix-blend-mode:screen}
+.clan-me{border:22px solid transparent;border-image:url(clan/frame-red.png) 38 fill / 22px stretch;padding:0 4px;margin:6px -4px 14px;
+  font-size:13.5px;line-height:1.55;color:#ddd0bf;filter:drop-shadow(0 0 10px rgba(255,30,10,.25))}
+.clan-me b{display:block;font-size:15px;color:#f3d48f;margin-bottom:2px}
+.clan-me.good{border-image:url(clan/frame-box.png) 14 fill / 12px stretch;border-width:12px;padding:4px 8px;filter:none}
+.clan-me.good b{color:#bfeec9}
+.clan-tiles{display:flex;gap:6px;margin:4px -4px 12px}
+.clan-tiles img{flex:1;min-width:0;width:33%;height:auto;display:block}
+.clan-box{border:12px solid transparent;border-image:url(clan/frame-box.png) 14 fill / 12px stretch;padding:2px 6px;margin:0 -2px 14px;
+  font-size:13.5px;color:#d8ccbd}
+.clan-box b{color:#f3d48f}
+.slots{display:flex;gap:9px;margin:0 -2px 14px}
+.slot{flex:1;min-width:0;display:flex;flex-direction:column;background:none;border:0;padding:0;box-shadow:none;border-radius:0;overflow:visible}
+.slot .sf{aspect-ratio:196/194;display:grid;place-items:center;background:url(clan/slot.png) center/100% 100% no-repeat;border:0;filter:drop-shadow(0 0 8px rgba(160,30,10,.35))}
+.slot .sf i{font-style:normal;font-size:28px;font-weight:300;color:rgba(217,182,108,.35)}
+.slot .sl{display:flex;flex-direction:column;justify-content:center;aspect-ratio:200/86;margin-top:-6px;background:url(clan/slot-label.png) center/100% 100% no-repeat;
+  text-align:center;font-size:12.5px;color:#d9c49a;line-height:1.3;padding:6px 4px 4px}
+.slot .sl b{display:block;font-size:13.5px;font-weight:600;color:#e8d6b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot.on{border:0;box-shadow:none}
+.slot.on .sf{background:url(clan/slot.png) center/100% 100% no-repeat}
+#p-clan .cp-g span,#p-clan .clan-row{border:10px solid transparent;border-image:url(clan/frame-box.png) 14 fill / 10px stretch;background:none;border-radius:0}
+#p-clan .cp-g span{padding:2px 2px}
+#p-clan .clan-row{padding:0 4px}
+.slot.on .sf{filter:drop-shadow(0 0 12px rgba(226,193,121,.55))}
+.slot.on .sl b{color:#ffe7b0}
+.clan-hero{border:16px solid transparent!important;border-image:url(clan/slot.png) 26 fill / 16px stretch!important;box-shadow:none!important;background:none!important;
+  padding:2px 2px 0!important;margin:18px -4px 14px!important;border-radius:0!important;filter:drop-shadow(0 0 14px rgba(226,193,121,.3))}
+.clan-hero .shine{inset:-10px}
+.cta-red{display:flex;flex-direction:column;align-items:center;justify-content:center;width:calc(100% + 16px);margin:14px -8px 10px;aspect-ratio:660/130;
+  background:url(clan/button.png) center/100% 100% no-repeat!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:3.2% 0 0!important}
+.cta-red::before,.cta-red::after{display:none!important}
+.cta-red span{font-size:21px;font-weight:900;color:#f6deb0;text-shadow:0 2px 3px #000,0 0 12px rgba(0,0,0,.6)}
+.cta-red small{font-size:11.5px;color:#f1c9a0;text-shadow:0 1px 2px #000}
+.cta-red:active{filter:brightness(1.15)}
+/* 하단 클랜 탭: 왕관 + 붉은 소용돌이 */
+.nav-clan{overflow:visible}
+.nav-clan svg:not(.nc-crown){position:relative}
+.nav-clan .nc-crown{position:absolute;top:1px;left:calc(50% + 9px);width:15px;height:10px;filter:drop-shadow(0 0 4px rgba(255,170,110,.8))}
+.nav-clan .nc-glow{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-33px 0 0 -31px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(200,40,20,.45),rgba(120,15,8,.25) 45%,transparent 70%);opacity:.55}
+.nav-clan .nc-glow::after{content:"";position:absolute;inset:4px;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent,rgba(255,90,60,.55),transparent 30%,transparent 50%,rgba(255,90,60,.4),transparent 80%);
+  -webkit-mask:radial-gradient(circle,transparent 52%,#000 56%,#000 62%,transparent 66%);mask:radial-gradient(circle,transparent 52%,#000 56%,#000 62%,transparent 66%);
+  animation:ncspin 6s linear infinite}
+@keyframes ncspin{to{transform:rotate(360deg)}}
+.nav-clan[aria-current=page] .nc-glow{opacity:1}
+.nav-clan[aria-current=page]{color:#f6b08a}
+.nav-clan[aria-current=page]::after{display:none}
+@media (prefers-reduced-motion:reduce){.nav-clan .nc-glow::after{animation:none}}
 .ad-note{font-size:11.5px;color:var(--dim);padding:2px 4px;line-height:1.6}
 .adm-row{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}
 .adm-row .ar-n{flex:1;min-width:0}
@@ -497,7 +589,7 @@ svg{display:block}
 <!-- ================= 정보 ================= -->
 <!-- ================= 클랜 ================= -->
 <section id="p-clan" class="page" hidden style="--c:#d9b66c;--rgb:217,182,108">
-  <h1 class="page-title">CLAN</h1>
+  <h1 class="page-title clan-title"><img src="clan/title.png" alt="CLAN"></h1>
   <p class="page-sub">같이 보스 잡을 클랜 찾기<span class="en b">Find a clan for boss runs</span></p>
   <div id="clan-page"></div>
 </section>
@@ -601,7 +693,7 @@ svg{display:block}
   <button data-go="home" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 2.5l3.2 4.3C7.8 5.7 9.8 5 12 5s4.2.7 5.8 1.8L21 2.5l-.6 6.3c.9 1.3 1.4 2.8 1.4 4.4 0 2.8-1.6 5.2-4 6.6V22h-2.6v-1.9h-1.9V22h-2.6v-1.9H8.8V22H6.2v-2.2c-2.4-1.4-4-3.8-4-6.6 0-1.6.5-3.1 1.4-4.4L3 2.5zm5.3 9.2c-1.2 0-2.1.9-2.1 2s1 2 2.4 2c1.1 0 1.8-.6 1.8-1.3 0-1.4-.9-2.7-2.1-2.7zm7.4 0c-1.2 0-2.1 1.3-2.1 2.7 0 .7.7 1.3 1.8 1.3 1.4 0 2.4-.9 2.4-2s-.9-2-2.1-2zM12 15.6l-1.2 2.2h2.4L12 15.6z"/></svg>알림</button>
   <button data-go="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01" stroke-width="2.6"/></svg>일정</button>
   <button data-go="builds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5L18 3h3v3l-3.5 8.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg>공략</button>
-  <button data-go="clan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.8l7.5 2.8v5.8c0 4.7-3.2 8.8-7.5 10-4.3-1.2-7.5-5.3-7.5-10V5.6L12 2.8z"/><path d="M8.5 11.5l2.5 2.5 4.5-4.5"/></svg>클랜</button>
+  <button data-go="clan" class="nav-clan"><span class="nc-glow"></span><svg class="nc-crown" viewBox="0 0 24 16"><path d="M2 13L1 3l6 4 5-6 5 6 6-4-1 10z" fill="#f2b98a"/><rect x="2" y="13.6" width="20" height="2.2" rx="1" fill="#f2b98a"/><circle cx="1.5" cy="2.5" r="1.6" fill="#f2b98a"/><circle cx="12" cy="1.3" r="1.6" fill="#f2b98a"/><circle cx="22.5" cy="2.5" r="1.6" fill="#f2b98a"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.8l7.5 2.8v5.8c0 4.7-3.2 8.8-7.5 10-4.3-1.2-7.5-5.3-7.5-10V5.6L12 2.8z"/><path d="M8.5 11.5l2.5 2.5 4.5-4.5"/></svg>클랜</button>
   <button data-go="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><path d="M12 7.5h.01" stroke-width="2.6"/></svg>정보</button>
   <button data-go="feedback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/><path d="M8.5 8.5h7M8.5 11.5h4.5"/></svg>의견</button>
 </nav>
@@ -1308,26 +1400,34 @@ function paintClanPage() {
 }
 function clanListHtml(cfg) {
   const live = cfg.featured || [], queue = cfg.queue || [];
-  const slots = cfg.slots || 3, days = cfg.days || 30, free = Math.max(0, slots - live.length);
+  const slots = Math.min(cfg.slots || 3, 4), days = cfg.days || 30, free = Math.max(0, slots - live.length);
   const me = S.clanMineStatus;
   const meText = !me || !me.state ? "" : me.state === "대기" ? "확인 중이에요. 신청 순서대로 보고 있어요"
     : me.state === "예약" ? `승인됐어요 · 대기 ${me.pos || 1}번, 자리가 나면 바로 시작돼요`
     : me.state === "노출" ? `지금 홍보 중이에요${me.ends ? " · " + daysLeft(me.ends) : ""}`
     : me.state === "거절" ? `승인되지 않았어요${me.reason ? " · " + me.reason : ""}. 고쳐서 다시 신청할 수 있어요`
     : me.state === "종료" ? "홍보가 끝났어요. 다시 신청하면 대기 맨 뒤로 들어가요" : "";
-  let html = meText ? `<div class="clan-me"><b>내 신청 · ${esc(me.name || "")}</b>${esc(meText)}</div>` : "";
+  const ok = me && (me.state === "예약" || me.state === "노출");
+  let html = meText ? `<div class="clan-me ${ok ? "good" : "red"}"><b>내 신청 · ${esc(me.name || "")}</b>${esc(meText)}</div>` : "";
+  html += `<p class="clan-intro">마음에 드는 클랜에 바로 들어가고, 클랜장은 우리 클랜을${cfg.paid ? "" : " 무료로"} 알릴 수 있어요.</p>${clanSteps(cfg)}`;
 
   // 홍보 중인 클랜: 가장 크게, 가장 먼저
-  html += `<div class="clan-sec">지금 홍보 중<span>FEATURED</span></div>`;
-  html += live.map(c => `<div class="clan-hero">
+  html += live.map(c => `<div class="clan-hero" id="hero-${esc(c.id)}"><span class="shine"></span>
       <div class="ch-top">${crest(c.name)}<div class="ch-nm"><span class="ch-n">${esc(c.name)}</span>
         <span class="ch-meta">${c.when ? `<i>⏰ ${esc(c.when)}</i>` : ""}${c.ends ? `<i>${daysLeft(c.ends)}</i>` : ""}</span></div>${AD}</div>
       ${c.line ? `<div class="ch-l">${esc(c.line)}</div>` : ""}
       ${clanButtons(c)}
       <div class="ch-sub"><button data-follow="${esc(c.id)}" aria-pressed="${isFollowing(c.id)}">${isFollowing(c.id) ? "✓ 관심 클랜" : "☆ 관심 (일정 받기)"}</button><button data-report="${esc(c.id)}">신고</button></div>
     </div>`).join("");
-  // 빈 자리: "여기에 우리 클랜을"
-  if (free > 0) html += `<button class="clan-slot" data-view="apply">${crest("?", true)}<span class="cs-t"><b>이 자리에 우리 클랜을</b>홈·알람 화면에 ${days}일${cfg.paid ? "" : " · 베타 무료"}</span><span class="cs-n">${free}자리<br>남음</span></button>`;
+
+  // 홍보 자리 액자: 찬 자리는 클랜 문장, 빈 자리는 "Open"
+  let slotsHtml = `<div class="slots">` + Array.from({ length: slots }, (_, i) => {
+    const c = live[i];
+    return c
+      ? `<button class="slot on" data-hero="${esc(c.id)}"><span class="sf">${crest(c.name)}</span><span class="sl"><b>${esc(c.name)}</b>${c.ends ? daysLeft(c.ends) : "홍보 중"}</span></button>`
+      : `<button class="slot" data-view="apply"><span class="sf"><i>+</i></span><span class="sl"><b>자리 ${i + 1}</b>Open</span></button>`;
+  }).join("") + `</div>`;
+  html += `<div class="clan-box">${free ? `홍보 자리 <b>${free}곳</b>이 비어 있어요 · 승인되면 바로 시작돼요` : "자리가 다 찼어요 · 승인되면 대기 순서대로 시작돼요"}</div>` + slotsHtml;
   if (queue.length) html += `<div class="clan-qline">${queue.map((q, i) => `대기 ${i + 1}번 <b>${esc(q.name)}</b>${q.starts ? ` · ${dateShort(q.starts)} 시작 예정` : ""}`).join("<br>")}</div>`;
 
   // 지난 클랜은 작게
@@ -1339,14 +1439,11 @@ function clanListHtml(cfg) {
       <button class="ghost" data-follow="${esc(c.id)}" aria-pressed="${isFollowing(c.id)}">${isFollowing(c.id) ? "✓" : "☆"}</button></div>`).join("");
   }
 
-  // 클랜장이 얻는 것
-  html += `<div class="clan-pitch">
-    <div class="cp-h">클랜장이라면<span>FOR CLAN LEADERS</span></div>
+  // 클랜장이 얻는 것 + 등록 버튼
+  html += `<div class="clan-sec">클랜장이라면<span>FOR CLAN LEADERS</span></div>
     <div class="cp-g"><span><b>홈 화면 맨 위</b>앱을 열 때마다 우리 클랜 한 줄</span><span><b>알람 화면 카드</b>보스 알람을 누르면 크게</span><span><b>관심 클랜 일정</b>우리 클랜 일정이 일정 탭에</span></div>
-    ${clanSteps(cfg)}
-    <div class="clan-btns"><button data-view="apply">우리 클랜 등록하기${cfg.paid ? "" : " · 베타 무료"}</button></div>
-  </div>
-  <p class="ad-note">클랜 정보는 클랜장이 직접 올린 내용이에요. 가입은 각 클랜 채널에서 진행돼요. 승인 기준은 등록 화면에 공개돼 있어요.</p>`;
+    <button class="cta-red" data-view="apply"><span>우리 클랜 등록</span><small>${days}일 노출${cfg.paid ? "" : " · 베타 기간 무료"}</small></button>
+    <p class="ad-note">클랜 정보는 클랜장이 직접 올린 내용이에요. 가입은 각 클랜 채널에서 진행돼요. 승인 기준은 등록 화면에 공개돼 있어요.</p>`;
   return html;
 }
 // 클랜 문장: 방패 안에 클랜명 첫 글자
@@ -1367,7 +1464,18 @@ const CLAN_RULES = [
 ];
 const NUM = ["①", "②", "③", "④", "⑤"];
 // 신청 → 승인 → 노출, 처음 온 사람도 한눈에
-const clanSteps = cfg => `<div class="clan-steps"><span><i>1</i>앱에서 신청</span><span><i>2</i>개발자 승인</span><span><i>3</i>홈에 ${cfg.days || 30}일 노출</span></div>`;
+const STEP_IC = [
+  // 밀랍 인장
+  '<svg viewBox="0 0 40 40"><path d="M20 3l3.2 2.6 4-.9 1.7 3.8 4 1.2-.4 4.1 3 2.8-2.1 3.6 1.2 3.9-3.6 2-.6 4.1-4.1.2-2.5 3.3-3.8-1.6-3.8 1.6-2.5-3.3-4.1-.2-.6-4.1-3.6-2 1.2-3.9L3.4 17.6l3-2.8-.4-4.1 4-1.2 1.7-3.8 4 .9z" fill="#8f1d16"/><circle cx="20" cy="20" r="10.5" fill="#b3271d" stroke="#e05a44" stroke-width="1"/></svg>',
+  // 모루와 망치
+  '<svg viewBox="0 0 40 40"><path d="M7 25h22c0 3-2.6 4.5-5.5 4.5H21l2 5H11l2-5H7z" fill="#5d5650"/><path d="M5 22h26v3H5z" fill="#837a71"/><path d="M24 4l9 9-3 3-9-9z" fill="#a39686"/><path d="M26.5 10.5l-12 12" stroke="#7b5a3a" stroke-width="3" stroke-linecap="round"/><circle cx="20" cy="20" r="0" /></svg>',
+  // 불꽃 고리
+  '<svg viewBox="0 0 40 40"><circle cx="20" cy="21" r="12" fill="none" stroke="#ff7a1a" stroke-width="3.2" style="filter:drop-shadow(0 0 4px #ff5a00)"/><path d="M11 12c1-4 4-6 4-9 3 3 2 5 5 7 1-2 1-4 3-6 2 3 5 5 6 9" fill="none" stroke="#ffb347" stroke-width="2" stroke-linecap="round"/></svg>'
+];
+const clanSteps = cfg => (cfg.days || 30) === 30
+  ? `<div class="clan-tiles"><img src="clan/step1.png" alt="1 앱에서 신청"><img src="clan/step2.png" alt="2 개발자 승인"><img src="clan/step3.png" alt="3 홈에 30일 노출"></div>`
+  : `<div class="clan-steps">${["앱에서 신청", "개발자 승인", `홈에 ${cfg.days || 30}일 노출`].map((t, i) =>
+  `<span class="orn"><em>${STEP_IC[i]}<i>${i + 1}</i></em>${t}</span>`).join("")}</div>`;
 function clanApplyHtml(cfg) {
   const days = cfg.days || 30;
   return `${clanSteps(cfg)}<p class="note" style="margin-top:0">아래 칸만 채우면 신청 끝이에요. 승인되면 홈 화면과, 알람을 눌러 앱을 열었을 때 보이고 ${days}일 뒤 저절로 내려가요.${cfg.paid ? "" : " 베타 기간에는 무료예요."}</p>
@@ -1429,6 +1537,8 @@ function adminHtml() {
 }
 
 function clanClick(e2) {
+  const h = e2.target.closest("[data-hero]");
+  if (h) { const el = $("hero-" + h.dataset.hero); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
   const v = e2.target.closest("[data-view]");
   if (v) {
     if (v.dataset.view === "list") { closeClan(); go("clan"); return; }
