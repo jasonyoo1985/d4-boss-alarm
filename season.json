@@ -18,11 +18,11 @@
     "answers": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWfD6vPXuLj3S2ZU4fyxTYAZjnBkTfwbtWdVOr_afKsT8KVxzqRDf5pEa_o_Lsf242xrYIsa_cUZMN/pub?gid=2118330553&single=true&output=csv"
   },
   "release": {
-    "code": 45,
-    "name": "2.3",
+    "code": 46,
+    "name": "2.4",
     "notes": [
-      "업데이트 안내 창이 새로워졌어요. 새 버전의 바뀐 점을 바로 보여드려요.",
-      "업데이트하고 처음 열면 바뀐 점을 한 번 알려드려요."
+      "'폰 방해금지 모드 따르기'가 생겼어요. 켜 두면 폰이 방해금지일 때 알림이 울리지 않아요.",
+      "방해금지 중에는 홈에 한 줄로 알려드려요."
     ]
   }
 }
