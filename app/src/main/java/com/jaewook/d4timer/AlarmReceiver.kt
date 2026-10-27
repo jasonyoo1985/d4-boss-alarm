@@ -15,6 +15,8 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val key = intent.getStringExtra(Alarms.EXTRA_KEY) ?: return
         val e = Schedule.byKey(key)
+        // Handled from the notification or the alarm screen: the alarm screen goes away too
+        if (intent.action != null && intent.action != ACTION_REMIND) AlarmActivity.close(e.key)
         if (intent.action == ACTION_STOP) {
             AlarmSound.stop(context, e.key)
             context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
@@ -63,11 +65,11 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        private const val ACTION_STOP = "com.jaewook.d4timer.STOP"
-        private const val ACTION_SKIP_NEXT = "com.jaewook.d4timer.SKIP_NEXT"
-        private const val ACTION_SNOOZE = "com.jaewook.d4timer.SNOOZE"
-        private const val ACTION_DISMISS = "com.jaewook.d4timer.DISMISS"
-        private const val ACTION_REMIND = "com.jaewook.d4timer.REMIND"
+        const val ACTION_STOP = "com.jaewook.d4timer.STOP"
+        const val ACTION_SKIP_NEXT = "com.jaewook.d4timer.SKIP_NEXT"
+        const val ACTION_SNOOZE = "com.jaewook.d4timer.SNOOZE"
+        const val ACTION_DISMISS = "com.jaewook.d4timer.DISMISS"
+        const val ACTION_REMIND = "com.jaewook.d4timer.REMIND"
 
         /** Snoozing only makes sense while at least two minutes remain before the start. */
         private const val SNOOZE_MIN_LEFT = 2 * MIN
@@ -107,6 +109,17 @@ class AlarmReceiver : BroadcastReceiver() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
+        private fun fullScreen(context: Context, e: GameEvent, start: Long, title: String, text: String): PendingIntent =
+            PendingIntent.getActivity(
+                context, 900 + notificationId(e),
+                Intent(context, AlarmActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
+                    .putExtra(Alarms.EXTRA_KEY, e.key).putExtra(Alarms.EXTRA_START, start)
+                    .putExtra(AlarmActivity.EXTRA_TITLE, title).putExtra(AlarmActivity.EXTRA_TEXT, text)
+                    .putExtra(AlarmActivity.EXTRA_SNOOZE, start - System.currentTimeMillis() >= SNOOZE_MIN_LEFT),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+
         fun build(context: Context, e: GameEvent, start: Long): Notification {
             Alarms.ensureChannel(context, e)
             val prefs = Prefs(context)
@@ -135,6 +148,10 @@ class AlarmReceiver : BroadcastReceiver() {
                 .setAutoCancel(true)
                 .setCategory(if (repeat) Notification.CATEGORY_ALARM else Notification.CATEGORY_REMINDER)
                 .setDeleteIntent(stop)
+                // Readable and answerable on the lock screen
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                // Locked or dark screen: the full alarm screen. In use: Android shows a pop-up at the top instead
+                .setFullScreenIntent(fullScreen(context, e, start, title, text), true)
             if (start - now >= SNOOZE_MIN_LEFT) {
                 builder.addAction(Notification.Action.Builder(null, "1분 후 다시", action(context, e, start, ACTION_SNOOZE, 300)).build())
             }

@@ -546,7 +546,7 @@ svg{display:block}
   </header>
 
   <nav class="seg" role="tablist" id="seg"></nav>
-  <div class="page"><div class="clan-card" id="clan-card" hidden></div><div class="quiet-banner" id="quiet-banner" hidden></div><div class="quiet-banner vol-banner" id="vol-banner" hidden></div><button class="clan-line notice-line" id="notice-line" hidden></button><button class="clan-line" id="clan-line" hidden></button><div class="season" id="season" hidden></div><div class="cards" id="cards"></div>
+  <div class="page"><div class="clan-card" id="clan-card" hidden></div><div class="quiet-banner" id="quiet-banner" hidden></div><div class="quiet-banner vol-banner" id="popup-banner" hidden></div><div class="quiet-banner vol-banner" id="vol-banner" hidden></div><button class="clan-line notice-line" id="notice-line" hidden></button><button class="clan-line" id="clan-line" hidden></button><div class="season" id="season" hidden></div><div class="cards" id="cards"></div>
   <a href="#" class="dev-card">
     <span class="dev-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r=".9" fill="currentColor"/><circle cx="7" cy="17" r=".9" fill="currentColor"/></svg></span>
     <span class="dev-tx"><span class="dev-k">개발자 운영 사이트<span class="en b">Developer's site</span></span><span class="dev-v">stackupinfra.com (IT 인프라 입문 홈페이지)</span></span>
@@ -1048,7 +1048,7 @@ function paintQuiet() {
     : `${MOON}<span class="qb-t">방해금지 <b>${fmtMin(q.start)} ~ ${fmtMin(q.end)}</b> · 알림이 울리지 않아요</span>`;
   // 항상 한 줄: 넘치면 글자를 조금 줄임
   requestAnimationFrame(fitQuiet);
-  paintVol();
+  paintVol(); paintPopup();
 }
 const SPEAKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/></svg>';
 function paintVol() {
@@ -1058,6 +1058,22 @@ function paintVol() {
   b.hidden = !need || phone >= 30;
   b.innerHTML = `${SPEAKER}<span class="qb-t">폰 알람 음량이 낮아요 <b>${phone}%</b> · 눌러서 조정</span>`;
   b.onclick = () => need && openSheet(need.key);
+}
+function paintPopup() {
+  // 알람이 상단 팝업이나 잠금화면 알람으로 안 뜨게 폰에서 바뀌어 있으면 홈에 한 줄 안내
+  const b = $("popup-banner");
+  const what = S.popupOff ? "알람 팝업" : S.lockOff ? "잠금화면 알람" : "";
+  b.hidden = !what || !S.notif;
+  b.innerHTML = `${BELL_OFF}<span class="qb-t"><b>${what}</b>이 꺼져 있어요 · 눌러서 켜기</span>`;
+  b.onclick = () => bridge && bridge.openPopupSettings && bridge.openPopupSettings();
+  requestAnimationFrame(() => fitLine(b));
+}
+function fitLine(b) {
+  const t = b.querySelector(".qb-t");
+  if (!t || !t.offsetParent) return;
+  t.style.fontSize = "";
+  let fs = parseFloat(getComputedStyle(t).fontSize);
+  while (t.scrollWidth > t.clientWidth && fs > 10) t.style.fontSize = (fs -= 0.5) + "px";
 }
 function setVol(v) {
   const e = ev(sheetKey); e.vol = v;
@@ -1720,6 +1736,8 @@ const WHATS_NEW = {
   "2.5": ["클랜 모집이 생겼어요. 홈의 클랜 줄을 누르면 같이 보스 잡을 클랜을 찾을 수 있어요.",
     "클랜장이라면 [우리 클랜 등록]으로 직접 올릴 수 있어요. 베타 기간에는 무료예요.",
     "관심 클랜을 담으면 그 클랜 일정이 전체 일정에 함께 보여요."],
+  "2.7": ["폰을 쓰는 중에는 알람이 화면 위쪽 팝업으로 떠요.",
+    "잠금화면에서는 알람 화면이 바로 떠서 잠금을 풀지 않고 끄거나 미룰 수 있어요."],
   "2.6": ["아래에 클랜 탭이 생겼어요. 클랜 찾기와 우리 클랜 홍보 신청을 한곳에서 할 수 있어요.",
     "신청한 클랜장은 클랜 탭에서 승인 상태와 대기 순서를 바로 볼 수 있어요."]
 };
