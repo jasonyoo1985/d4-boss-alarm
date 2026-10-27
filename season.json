@@ -18,11 +18,11 @@
     "answers": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWfD6vPXuLj3S2ZU4fyxTYAZjnBkTfwbtWdVOr_afKsT8KVxzqRDf5pEa_o_Lsf242xrYIsa_cUZMN/pub?gid=2118330553&single=true&output=csv"
   },
   "release": {
-    "code": 48,
-    "name": "2.6",
+    "code": 49,
+    "name": "2.7",
     "notes": [
-      "아래에 클랜 탭이 생겼어요. 클랜 찾기와 우리 클랜 홍보 신청을 한곳에서 할 수 있어요.",
-      "신청한 클랜장은 클랜 탭에서 승인 상태와 대기 순서를 바로 볼 수 있어요."
+      "폰을 쓰는 중에는 알람이 화면 위쪽 팝업으로 떠요.",
+      "잠금화면에서는 알람 화면이 바로 떠서, 잠금을 풀지 않고 끄거나 미룰 수 있어요."
     ]
   },
   "clans": {
