@@ -1059,13 +1059,12 @@ function paintVol() {
   b.innerHTML = `${SPEAKER}<span class="qb-t">폰 알람 음량이 낮아요 <b>${phone}%</b> · 눌러서 조정</span>`;
   b.onclick = () => need && openSheet(need.key);
 }
-const BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>';
 function paintPopup() {
   // 알람이 상단 팝업이나 잠금화면 알람으로 안 뜨게 폰에서 바뀌어 있으면 홈에 한 줄 안내
   const b = $("popup-banner");
   const what = S.popupOff ? "알람 팝업" : S.lockOff ? "잠금화면 알람" : "";
   b.hidden = !what || !S.notif;
-  b.innerHTML = `${BELL}<span class="qb-t"><b>${what}</b>이 꺼져 있어요 · 눌러서 켜기</span>`;
+  b.innerHTML = `${BELL_OFF}<span class="qb-t"><b>${what}</b>이 꺼져 있어요 · 눌러서 켜기</span>`;
   b.onclick = () => bridge && bridge.openPopupSettings && bridge.openPopupSettings();
   requestAnimationFrame(() => fitLine(b));
 }
