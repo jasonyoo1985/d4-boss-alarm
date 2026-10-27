@@ -215,6 +215,18 @@ class MainActivity : Activity() {
         100
     }
 
+    /** An event whose alarm was turned down from a pop-up to a plain notification in the phone's settings. */
+    private fun popupOffKey(): String? {
+        val nm = getSystemService(NotificationManager::class.java)
+        val prefs = Prefs(this)
+        return Schedule.events.firstOrNull { e ->
+            if (!prefs.isOn(e)) return@firstOrNull false
+            Alarms.ensureChannel(this, e)
+            val imp = nm.getNotificationChannel(Alarms.channelId(this, e))?.importance ?: return@firstOrNull false
+            imp != NotificationManager.IMPORTANCE_NONE && imp < NotificationManager.IMPORTANCE_HIGH
+        }?.key
+    }
+
     private fun stateJson(): String {
         val prefs = Prefs(this)
         val events = JSONArray()
@@ -243,6 +255,7 @@ class MainActivity : Activity() {
             .put("version", version).put("whatsNew", whatsNew).put("notif", notif).put("exact", Alarms.canExact(this))
             .put("events", events)
             .put("onlyOpen", prefs.onlyOpen())
+            .put("popupOff", popupOffKey() ?: JSONObject.NULL).put("lockOff", !AlarmActivity.allowed(this))
             .put("followDnd", prefs.followDnd()).put("dndNow", AlarmReceiver.phoneDnd(this))
             .put("phoneVol", phoneAlarmVolume())
             .put("season", prefs.remoteSeason() ?: JSONObject.NULL)
@@ -516,6 +529,19 @@ class MainActivity : Activity() {
             startActivity(
                 Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
             )
+        }
+
+        @JavascriptInterface
+        fun openPopupSettings() = runOnUiThread {
+            val key = popupOffKey()
+            val i = when {
+                key != null -> Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                    .putExtra(Settings.EXTRA_CHANNEL_ID, Alarms.channelId(this@MainActivity, event(key)))
+                Build.VERSION.SDK_INT >= 34 -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$packageName"))
+                else -> Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            }
+            runCatching { startActivity(i) }.onFailure { openNotifSettings() }
         }
 
         @JavascriptInterface
