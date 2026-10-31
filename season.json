@@ -18,11 +18,11 @@
     "answers": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWfD6vPXuLj3S2ZU4fyxTYAZjnBkTfwbtWdVOr_afKsT8KVxzqRDf5pEa_o_Lsf242xrYIsa_cUZMN/pub?gid=2118330553&single=true&output=csv"
   },
   "release": {
-    "code": 49,
-    "name": "2.7",
+    "code": 50,
+    "name": "2.8",
     "notes": [
-      "폰을 쓰는 중에는 알람이 화면 위쪽 팝업으로 떠요.",
-      "잠금화면에서는 알람 화면이 바로 떠서, 잠금을 풀지 않고 끄거나 미룰 수 있어요."
+      "알람 버튼이 [끄기] [이번 회 건너뛰기] [다음 회까지 건너뛰기]로 바뀌어 뜻이 더 분명해졌어요.",
+      "정확한 시간 알람이 꺼져 있어도 소리가 나고, 홈에 켜기 안내가 떠요."
     ]
   },
   "clans": {
