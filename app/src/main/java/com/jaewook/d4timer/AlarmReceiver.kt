@@ -45,7 +45,9 @@ class AlarmReceiver : BroadcastReceiver() {
         }
         if (intent.action == ACTION_SKIP_NEXT) {
             val prefs = Prefs(context)
+            // Skips this spawn's remaining alerts and the next spawn (skip covers every start up to that time)
             prefs.setSkip(e, Schedule.nextStart(prefs.effective(e), start + MIN))
+            context.getSystemService(AlarmManager::class.java).cancel(snoozeIntent(context, e, start))
             AlarmSound.stop(context, e.key)
             context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
             Alarms.schedule(context, e)
@@ -83,6 +85,12 @@ class AlarmReceiver : BroadcastReceiver() {
         /** The user chose to follow the phone's Do Not Disturb and it is on now; same for every event. */
         fun dndSilenced(context: Context) = Prefs(context).followDnd() && phoneDnd(context)
 
+        /** Whether this spawn still has early alerts (or its start alert) coming after the one ringing now. */
+        fun moreAlerts(context: Context, e: GameEvent, start: Long): Boolean {
+            val now = System.currentTimeMillis()
+            return Prefs(context).leads(e).any { start - it * MIN > now + 10_000 }
+        }
+
         fun notificationId(e: GameEvent) = Schedule.events.indexOfFirst { it.key == e.key } + 1
 
         fun notify(context: Context, e: GameEvent, start: Long, receiver: BroadcastReceiver? = null) {
@@ -115,7 +123,8 @@ class AlarmReceiver : BroadcastReceiver() {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
                     .putExtra(Alarms.EXTRA_KEY, e.key).putExtra(Alarms.EXTRA_START, start)
                     .putExtra(AlarmActivity.EXTRA_TITLE, title).putExtra(AlarmActivity.EXTRA_TEXT, text)
-                    .putExtra(AlarmActivity.EXTRA_SNOOZE, start - System.currentTimeMillis() >= SNOOZE_MIN_LEFT),
+                    .putExtra(AlarmActivity.EXTRA_SNOOZE, start - System.currentTimeMillis() >= SNOOZE_MIN_LEFT)
+                    .putExtra(AlarmActivity.EXTRA_MORE, moreAlerts(context, e, start)),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
@@ -151,11 +160,12 @@ class AlarmReceiver : BroadcastReceiver() {
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 // Locked or dark screen: the full alarm screen. In use: Android shows a pop-up at the top instead
                 .setFullScreenIntent(fullScreen(context, e, start, title, text), true)
-            if (start - now >= SNOOZE_MIN_LEFT) {
-                builder.addAction(Notification.Action.Builder(null, "1분 후 다시", action(context, e, start, ACTION_SNOOZE, 300)).build())
+            // Left to right: C (this + next spawn), B (this spawn's remaining alerts), A (just this ring, most used)
+            builder.addAction(Notification.Action.Builder(null, "다음 회까지 건너뛰기", action(context, e, start, ACTION_SKIP_NEXT, 700)).build())
+            if (moreAlerts(context, e, start)) {
+                builder.addAction(Notification.Action.Builder(null, "이번 회 건너뛰기", action(context, e, start, ACTION_DISMISS, 600)).build())
             }
-            builder.addAction(Notification.Action.Builder(null, "다음 회 건너뛰기", action(context, e, start, ACTION_SKIP_NEXT, 700)).build())
-            builder.addAction(Notification.Action.Builder(null, "다시 보지 않기", action(context, e, start, ACTION_DISMISS, 600)).build())
+            builder.addAction(Notification.Action.Builder(null, "끄기", action(context, e, start, ACTION_STOP, 800)).build())
             return builder.build()
         }
     }
