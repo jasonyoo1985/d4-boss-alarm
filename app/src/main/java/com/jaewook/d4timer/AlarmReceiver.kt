@@ -52,14 +52,14 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
         if (intent.action == ACTION_REMIND) {
-            if (start > System.currentTimeMillis() - 5 * MIN && !dndSilenced(context)) notify(context, e, start)
+            if (start > System.currentTimeMillis() - 5 * MIN && !dndSilenced(context)) notify(context, e, start, this)
             return
         }
         val prefs = Prefs(context)
         // A task in the recents list means the user hasn't closed the app
         val closed = prefs.onlyOpen() &&
             context.getSystemService(android.app.ActivityManager::class.java).appTasks.isEmpty()
-        if (!closed && !prefs.isQuiet(System.currentTimeMillis(), e) && !dndSilenced(context)) notify(context, e, start)
+        if (!closed && !prefs.isQuiet(System.currentTimeMillis(), e) && !dndSilenced(context)) notify(context, e, start, this)
         Alarms.schedule(context, e)
         Widgets.refreshAll(context)
     }
@@ -85,12 +85,11 @@ class AlarmReceiver : BroadcastReceiver() {
 
         fun notificationId(e: GameEvent) = Schedule.events.indexOfFirst { it.key == e.key } + 1
 
-        fun notify(context: Context, e: GameEvent, start: Long) {
-            if (Alarms.soundUri(context, e) != null) {
-                AlarmSound.start(context, e, start)
-            } else {
-                context.getSystemService(NotificationManager::class.java).notify(notificationId(e), build(context, e, start))
-            }
+        fun notify(context: Context, e: GameEvent, start: Long, receiver: BroadcastReceiver? = null) {
+            if (Alarms.soundUri(context, e) != null && AlarmSound.start(context, e, start)) return
+            context.getSystemService(NotificationManager::class.java).notify(notificationId(e), build(context, e, start))
+            // The ringing service couldn't start (exact alarms off): still make a sound, not just a buzz
+            if (Alarms.soundUri(context, e) != null && receiver != null) AlarmSound.playBrief(context, e, receiver.goAsync())
         }
 
         private fun snoozeIntent(context: Context, e: GameEvent, start: Long): PendingIntent =

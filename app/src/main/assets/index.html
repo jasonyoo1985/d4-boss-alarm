@@ -1061,11 +1061,13 @@ function paintVol() {
 }
 function paintPopup() {
   // 알람이 상단 팝업이나 잠금화면 알람으로 안 뜨게 폰에서 바뀌어 있으면 홈에 한 줄 안내
+  // 정확한 알람이 꺼져 있으면 미리 알림이 늦게 몰려 오고 소리도 못 내므로 이 안내가 먼저
   const b = $("popup-banner");
-  const what = S.popupOff ? "알람 팝업" : S.lockOff ? "잠금화면 알람" : "";
+  const exactOff = S.notif && S.exact === false;
+  const what = exactOff ? "정확한 시간 알람" : S.popupOff ? "알람 팝업" : S.lockOff ? "잠금화면 알람" : "";
   b.hidden = !what || !S.notif;
   b.innerHTML = `${BELL_OFF}<span class="qb-t"><b>${what}</b>이 꺼져 있어요 · 눌러서 켜기</span>`;
-  b.onclick = () => bridge && bridge.openPopupSettings && bridge.openPopupSettings();
+  b.onclick = () => bridge && (exactOff ? bridge.openExactSettings() : bridge.openPopupSettings && bridge.openPopupSettings());
   requestAnimationFrame(() => fitLine(b));
 }
 function fitLine(b) {
