@@ -602,7 +602,7 @@ svg{display:block}
     <div class="tip" id="tip-popup">
       <div class="tip-h"><span>알림을 처음부터 크게 보려면<span class="en b">Galaxy: show alerts expanded</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
       <div class="tip-b">
-        <p>갤럭시는 알림을 작은 알약 모양으로 먼저 띄우고, 화살표를 눌러야 버튼이 보이는 경우가 있어요. 아래처럼 바꾸면 처음부터 [1분 후 다시] [다음 회 건너뛰기] [다시 보지 않기] 버튼까지 크게 보여요.</p>
+        <p>갤럭시는 알림을 작은 알약 모양으로 먼저 띄우고, 화살표를 눌러야 버튼이 보이는 경우가 있어요. 아래처럼 바꾸면 처음부터 [다음 회까지 건너뛰기] [이번 회 건너뛰기] [끄기] 버튼까지 크게 보여요.</p>
         <ol>
           <li>폰 <b>설정</b> → <b>알림</b></li>
           <li><b>알림 팝업 스타일</b> 누르기</li>
@@ -1061,11 +1061,13 @@ function paintVol() {
 }
 function paintPopup() {
   // 알람이 상단 팝업이나 잠금화면 알람으로 안 뜨게 폰에서 바뀌어 있으면 홈에 한 줄 안내
+  // 정확한 알람이 꺼져 있으면 미리 알림이 늦게 몰려 오고 소리도 못 내므로 이 안내가 먼저
   const b = $("popup-banner");
-  const what = S.popupOff ? "알람 팝업" : S.lockOff ? "잠금화면 알람" : "";
+  const exactOff = S.notif && S.exact === false;
+  const what = exactOff ? "정확한 시간 알람" : S.popupOff ? "알람 팝업" : S.lockOff ? "잠금화면 알람" : "";
   b.hidden = !what || !S.notif;
   b.innerHTML = `${BELL_OFF}<span class="qb-t"><b>${what}</b>이 꺼져 있어요 · 눌러서 켜기</span>`;
-  b.onclick = () => bridge && bridge.openPopupSettings && bridge.openPopupSettings();
+  b.onclick = () => bridge && (exactOff ? bridge.openExactSettings() : bridge.openPopupSettings && bridge.openPopupSettings());
   requestAnimationFrame(() => fitLine(b));
 }
 function fitLine(b) {
@@ -1736,6 +1738,8 @@ const WHATS_NEW = {
   "2.5": ["클랜 모집이 생겼어요. 홈의 클랜 줄을 누르면 같이 보스 잡을 클랜을 찾을 수 있어요.",
     "클랜장이라면 [우리 클랜 등록]으로 직접 올릴 수 있어요. 베타 기간에는 무료예요.",
     "관심 클랜을 담으면 그 클랜 일정이 전체 일정에 함께 보여요."],
+  "2.8": ["알람 버튼이 [끄기] [이번 회 건너뛰기] [다음 회까지 건너뛰기]로 바뀌어 뜻이 더 분명해졌어요.",
+    "정확한 시간 알람이 꺼져 있어도 소리가 나고, 홈에 켜기 안내가 떠요."],
   "2.7": ["폰을 쓰는 중에는 알람이 화면 위쪽 팝업으로 떠요.",
     "잠금화면에서는 알람 화면이 바로 떠서 잠금을 풀지 않고 끄거나 미룰 수 있어요."],
   "2.6": ["아래에 클랜 탭이 생겼어요. 클랜 찾기와 우리 클랜 홍보 신청을 한곳에서 할 수 있어요.",

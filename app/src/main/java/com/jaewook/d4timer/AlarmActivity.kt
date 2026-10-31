@@ -90,17 +90,23 @@ class AlarmActivity : Activity() {
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val grey = Color.parseColor("#26211E")
         val light = Color.parseColor("#E8E2DC")
+        // Same buttons and order as the notification: C (this + next spawn), B (this spawn's remaining alerts)
         val small = mutableListOf<Pair<String, String>>()
-        if (i.getBooleanExtra(EXTRA_SNOOZE, false)) small += "1분 후 다시" to AlarmReceiver.ACTION_SNOOZE
-        small += "다음 회 건너뛰기" to AlarmReceiver.ACTION_SKIP_NEXT
-        small += "다시 보지 않기" to AlarmReceiver.ACTION_DISMISS
+        small += "다음 회까지\n건너뛰기" to AlarmReceiver.ACTION_SKIP_NEXT
+        if (i.getBooleanExtra(EXTRA_MORE, false)) small += "이번 회\n건너뛰기" to AlarmReceiver.ACTION_DISMISS
         small.forEachIndexed { n, (text, action) ->
             row.addView(
                 button(text, grey, light, false) { send(action, start) },
-                LinearLayout.LayoutParams(0, px(56), 1f).apply { if (n > 0) marginStart = px(8) },
+                LinearLayout.LayoutParams(0, px(60), 1f).apply { if (n > 0) marginStart = px(8) },
             )
         }
         root.addView(row, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = px(12) })
+        if (i.getBooleanExtra(EXTRA_SNOOZE, false)) {
+            root.addView(
+                button("1분 후 다시", grey, light, false) { send(AlarmReceiver.ACTION_SNOOZE, start) },
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, px(48)).apply { topMargin = px(8) },
+            )
+        }
         root.addView(
             label("앱 열기", 14f, Color.parseColor("#8A817A")).apply {
                 setPadding(0, px(22), 0, px(8))
@@ -145,6 +151,7 @@ class AlarmActivity : Activity() {
         const val EXTRA_TITLE = "title"
         const val EXTRA_TEXT = "text"
         const val EXTRA_SNOOZE = "snooze"
+        const val EXTRA_MORE = "more"
 
         private var current: WeakReference<AlarmActivity>? = null
 

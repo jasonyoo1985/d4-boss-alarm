@@ -139,16 +139,78 @@ class AlarmSound : Service() {
         /** World boss first, then Helltide, then Legion. */
         private fun rank(key: String) = Schedule.events.indexOfFirst { it.key == key }
 
-        fun start(context: Context, e: GameEvent, start: Long) {
+        /**
+         * Rings through the foreground service. Returns false when Android won't allow it: without the
+         * exact-alarm permission the alarm arrives as an ordinary background broadcast, which may not
+         * start a foreground service (and the systemExempted type needs that permission anyway).
+         */
+        fun start(context: Context, e: GameEvent, start: Long): Boolean {
+            if (!Alarms.canExact(context)) return false
             val i = Intent(context, AlarmSound::class.java)
                 .putExtra(Alarms.EXTRA_KEY, e.key).putExtra(Alarms.EXTRA_START, start)
-            try {
+            return try {
                 context.startForegroundService(i)
+                true
             } catch (_: Exception) {
-                context.getSystemService(android.app.NotificationManager::class.java)
-                    .notify(AlarmReceiver.notificationId(e), AlarmReceiver.build(context, e, start))
+                false
             }
         }
+
+        /**
+         * Fallback when the service can't run: play the sound from the receiver itself on the alarm
+         * stream (so vibrate mode doesn't mute it) for a few seconds, while the broadcast is kept alive.
+         */
+        fun playBrief(context: Context, e: GameEvent, done: android.content.BroadcastReceiver.PendingResult?) {
+            val uri = Alarms.soundUri(context, e)
+            if (uri == null) { done?.finish(); return }
+            val am = context.getSystemService(AudioManager::class.java)
+            var saved = -1
+            var set = -1
+            val v = Prefs(context).alarmVolume(e)
+            if (v >= 0) try {
+                val max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+                saved = am.getStreamVolume(AudioManager.STREAM_ALARM)
+                set = (max * v / 100.0).roundToInt().coerceIn(1, max)
+                am.setStreamVolume(AudioManager.STREAM_ALARM, set, 0)
+            } catch (_: Exception) {
+                saved = -1
+            }
+            val handler = Handler(Looper.getMainLooper())
+            var mp: MediaPlayer? = null
+            var finished = false
+            val end = Runnable {
+                if (!finished) {
+                    finished = true
+                    handler.removeCallbacksAndMessages(null)
+                    runCatching { mp?.release() }
+                    if (saved >= 0) runCatching {
+                        if (am.getStreamVolume(AudioManager.STREAM_ALARM) == set) am.setStreamVolume(AudioManager.STREAM_ALARM, saved, 0)
+                    }
+                    done?.finish()
+                }
+            }
+            mp = try {
+                MediaPlayer().apply {
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build(),
+                    )
+                    setDataSource(context, uri)
+                    isLooping = true
+                    prepare()
+                    start()
+                }
+            } catch (_: Exception) {
+                null
+            }
+            if (mp == null) { end.run(); return }
+            // A broadcast may stay alive for about 10 seconds
+            handler.postDelayed(end, BRIEF_MS)
+        }
+
+        private const val BRIEF_MS = 8_000L
 
         /** Stops the sound; with a key, only when that event is the one ringing. */
         fun stop(context: Context, key: String? = null) {
