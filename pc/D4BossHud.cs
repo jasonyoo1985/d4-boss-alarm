@@ -80,6 +80,9 @@ namespace D4BossHud
         // Base layout at 1080p (scaled by screen height / 1080 and the size setting)
         const int BaseW = 300, BaseH = 112, HeaderH = 22, SideW = 58;
 
+        static readonly string[] HkNames = { "F7", "F8", "F9", "F11", "F12", "Pause", "ScrollLock" };
+        static readonly int[] HkVk = { 0x76, 0x77, 0x78, 0x7A, 0x7B, 0x13, 0x91 };
+        int hkIndex = 1;            // default F8 toggles lock/edit
         EventDef[] events;
         bool locked;                // locked = game mode: display only, mouse clicks pass through
         bool soundOn = true;
@@ -89,6 +92,7 @@ namespace D4BossHud
         NotifyIcon tray;
         System.Windows.Forms.Timer timer;
         HashSet<string> fired = new HashSet<string>();
+        List<ToolStripMenuItem> hkItems = new List<ToolStripMenuItem>();
         Dictionary<string, ToolStripMenuItem> items = new Dictionary<string, ToolStripMenuItem>();
         Font fName, fNameBig, fDigit, fDigitBig, fSmall, fBold;
         Rectangle rLock, rClose;
@@ -108,6 +112,7 @@ namespace D4BossHud
             soundOn = Settings.GetBool("sound", true);
             scalePct = Settings.GetInt("scale", 100);
             opacityPct = Settings.GetInt("opacity", 90);
+            hkIndex = Math.Max(0, Math.Min(HkVk.Length - 1, Settings.GetInt("hk", 1)));
             locked = Settings.GetBool("locked", false);   // first run: editable until the user locks it
 
             FormBorderStyle = FormBorderStyle.None;
@@ -150,17 +155,22 @@ namespace D4BossHud
         {
             base.OnHandleCreated(e);
             try { RegisterHotKey(Handle, 1, 0x2 | 0x4, 0x48); } catch { } // Ctrl+Shift+H
+            RegisterLockKey();
         }
 
         protected override void OnHandleDestroyed(EventArgs e)
         {
-            try { UnregisterHotKey(Handle, 1); } catch { }
+            try { UnregisterHotKey(Handle, 1); UnregisterHotKey(Handle, 2); } catch { }
             base.OnHandleDestroyed(e);
         }
 
         protected override void WndProc(ref Message m)
         {
-            if (m.Msg == WM_HOTKEY) { ToggleVisible(); return; }
+            if (m.Msg == WM_HOTKEY)
+            {
+                if (m.WParam.ToInt32() == 2) SetLocked(!locked); else ToggleVisible();
+                return;
+            }
             if (m.Msg == WM_NCHITTEST && !locked)
             {
                 long l = m.LParam.ToInt64();
@@ -172,6 +182,16 @@ namespace D4BossHud
                 return;
             }
             base.WndProc(ref m);
+        }
+
+        void RegisterLockKey()
+        {
+            bool ok = false;
+            try { UnregisterHotKey(Handle, 2); ok = RegisterHotKey(Handle, 2, 0, HkVk[hkIndex]); } catch { }
+            if (!ok)
+            {
+                try { tray.ShowBalloonTip(5000, "디아4 보스 HUD", HkNames[hkIndex] + " 키를 다른 프로그램이 쓰고 있어요. 트레이 메뉴의 '고정 단축키'에서 다른 키를 고르세요.", ToolTipIcon.Warning); } catch { }
+            }
         }
 
         // Never exactly 1.0: WinForms then drops the layered style and a forced layered window stays invisible
@@ -281,6 +301,16 @@ namespace D4BossHud
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Items.Add(Item("show", "보이기/숨기기  (Ctrl+Shift+H)", delegate { ToggleVisible(); }));
             menu.Items.Add(Item("lock", "고정 (게임용: 클릭·이동 안 됨)", delegate { SetLocked(!locked); }));
+            ToolStripMenuItem hk = new ToolStripMenuItem("고정/해제 단축키");
+            for (int i = 0; i < HkNames.Length; i++)
+            {
+                int ii = i;
+                ToolStripMenuItem it = new ToolStripMenuItem(HkNames[i]);
+                it.Click += delegate { hkIndex = ii; Settings.Set("hk", ii); Settings.Save(); RegisterLockKey(); Sync(); Invalidate(); };
+                hk.DropDownItems.Add(it);
+                hkItems.Add(it);
+            }
+            menu.Items.Add(hk);
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(Item("a_boss", "월드보스 알림", delegate { ToggleAlarm(0); }));
             menu.Items.Add(Item("a_tide", "지옥물결 알림", delegate { ToggleAlarm(1); }));
@@ -338,6 +368,7 @@ namespace D4BossHud
             items["sound"].Checked = soundOn;
             items["auto"].Checked = IsAutoStart();
             items["lock"].Checked = locked;
+            for (int i = 0; i < hkItems.Count; i++) hkItems[i].Checked = i == hkIndex;
         }
 
         static Icon MakeIcon()
@@ -444,7 +475,7 @@ namespace D4BossHud
                 RectangleF box = new RectangleF(7 * s, (hh - cb) / 2, cb, cb);
                 using (Pen bp = new Pen(Color.FromArgb(230, 220, 200), 1.5f * s)) g.DrawRectangle(bp, box.X, box.Y, box.Width, box.Height);
                 g.DrawString("고정", fBold, Brushes.White, new RectangleF(box.Right + 5 * s, 0, 40 * s, hh), left);
-                g.DrawString("끌어서 이동 · 끝나면 고정 체크", fSmall, new SolidBrush(Color.FromArgb(170, 175, 180)), new RectangleF(70 * s, 0, w - 70 * s - hh, hh), left);
+                g.DrawString("끌어서 이동 · " + HkNames[hkIndex] + " 또는 □ 로 고정", fSmall, new SolidBrush(Color.FromArgb(170, 175, 180)), new RectangleF(70 * s, 0, w - 70 * s - hh, hh), left);
                 rLock = new Rectangle(0, 0, (int)(66 * s), (int)hh);
                 rClose = new Rectangle(w - (int)hh - 2, 1, (int)hh, (int)hh - 1);
                 using (Pen xp = new Pen(Color.FromArgb(255, 110, 100), 2f * s))
@@ -495,6 +526,12 @@ namespace D4BossHud
                     using (SolidBrush pb = new SolidBrush(e.Alarm ? Color.FromArgb(46, 140, 80) : Color.FromArgb(70, 74, 78)))
                         g.FillPath(pb, gp);
                     g.DrawString(e.Alarm ? "알림" : "끔", fBold, Brushes.White, pr, mid);
+                }
+                if (i == 2)
+                {
+                    // always-visible small hint: which key locks/unlocks
+                    using (SolidBrush hb2 = new SolidBrush(Color.FromArgb(160, 170, 175)))
+                        g.DrawString(HkNames[hkIndex] + (locked ? " = 편집" : " = 고정"), fSmall, hb2, new RectangleF(112 * s, y, 84 * s, rowH[i]), mid);
                 }
                 y += rowH[i];
                 if (i < 2) using (Pen sep = new Pen(Color.FromArgb(48, 56, 58), 1f)) g.DrawLine(sep, 8 * s, y, mainW - 8 * s, y);
