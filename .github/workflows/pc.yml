@@ -46,15 +46,16 @@ jobs:
       # Same pattern as the APK: a stable download link on its own branch
       # https://github.com/<owner>/<repo>/raw/pc/D4BossHud.exe
       - name: Publish exe branch
-        if: github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          # PR builds go to a test branch so the exe can be tried before merging
+          BRANCH: ${{ github.ref == 'refs/heads/main' && 'pc' || 'pc-test' }}
         run: |
           mkdir pc-out
           cp D4BossHud.exe pc-out/
           cd pc-out
-          git init -q -b pc
+          git init -q -b "$BRANCH"
           git add D4BossHud.exe
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "PC HUD build ${GITHUB_SHA::7}"
-          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" pc
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$BRANCH"
