@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     # Season data updates don't need a new APK
-    paths-ignore: [season.json, tools/**, docs/**, .github/workflows/season.yml]
+    paths-ignore: [season.json, tools/**, docs/**, pc/**, .github/workflows/season.yml, .github/workflows/pc.yml]
   workflow_dispatch:
 
 permissions:
