@@ -1,0 +1,60 @@
+name: Build PC HUD
+
+on:
+  push:
+    branches: [main]
+    paths: [pc/**, .github/workflows/pc.yml]
+  pull_request:
+    paths: [pc/**, .github/workflows/pc.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-pc
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile (.NET Framework csc, no extra runtime needed on the PC)
+        shell: pwsh
+        run: |
+          $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          & $csc /nologo /target:winexe /optimize+ /out:D4BossHud.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll pc\D4BossHud.cs
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Get-Item D4BossHud.exe | Format-List Name,Length
+
+      - name: Smoke test (starts, stays alive, no crash log)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath .\D4BossHud.exe -PassThru
+          Start-Sleep -Seconds 6
+          if ($p.HasExited) { Write-Host "exited early: $($p.ExitCode)"; if (Test-Path "$env:TEMP\D4BossHud-error.txt") { Get-Content "$env:TEMP\D4BossHud-error.txt" }; exit 1 }
+          Stop-Process -Id $p.Id -Force
+          Write-Host "alive after 6s"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: D4BossHud
+          path: D4BossHud.exe
+
+      # Same pattern as the APK: a stable download link on its own branch
+      # https://github.com/<owner>/<repo>/raw/pc/D4BossHud.exe
+      - name: Publish exe branch
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir pc-out
+          cp D4BossHud.exe pc-out/
+          cd pc-out
+          git init -q -b pc
+          git add D4BossHud.exe
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "PC HUD build ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" pc
