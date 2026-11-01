@@ -161,9 +161,9 @@ class AlarmReceiver : BroadcastReceiver() {
                 // Locked or dark screen: the full alarm screen. In use: Android shows a pop-up at the top instead
                 .setFullScreenIntent(fullScreen(context, e, start, title, text), true)
             // Left to right: C (this + next spawn), B (this spawn's remaining alerts), A (just this ring, most used)
-            builder.addAction(Notification.Action.Builder(null, "다음 회까지 건너뛰기", action(context, e, start, ACTION_SKIP_NEXT, 700)).build())
+            builder.addAction(Notification.Action.Builder(null, "다음 회까지", action(context, e, start, ACTION_SKIP_NEXT, 700)).build())
             if (moreAlerts(context, e, start)) {
-                builder.addAction(Notification.Action.Builder(null, "이번 회 건너뛰기", action(context, e, start, ACTION_DISMISS, 600)).build())
+                builder.addAction(Notification.Action.Builder(null, "이번 회만", action(context, e, start, ACTION_DISMISS, 600)).build())
             }
             builder.addAction(Notification.Action.Builder(null, "끄기", action(context, e, start, ACTION_STOP, 800)).build())
             return builder.build()

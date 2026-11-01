@@ -92,8 +92,8 @@ class AlarmActivity : Activity() {
         val light = Color.parseColor("#E8E2DC")
         // Same buttons and order as the notification: C (this + next spawn), B (this spawn's remaining alerts)
         val small = mutableListOf<Pair<String, String>>()
-        small += "다음 회까지\n건너뛰기" to AlarmReceiver.ACTION_SKIP_NEXT
-        if (i.getBooleanExtra(EXTRA_MORE, false)) small += "이번 회\n건너뛰기" to AlarmReceiver.ACTION_DISMISS
+        small += "다음 회까지" to AlarmReceiver.ACTION_SKIP_NEXT
+        if (i.getBooleanExtra(EXTRA_MORE, false)) small += "이번 회만" to AlarmReceiver.ACTION_DISMISS
         small.forEachIndexed { n, (text, action) ->
             row.addView(
                 button(text, grey, light, false) { send(action, start) },
