@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.IO;
+using System.Media;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -82,6 +83,12 @@ namespace D4BossHud
 
         static readonly string[] HkNames = { "F7", "F8", "F9", "F11", "F12", "Pause", "ScrollLock" };
         static readonly int[] HkVk = { 0x76, 0x77, 0x78, 0x7A, 0x7B, 0x13, 0x91 };
+        int leadMin = 1;            // minutes before the event for the alarm
+        int volPct = 60;
+        bool ringing;
+        DateTime ringEnd;
+        SoundPlayer player;
+        byte[] ringWav, startWav;
         int hkIndex = 1;            // default F8 toggles lock/edit
         EventDef[] events;
         bool locked;                // locked = game mode: display only, mouse clicks pass through
@@ -92,6 +99,8 @@ namespace D4BossHud
         NotifyIcon tray;
         System.Windows.Forms.Timer timer;
         HashSet<string> fired = new HashSet<string>();
+        List<ToolStripMenuItem> leadItems = new List<ToolStripMenuItem>();
+        List<ToolStripMenuItem> volItems = new List<ToolStripMenuItem>();
         List<ToolStripMenuItem> hkItems = new List<ToolStripMenuItem>();
         Dictionary<string, ToolStripMenuItem> items = new Dictionary<string, ToolStripMenuItem>();
         Font fName, fNameBig, fDigit, fDigitBig, fSmall, fBold;
@@ -112,6 +121,9 @@ namespace D4BossHud
             soundOn = Settings.GetBool("sound", true);
             scalePct = Settings.GetInt("scale", 100);
             opacityPct = Settings.GetInt("opacity", 90);
+            leadMin = Settings.GetInt("lead", 1);
+            volPct = Settings.GetInt("vol", 60);
+            BuildWavs();
             hkIndex = Math.Max(0, Math.Min(HkVk.Length - 1, Settings.GetInt("hk", 1)));
             locked = Settings.GetBool("locked", false);   // first run: editable until the user locks it
 
@@ -168,7 +180,7 @@ namespace D4BossHud
         {
             if (m.Msg == WM_HOTKEY)
             {
-                if (m.WParam.ToInt32() == 2) SetLocked(!locked); else ToggleVisible();
+                if (m.WParam.ToInt32() == 2) { if (ringing) StopRing(); else SetLocked(!locked); } else ToggleVisible();
                 return;
             }
             if (m.Msg == WM_NCHITTEST && !locked)
@@ -316,7 +328,27 @@ namespace D4BossHud
             menu.Items.Add(Item("a_tide", "지옥물결 알림", delegate { ToggleAlarm(1); }));
             menu.Items.Add(Item("a_legion", "군단 알림", delegate { ToggleAlarm(2); }));
             menu.Items.Add(Item("sound", "알림 소리", delegate { soundOn = !soundOn; Settings.Set("sound", soundOn); Settings.Save(); Sync(); }));
-            menu.Items.Add(Item("test", "소리 테스트", delegate { PlayAlarm(false); }));
+            ToolStripMenuItem lead = new ToolStripMenuItem("알림 시각 (보스 몇 분 전)");
+            foreach (int mn in new int[] { 1, 3, 5, 10 })
+            {
+                int mm = mn;
+                ToolStripMenuItem it = new ToolStripMenuItem(mm + "분 전");
+                it.Click += delegate { leadMin = mm; Settings.Set("lead", mm); Settings.Save(); Sync(); };
+                lead.DropDownItems.Add(it);
+                leadItems.Add(it);
+            }
+            menu.Items.Add(lead);
+            ToolStripMenuItem vol = new ToolStripMenuItem("알림 음량");
+            foreach (int v in new int[] { 30, 60, 100 })
+            {
+                int vv = v;
+                ToolStripMenuItem it = new ToolStripMenuItem(vv + "%");
+                it.Click += delegate { volPct = vv; Settings.Set("vol", vv); Settings.Save(); BuildWavs(); Sync(); };
+                vol.DropDownItems.Add(it);
+                volItems.Add(it);
+            }
+            menu.Items.Add(vol);
+            menu.Items.Add(Item("test", "소리 테스트 (끄려면 단축키)", delegate { StartRing(); }));
             menu.Items.Add(new ToolStripSeparator());
             ToolStripMenuItem size = new ToolStripMenuItem("크기");
             foreach (int p in new int[] { 80, 100, 125, 150 })
@@ -369,6 +401,9 @@ namespace D4BossHud
             items["auto"].Checked = IsAutoStart();
             items["lock"].Checked = locked;
             for (int i = 0; i < hkItems.Count; i++) hkItems[i].Checked = i == hkIndex;
+            int[] leads = { 1, 3, 5, 10 }, vols = { 30, 60, 100 };
+            for (int i = 0; i < leadItems.Count; i++) leadItems[i].Checked = leads[i] == leadMin;
+            for (int i = 0; i < volItems.Count; i++) volItems[i].Checked = vols[i] == volPct;
         }
 
         static Icon MakeIcon()
@@ -415,26 +450,83 @@ namespace D4BossHud
                 if (!e.Alarm) continue;
                 long next = e.NextStart(now);
                 long left = next - now;
-                if (left <= 5 * MIN && left > 5 * MIN - 10000 && fired.Add(e.Key + next + "L5")) PlayAlarm(false);
+                long lead = leadMin * MIN;
+                if (left <= lead && left > lead - 10000 && fired.Add(e.Key + next + "L")) StartRing();
                 long last = e.LastStart(now);
-                if (now - last >= 0 && now - last < 10000 && fired.Add(e.Key + last + "S")) PlayAlarm(true);
+                if (now - last >= 0 && now - last < 10000 && fired.Add(e.Key + last + "S")) PlayStart();
             }
             if (fired.Count > 200) fired.Clear();
+            if (ringing && DateTime.UtcNow > ringEnd) StopRing();
             Invalidate();
         }
 
-        void PlayAlarm(bool start)
+        // Pre-alert: repeats until the user presses the key (or 60 s pass)
+        void StartRing()
         {
             if (!soundOn) return;
-            ThreadPool.QueueUserWorkItem(delegate
+            ringEnd = DateTime.UtcNow.AddSeconds(60);
+            if (ringing) return;
+            ringing = true;
+            try
             {
-                try
+                if (player != null) player.Dispose();
+                player = new SoundPlayer(new MemoryStream(ringWav));
+                player.PlayLooping();
+            }
+            catch { try { SystemSounds.Exclamation.Play(); } catch { } }
+        }
+
+        void StopRing()
+        {
+            ringing = false;
+            try { if (player != null) player.Stop(); } catch { }
+        }
+
+        // At the exact start time: one short chime
+        void PlayStart()
+        {
+            if (!soundOn) return;
+            try
+            {
+                StopRing();
+                if (player != null) player.Dispose();
+                player = new SoundPlayer(new MemoryStream(startWav));
+                player.Play();
+            }
+            catch { try { SystemSounds.Asterisk.Play(); } catch { } }
+        }
+
+        void BuildWavs()
+        {
+            double amp = 0.8 * volPct / 100.0;
+            ringWav = Wav(new double[][] { new double[] { 880, 0.18 }, new double[] { 0, 0.08 }, new double[] { 880, 0.18 }, new double[] { 0, 0.08 }, new double[] { 1175, 0.30 }, new double[] { 0, 0.90 } }, amp);
+            startWav = Wav(new double[][] { new double[] { 1047, 0.20 }, new double[] { 1319, 0.20 }, new double[] { 1568, 0.40 } }, amp);
+        }
+
+        // 16-bit mono 22.05 kHz WAV built in memory: list of {frequency Hz (0 = silence), seconds}
+        static byte[] Wav(double[][] notes, double amp)
+        {
+            const int rate = 22050;
+            MemoryStream ms = new MemoryStream();
+            BinaryWriter w = new BinaryWriter(ms);
+            int total = 0;
+            foreach (double[] n in notes) total += (int)(n[1] * rate);
+            w.Write(new char[] { 'R', 'I', 'F', 'F' }); w.Write(36 + total * 2);
+            w.Write(new char[] { 'W', 'A', 'V', 'E', 'f', 'm', 't', ' ' }); w.Write(16);
+            w.Write((short)1); w.Write((short)1); w.Write(rate); w.Write(rate * 2); w.Write((short)2); w.Write((short)16);
+            w.Write(new char[] { 'd', 'a', 't', 'a' }); w.Write(total * 2);
+            foreach (double[] n in notes)
+            {
+                int cnt = (int)(n[1] * rate);
+                for (int i = 0; i < cnt; i++)
                 {
-                    if (start) { Console.Beep(1047, 220); Console.Beep(1319, 220); Console.Beep(1568, 380); Console.Beep(1319, 220); Console.Beep(1568, 500); }
-                    else { Console.Beep(880, 250); Thread.Sleep(80); Console.Beep(880, 250); }
+                    double env = Math.Min(1.0, Math.Min(i, cnt - i) / (0.01 * rate));   // 10 ms fade in/out, no clicks
+                    double v = n[0] <= 0 ? 0 : Math.Sin(2 * Math.PI * n[0] * i / rate) * amp * env;
+                    w.Write((short)(v * 32767));
                 }
-                catch { try { System.Media.SystemSounds.Exclamation.Play(); } catch { } }
-            });
+            }
+            w.Flush();
+            return ms.ToArray();
         }
 
         // ---- drawing ----
@@ -457,7 +549,8 @@ namespace D4BossHud
             float s = (float)S;
             int eh = ExtraH;
             g.Clear(Color.FromArgb(16, 18, 20));
-            using (Pen border = new Pen(locked ? Color.FromArgb(70, 120, 125) : Color.FromArgb(255, 200, 80), Math.Max(1.5f, 1.5f * s)))
+            bool blink = ringing && (DateTime.UtcNow.Ticks / 5000000 % 2 == 0);
+            using (Pen border = new Pen(blink ? Color.FromArgb(255, 70, 60) : locked ? Color.FromArgb(70, 120, 125) : Color.FromArgb(255, 200, 80), Math.Max(1.5f, (blink ? 3f : 1.5f) * s)))
                 g.DrawRectangle(border, 0.5f, 0.5f, w - 2, h - 2);
 
             StringFormat left = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
@@ -530,8 +623,8 @@ namespace D4BossHud
                 if (i == 2)
                 {
                     // always-visible small hint: which key locks/unlocks
-                    using (SolidBrush hb2 = new SolidBrush(Color.FromArgb(160, 170, 175)))
-                        g.DrawString(HkNames[hkIndex] + (locked ? " = 편집" : " = 고정"), fSmall, hb2, new RectangleF(112 * s, y, 84 * s, rowH[i]), mid);
+                    using (SolidBrush hb2 = new SolidBrush(ringing ? Color.FromArgb(255, 210, 90) : Color.FromArgb(160, 170, 175)))
+                        g.DrawString(HkNames[hkIndex] + (ringing ? " = 알람 끄기" : locked ? " = 편집" : " = 고정"), fSmall, hb2, new RectangleF(112 * s, y, 84 * s, rowH[i]), mid);
                 }
                 y += rowH[i];
                 if (i < 2) using (Pen sep = new Pen(Color.FromArgb(48, 56, 58), 1f)) g.DrawLine(sep, 8 * s, y, mainW - 8 * s, y);
