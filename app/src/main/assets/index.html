@@ -301,10 +301,8 @@ svg{display:block}
 
 .hud-banner{display:flex;align-items:center;gap:8px;width:100%;height:40px;margin:0 0 10px;padding:0 12px;border:0;border-radius:12px;color:#fff;font:inherit;font-size:13.5px;font-weight:700;text-align:left;cursor:pointer;background:linear-gradient(90deg,#0f9d94,#2563eb)}
 .hud-banner[hidden]{display:none}.hud-banner .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hud-banner .x{flex:none;padding:6px 4px 6px 10px;font-size:15px;opacity:.85}
-.hud-mock{height:96px;border-radius:14px;margin:0 0 14px;position:relative;overflow:hidden;background:linear-gradient(135deg,#1b1210,#0b0806 60%,#1d1410);border:1px solid var(--line)}
-.hud-mock i{position:absolute;right:14px;top:12px;width:150px;padding:6px 9px;border-radius:9px;background:rgba(10,8,6,.88);border:1px solid rgba(255,255,255,.18);font-style:normal;font-size:11.5px;line-height:1.55;color:#f1e8e0}
-.hud-mock i b{display:block;font-size:13px;color:#ffb35c}
-.hud-mock span{position:absolute;left:14px;bottom:10px;font-size:11px;color:var(--dim)}
+.hud-mock{margin:0 0 14px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.hud-mock img{display:block;width:100%;height:auto}
 .hud-desc{margin:0 0 14px;font-size:14.5px;line-height:1.55}
 .hud-btns{display:flex;gap:10px}.hud-btns button{flex:1;height:46px;border-radius:23px;font-size:15px;font-weight:800;border:1px solid var(--line);color:#d7ccc4;background:#1a1312}
 .hud-btns .go{border:0;color:#fff;background:linear-gradient(90deg,#0f9d94,#2563eb)}
@@ -716,7 +714,7 @@ svg{display:block}
   <div class="sheet" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <h2>PC 게임 화면 위에 타이머</h2>
-    <div class="hud-mock"><i><b>월드보스 12:34</b>지옥물결 31:20<br>군단 08:05</i><span>게임 화면 위에 작은 박스로 떠요</span></div>
+    <div class="hud-mock"><img src="img/hud.jpg" alt="게임 화면 위 타이머 박스"></div>
     <p class="hud-desc">Windows PC용 프로그램이에요. 게임 화면 위에 타이머를 띄워 주고, 보스 직전에 알람이 울려요. PC에서 위 주소를 열어 내려받으세요.</p>
     <div class="hud-btns"><button id="hud-copy">주소 복사</button><button class="go" id="hud-send">PC로 링크 보내기</button></div>
   </div>
