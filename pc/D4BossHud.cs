@@ -119,7 +119,7 @@ namespace D4BossHud
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
 
             ApplyLayout(true);
-            Opacity = locked ? opacityPct / 100.0 : 1.0;
+            Opacity = locked ? Op(opacityPct) : Op(100);
 
             BuildTray();
             timer = new System.Windows.Forms.Timer();
@@ -173,6 +173,9 @@ namespace D4BossHud
             }
             base.WndProc(ref m);
         }
+
+        // Never exactly 1.0: WinForms then drops the layered style and a forced layered window stays invisible
+        static double Op(int pct) { return Math.Min(0.99, pct / 100.0); }
 
         void ToggleVisible() { Visible = !Visible; if (Visible) TopMost = true; }
 
@@ -237,7 +240,7 @@ namespace D4BossHud
                 SetWindowLong(Handle, GWL_EXSTYLE, locked ? (ex | WS_EX_TRANSPARENT) : (ex & ~WS_EX_TRANSPARENT));
             }
             catch { }
-            Opacity = locked ? opacityPct / 100.0 : 1.0;
+            Opacity = locked ? Op(opacityPct) : Op(100);
             ApplyLayout(false);
             TopMost = true;
             Settings.Set("locked", locked);
@@ -299,7 +302,7 @@ namespace D4BossHud
             {
                 int pp = p;
                 ToolStripMenuItem it = new ToolStripMenuItem(pp + "%");
-                it.Click += delegate { opacityPct = pp; Settings.Set("opacity", pp); Settings.Save(); if (locked) Opacity = pp / 100.0; };
+                it.Click += delegate { opacityPct = pp; Settings.Set("opacity", pp); Settings.Save(); if (locked) Opacity = Op(pp); };
                 op.DropDownItems.Add(it);
             }
             menu.Items.Add(op);
