@@ -79,7 +79,7 @@ namespace D4BossHud
 
         const long MIN = 60000;
         // Base layout at 1080p (scaled by screen height / 1080 and the size setting)
-        const int BaseW = 300, BaseH = 112, HeaderH = 22, SideW = 58;
+        const int BaseW = 300, BaseH = 112, HeaderH = 22, SideW = 58, PanelH = 118, LockH = 17;
 
         static readonly string[] HkNames = { "F7", "F8", "F9", "F11", "F12", "Pause", "ScrollLock" };
         static readonly int[] HkVk = { 0x76, 0x77, 0x78, 0x7A, 0x7B, 0x13, 0x91 };
@@ -105,6 +105,7 @@ namespace D4BossHud
         Dictionary<string, ToolStripMenuItem> items = new Dictionary<string, ToolStripMenuItem>();
         Font fName, fNameBig, fDigit, fDigitBig, fSmall, fBold;
         Rectangle rLock, rClose;
+        List<KeyValuePair<Rectangle, Action>> chips = new List<KeyValuePair<Rectangle, Action>>();
         Rectangle[] rToggle = new Rectangle[3];
 
         public HudForm()
@@ -190,6 +191,7 @@ namespace D4BossHud
                 Point c = PointToClient(new Point(x, y));
                 bool onButton = rLock.Contains(c) || rClose.Contains(c);
                 for (int i = 0; i < 3; i++) if (rToggle[i].Contains(c)) onButton = true;
+                foreach (KeyValuePair<Rectangle, Action> ch in chips.ToArray()) if (ch.Key.Contains(c)) onButton = true;
                 m.Result = (IntPtr)(onButton ? HTCLIENT : HTCAPTION);   // drag by any other part
                 return;
             }
@@ -211,7 +213,7 @@ namespace D4BossHud
 
         void ToggleVisible() { Visible = !Visible; if (Visible) TopMost = true; }
 
-        int ExtraH { get { return locked ? 0 : (int)Math.Round(HeaderH * S); } }
+        int ExtraH { get { return (int)Math.Round((locked ? LockH : HeaderH + PanelH) * S); } }
         int ExtraW { get { return locked ? 0 : (int)Math.Round(SideW * S); } }
 
         // Left edge and bottom edge of the form stay fixed when switching between edit and locked mode.
@@ -303,6 +305,7 @@ namespace D4BossHud
             if (rClose.Contains(e.Location)) { QuitApp(); return; }
             if (rLock.Contains(e.Location)) { SetLocked(true); return; }
             for (int i = 0; i < 3; i++) if (rToggle[i].Contains(e.Location)) { ToggleAlarm(i); return; }
+            foreach (KeyValuePair<Rectangle, Action> ch in chips.ToArray()) if (ch.Key.Contains(e.Location)) { ch.Value(); Invalidate(); return; }
         }
 
         void BuildTray()
@@ -541,6 +544,27 @@ namespace D4BossHud
             return p;
         }
 
+        void DrawChip(Graphics g, float s, string text, RectangleF r, bool on, Action act)
+        {
+            using (GraphicsPath gp = Pill(r))
+            using (SolidBrush b = new SolidBrush(on ? Color.FromArgb(46, 120, 150) : Color.FromArgb(58, 63, 68)))
+                g.FillPath(b, gp);
+            StringFormat mid = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
+            g.DrawString(text, fBold, Brushes.White, r, mid);
+            chips.Add(new KeyValuePair<Rectangle, Action>(Rectangle.Round(r), act));
+        }
+
+        void ChipRow(Graphics g, float s, float y, string label, int[] vals, string suffix, int cur, Action<int> set)
+        {
+            StringFormat left = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
+            g.DrawString(label, fBold, new SolidBrush(Color.FromArgb(200, 205, 208)), new RectangleF(8 * s, y, 62 * s, 18 * s), left);
+            for (int i = 0; i < vals.Length; i++)
+            {
+                int v = vals[i];
+                DrawChip(g, s, v + suffix, new RectangleF((72 + i * 52) * s, y, 48 * s, 18 * s), v == cur, delegate { set(v); });
+            }
+        }
+
         protected override void OnPaint(PaintEventArgs pe)
         {
             Graphics g = pe.Graphics;
@@ -560,10 +584,11 @@ namespace D4BossHud
 
             // header (edit mode only): lock checkbox on the left, close on the right
             rLock = Rectangle.Empty; rClose = Rectangle.Empty;
+            chips.Clear();
             for (int i = 0; i < 3; i++) rToggle[i] = Rectangle.Empty;
             if (!locked)
             {
-                float hh = eh;
+                float hh = HeaderH * s;
                 using (SolidBrush hb = new SolidBrush(Color.FromArgb(38, 42, 46))) g.FillRectangle(hb, 1, 1, w - 2, hh - 1);
                 float cb = 13 * s;
                 RectangleF box = new RectangleF(7 * s, (hh - cb) / 2, cb, cb);
@@ -578,6 +603,27 @@ namespace D4BossHud
                     g.DrawLine(xp, cx - r, cy - r, cx + r, cy + r);
                     g.DrawLine(xp, cx - r, cy + r, cx + r, cy - r);
                 }
+            }
+
+            if (!locked)
+            {
+                float py = (HeaderH + 4) * s, rh = 22 * s;
+                ChipRow(g, s, py, "알림 시각", new int[] { 1, 3, 5, 10 }, "분", leadMin, delegate(int v) { leadMin = v; Settings.Set("lead", v); Settings.Save(); Sync(); });
+                ChipRow(g, s, py + rh, "음량", new int[] { 30, 60, 100 }, "%", volPct, delegate(int v) { volPct = v; Settings.Set("vol", v); Settings.Save(); BuildWavs(); Sync(); });
+                ChipRow(g, s, py + 2 * rh, "크기", new int[] { 80, 100, 125, 150 }, "%", scalePct, delegate(int v) { scalePct = v; Settings.Set("scale", v); Settings.Save(); ApplyLayout(false); });
+                ChipRow(g, s, py + 3 * rh, "투명도", new int[] { 100, 90, 75, 60 }, "%", opacityPct, delegate(int v) { opacityPct = v; Settings.Set("opacity", v); Settings.Save(); });
+                float by = py + 4 * rh;
+                DrawChip(g, s, "소리 테스트", new RectangleF(8 * s, by, 84 * s, 18 * s), false, delegate { StartRing(); });
+                DrawChip(g, s, "자동 실행", new RectangleF(98 * s, by, 76 * s, 18 * s), IsAutoStart(), delegate { SetAutoStart(!IsAutoStart()); Sync(); });
+                DrawChip(g, s, "기본 위치", new RectangleF(180 * s, by, 76 * s, 18 * s), false, delegate { ApplyDefaultPos(); });
+            }
+            else
+            {
+                // locked: one bright line above the boss row tells how to get back to edit mode
+                bool blink2 = ringing && (DateTime.UtcNow.Ticks / 5000000 % 2 == 0);
+                string tip = ringing ? HkNames[hkIndex] + " 키 = 알람 끄기" : HkNames[hkIndex] + " 키 = 편집 · 이동";
+                using (SolidBrush tb = new SolidBrush(blink2 ? Color.FromArgb(255, 120, 100) : Color.FromArgb(255, 214, 72)))
+                    g.DrawString(tip, fBold, tb, new RectangleF(0, 1 * s, w, LockH * s - 1), mid);
             }
 
             long now = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
@@ -620,12 +666,6 @@ namespace D4BossHud
                     using (SolidBrush pb = new SolidBrush(e.Alarm ? Color.FromArgb(46, 140, 80) : Color.FromArgb(70, 74, 78)))
                         g.FillPath(pb, gp);
                     g.DrawString(e.Alarm ? "알림" : "끔", fBold, Brushes.White, pr, mid);
-                }
-                if (i == 2)
-                {
-                    // always-visible small hint: which key locks/unlocks
-                    using (SolidBrush hb2 = new SolidBrush(ringing ? Color.FromArgb(255, 210, 90) : Color.FromArgb(160, 170, 175)))
-                        g.DrawString(HkNames[hkIndex] + (ringing ? " = 알람 끄기" : locked ? " = 편집" : " = 고정"), fSmall, hb2, new RectangleF(112 * s, y, 84 * s, rowH[i]), mid);
                 }
                 y += rowH[i];
                 if (i < 2) using (Pen sep = new Pen(Color.FromArgb(48, 56, 58), 1f)) g.DrawLine(sep, 8 * s, y, mainW - 8 * s, y);
