@@ -69,33 +69,30 @@ namespace D4BossHud
     class HudForm : Form
     {
         const int WS_EX_TRANSPARENT = 0x20, WS_EX_TOOLWINDOW = 0x80, WS_EX_NOACTIVATE = 0x08000000, WS_EX_LAYERED = 0x80000;
-        const int WM_HOTKEY = 0x0312, WM_NCHITTEST = 0x84, HTCAPTION = 2;
+        const int GWL_EXSTYLE = -20;
+        const int WM_HOTKEY = 0x0312, WM_NCHITTEST = 0x84, HTCLIENT = 1, HTCAPTION = 2;
         [DllImport("user32.dll")] static extern bool RegisterHotKey(IntPtr h, int id, int mod, int vk);
         [DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr h, int id);
-        [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
         [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr h, int i);
         [DllImport("user32.dll")] static extern int SetWindowLong(IntPtr h, int i, int v);
 
         const long MIN = 60000;
+        // Base layout at 1080p (scaled by screen height / 1080 and the size setting)
+        const int BaseW = 300, BaseH = 112, HeaderH = 22, SideW = 58;
+
         EventDef[] events;
-        bool clickThrough = true;   // default: mouse clicks go to the game
+        bool locked;                // locked = game mode: display only, mouse clicks pass through
         bool soundOn = true;
         int scalePct = 100;
         int opacityPct = 90;
+        double S = 1.0;             // current pixel scale
         NotifyIcon tray;
         System.Windows.Forms.Timer timer;
         HashSet<string> fired = new HashSet<string>();
         Dictionary<string, ToolStripMenuItem> items = new Dictionary<string, ToolStripMenuItem>();
-        Font fName, fNameBig, fDigit, fDigitBig, fSmall;
-        bool hasPos;
-
-        // Base layout at 1080p (scaled by screen height / 1080 and the size setting)
-        const int BaseW = 300, BaseH = 112;
-
-        static long Utc(int y, int mo, int d, int h, int mi)
-        {
-            return (long)(new DateTime(y, mo, d, h, mi, 0, DateTimeKind.Utc) - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
-        }
+        Font fName, fNameBig, fDigit, fDigitBig, fSmall, fBold;
+        Rectangle rLock, rClose;
+        Rectangle[] rToggle = new Rectangle[3];
 
         public HudForm()
         {
@@ -111,6 +108,7 @@ namespace D4BossHud
             soundOn = Settings.GetBool("sound", true);
             scalePct = Settings.GetInt("scale", 100);
             opacityPct = Settings.GetInt("opacity", 90);
+            locked = Settings.GetBool("locked", false);   // first run: editable until the user locks it
 
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
@@ -120,14 +118,19 @@ namespace D4BossHud
             DoubleBuffered = true;
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
 
-            ApplySizeAndPosition();
-            Opacity = opacityPct / 100.0;
+            ApplyLayout(true);
+            Opacity = locked ? opacityPct / 100.0 : 1.0;
 
             BuildTray();
             timer = new System.Windows.Forms.Timer();
             timer.Interval = 250;
             timer.Tick += delegate { try { Tick(); } catch { } };
             timer.Start();
+            try
+            {
+                tray.ShowBalloonTip(5000, "디아4 보스 HUD", locked ? "실행 중이에요. 끄려면 작업 표시줄 오른쪽 ^ 안의 D4 아이콘을 우클릭하세요." : "끌어서 위치를 옮기고, 끝나면 '고정'을 체크하세요.", ToolTipIcon.Info);
+            }
+            catch { }
         }
 
         protected override bool ShowWithoutActivation { get { return true; } }
@@ -138,7 +141,7 @@ namespace D4BossHud
             {
                 CreateParams cp = base.CreateParams;
                 cp.ExStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_LAYERED;
-                if (clickThrough) cp.ExStyle |= WS_EX_TRANSPARENT;
+                if (locked) cp.ExStyle |= WS_EX_TRANSPARENT;
                 return cp;
             }
         }
@@ -158,41 +161,114 @@ namespace D4BossHud
         protected override void WndProc(ref Message m)
         {
             if (m.Msg == WM_HOTKEY) { ToggleVisible(); return; }
-            if (m.Msg == WM_NCHITTEST && !clickThrough) { m.Result = (IntPtr)HTCAPTION; return; } // drag by any part
+            if (m.Msg == WM_NCHITTEST && !locked)
+            {
+                long l = m.LParam.ToInt64();
+                int x = unchecked((short)(l & 0xFFFF)), y = unchecked((short)((l >> 16) & 0xFFFF));
+                Point c = PointToClient(new Point(x, y));
+                bool onButton = rLock.Contains(c) || rClose.Contains(c);
+                for (int i = 0; i < 3; i++) if (rToggle[i].Contains(c)) onButton = true;
+                m.Result = (IntPtr)(onButton ? HTCLIENT : HTCAPTION);   // drag by any other part
+                return;
+            }
             base.WndProc(ref m);
         }
 
         void ToggleVisible() { Visible = !Visible; if (Visible) TopMost = true; }
 
-        void ApplySizeAndPosition()
+        int ExtraH { get { return locked ? 0 : (int)Math.Round(HeaderH * S); } }
+        int ExtraW { get { return locked ? 0 : (int)Math.Round(SideW * S); } }
+
+        // Left edge and bottom edge of the form stay fixed when switching between edit and locked mode.
+        void ApplyLayout(bool first)
         {
             Rectangle b = Screen.PrimaryScreen.Bounds;
-            double s = (b.Height / 1080.0) * (scalePct / 100.0);
-            int w = (int)(BaseW * s), h = (int)(BaseH * s);
-            Size = new Size(w, h);
-            if (fName != null) { fName.Dispose(); fNameBig.Dispose(); fDigit.Dispose(); fDigitBig.Dispose(); fSmall.Dispose(); }
-            float px = (float)s;
+            S = (b.Height / 1080.0) * (scalePct / 100.0);
+            int w = (int)(BaseW * S), h = (int)(BaseH * S);
+            DisposeFonts();
+            float px = (float)S;
             fName = new Font("Malgun Gothic", 11f * px, FontStyle.Bold, GraphicsUnit.Pixel);
             fNameBig = new Font("Malgun Gothic", 14f * px, FontStyle.Bold, GraphicsUnit.Pixel);
             fDigit = new Font("Consolas", 22f * px, FontStyle.Bold, GraphicsUnit.Pixel);
             fDigitBig = new Font("Consolas", 34f * px, FontStyle.Bold, GraphicsUnit.Pixel);
             fSmall = new Font("Malgun Gothic", 10f * px, FontStyle.Regular, GraphicsUnit.Pixel);
-            int x, y;
-            if (Settings.GetInt("x", int.MinValue) != int.MinValue && Settings.GetBool("pos", false))
+            fBold = new Font("Malgun Gothic", 11f * px, FontStyle.Bold, GraphicsUnit.Pixel);
+
+            int left, bottom;
+            if (first)
             {
-                x = Settings.GetInt("x", 0); y = Settings.GetInt("y", 0);
-                Point p = new Point(x + w / 2, y + h / 2);
-                bool onScreen = false;
-                foreach (Screen sc in Screen.AllScreens) if (sc.Bounds.Contains(p)) onScreen = true;
-                if (!onScreen) { x = DefaultX(b); y = b.Bottom - h; }
+                // Default: right next to the orange resource orb, about as high as the orb itself
+                left = b.Left + (int)(b.Width * 0.73);
+                bottom = b.Bottom - (int)(50 * S);
+                if (Settings.GetBool("has_pos", false))
+                {
+                    int sx = Settings.GetInt("px", left), sb = Settings.GetInt("pb", bottom);
+                    Point p = new Point(sx + w / 2, sb - h / 2);
+                    foreach (Screen sc in Screen.AllScreens) if (sc.Bounds.Contains(p)) { left = sx; bottom = sb; }
+                }
             }
-            else { x = DefaultX(b); y = b.Bottom - h; }
-            Location = new Point(x, y);
+            else { left = Left; bottom = Bottom; }
+            int fw = w + ExtraW, fh = h + ExtraH;
+            SetBounds(left, bottom - fh, fw, fh);
             Invalidate();
         }
 
-        // Right next to the orange resource orb of the default D4 layout (about 73% of the width)
-        int DefaultX(Rectangle b) { return b.Left + (int)(b.Width * 0.73); }
+        void DisposeFonts()
+        {
+            if (fName == null) return;
+            fName.Dispose(); fNameBig.Dispose(); fDigit.Dispose(); fDigitBig.Dispose(); fSmall.Dispose(); fBold.Dispose();
+        }
+
+        void SavePos()
+        {
+            Settings.Set("px", Left); Settings.Set("pb", Bottom); Settings.Set("has_pos", true);
+            Settings.Set("locked", locked);
+            Settings.Save();
+        }
+
+        void SetLocked(bool v)
+        {
+            if (v == locked) return;
+            if (!locked) { locked = true; SavePos(); locked = false; }   // remember where the user put it
+            locked = v;
+            try
+            {
+                int ex = GetWindowLong(Handle, GWL_EXSTYLE);
+                SetWindowLong(Handle, GWL_EXSTYLE, locked ? (ex | WS_EX_TRANSPARENT) : (ex & ~WS_EX_TRANSPARENT));
+            }
+            catch { }
+            Opacity = locked ? opacityPct / 100.0 : 1.0;
+            ApplyLayout(false);
+            TopMost = true;
+            Settings.Set("locked", locked);
+            Settings.Save();
+            Sync();
+        }
+
+        void ToggleAlarm(int i)
+        {
+            events[i].Alarm = !events[i].Alarm;
+            Settings.Set(i == 0 ? "alarm_boss" : i == 1 ? "alarm_tide" : "alarm_legion", events[i].Alarm);
+            Settings.Save();
+            Sync();
+            Invalidate();
+        }
+
+        void QuitApp()
+        {
+            try { SavePos(); } catch { }
+            try { tray.Visible = false; } catch { }
+            Application.Exit();
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            if (locked || e.Button != MouseButtons.Left) return;
+            if (rClose.Contains(e.Location)) { QuitApp(); return; }
+            if (rLock.Contains(e.Location)) { SetLocked(true); return; }
+            for (int i = 0; i < 3; i++) if (rToggle[i].Contains(e.Location)) { ToggleAlarm(i); return; }
+        }
 
         void BuildTray()
         {
@@ -200,44 +276,50 @@ namespace D4BossHud
             tray.Text = "디아4 보스 HUD";
             tray.Icon = MakeIcon();
             ContextMenuStrip menu = new ContextMenuStrip();
-            menu.Items.Add(Item("show", "보이기/숨기기  (Ctrl+Shift+H)", delegate { ToggleVisible(); }, false));
-            menu.Items.Add(Item("move", "위치 옮기기 (끝나면 다시 클릭)", delegate { SetMoveMode(clickThrough); }, false));
+            menu.Items.Add(Item("show", "보이기/숨기기  (Ctrl+Shift+H)", delegate { ToggleVisible(); }));
+            menu.Items.Add(Item("lock", "고정 (게임용: 클릭·이동 안 됨)", delegate { SetLocked(!locked); }));
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(Item("a_boss", "월드보스 알림", delegate { events[0].Alarm = !events[0].Alarm; Settings.Set("alarm_boss", events[0].Alarm); Settings.Save(); Sync(); }, true));
-            menu.Items.Add(Item("a_tide", "지옥물결 알림", delegate { events[1].Alarm = !events[1].Alarm; Settings.Set("alarm_tide", events[1].Alarm); Settings.Save(); Sync(); }, true));
-            menu.Items.Add(Item("a_legion", "군단 알림", delegate { events[2].Alarm = !events[2].Alarm; Settings.Set("alarm_legion", events[2].Alarm); Settings.Save(); Sync(); }, true));
-            menu.Items.Add(Item("sound", "알림 소리", delegate { soundOn = !soundOn; Settings.Set("sound", soundOn); Settings.Save(); Sync(); }, true));
-            menu.Items.Add(Item("test", "소리 테스트", delegate { PlayAlarm(false); }, false));
+            menu.Items.Add(Item("a_boss", "월드보스 알림", delegate { ToggleAlarm(0); }));
+            menu.Items.Add(Item("a_tide", "지옥물결 알림", delegate { ToggleAlarm(1); }));
+            menu.Items.Add(Item("a_legion", "군단 알림", delegate { ToggleAlarm(2); }));
+            menu.Items.Add(Item("sound", "알림 소리", delegate { soundOn = !soundOn; Settings.Set("sound", soundOn); Settings.Save(); Sync(); }));
+            menu.Items.Add(Item("test", "소리 테스트", delegate { PlayAlarm(false); }));
             menu.Items.Add(new ToolStripSeparator());
             ToolStripMenuItem size = new ToolStripMenuItem("크기");
             foreach (int p in new int[] { 80, 100, 125, 150 })
             {
                 int pp = p;
                 ToolStripMenuItem it = new ToolStripMenuItem(pp + "%");
-                it.Click += delegate { scalePct = pp; Settings.Set("scale", pp); Settings.Save(); ApplySizeAndPosition(); };
+                it.Click += delegate { scalePct = pp; Settings.Set("scale", pp); Settings.Save(); ApplyLayout(false); };
                 size.DropDownItems.Add(it);
             }
             menu.Items.Add(size);
-            ToolStripMenuItem op = new ToolStripMenuItem("투명도");
+            ToolStripMenuItem op = new ToolStripMenuItem("투명도 (고정했을 때)");
             foreach (int p in new int[] { 100, 90, 75, 60 })
             {
                 int pp = p;
                 ToolStripMenuItem it = new ToolStripMenuItem(pp + "%");
-                it.Click += delegate { opacityPct = pp; Settings.Set("opacity", pp); Settings.Save(); Opacity = pp / 100.0; };
+                it.Click += delegate { opacityPct = pp; Settings.Set("opacity", pp); Settings.Save(); if (locked) Opacity = pp / 100.0; };
                 op.DropDownItems.Add(it);
             }
             menu.Items.Add(op);
-            menu.Items.Add(Item("reset", "위치 기본값으로", delegate { Settings.Set("pos", false); Settings.Save(); ApplySizeAndPosition(); }, false));
-            menu.Items.Add(Item("auto", "윈도우 시작 시 자동 실행", delegate { SetAutoStart(!IsAutoStart()); Sync(); }, true));
+            menu.Items.Add(Item("reset", "위치 기본값으로", delegate { Settings.Set("has_pos", false); Settings.Save(); bool l = locked; ApplyDefaultPos(); }));
+            menu.Items.Add(Item("auto", "윈도우 시작 시 자동 실행", delegate { SetAutoStart(!IsAutoStart()); Sync(); }));
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(Item("exit", "종료", delegate { tray.Visible = false; Application.Exit(); }, false));
+            menu.Items.Add(Item("exit", "종료", delegate { QuitApp(); }));
             tray.ContextMenuStrip = menu;
             tray.DoubleClick += delegate { ToggleVisible(); };
             tray.Visible = true;
             Sync();
         }
 
-        ToolStripMenuItem Item(string key, string text, EventHandler h, bool check)
+        void ApplyDefaultPos()
+        {
+            Rectangle b = Screen.PrimaryScreen.Bounds;
+            Location = new Point(b.Left + (int)(b.Width * 0.73), b.Bottom - (int)(50 * S) - Height);
+        }
+
+        ToolStripMenuItem Item(string key, string text, EventHandler h)
         {
             ToolStripMenuItem it = new ToolStripMenuItem(text);
             it.Click += h;
@@ -252,7 +334,7 @@ namespace D4BossHud
             items["a_legion"].Checked = events[2].Alarm;
             items["sound"].Checked = soundOn;
             items["auto"].Checked = IsAutoStart();
-            items["move"].Checked = !clickThrough;
+            items["lock"].Checked = locked;
         }
 
         static Icon MakeIcon()
@@ -290,28 +372,6 @@ namespace D4BossHud
             catch { }
         }
 
-        void SetMoveMode(bool move)
-        {
-            if (move)
-            {
-                clickThrough = false;
-                RecreateHandle();
-                Opacity = 1.0;
-                MessageBeep();
-            }
-            else
-            {
-                clickThrough = true;
-                Settings.Set("x", Left); Settings.Set("y", Top); Settings.Set("pos", true); Settings.Save();
-                RecreateHandle();
-                Opacity = opacityPct / 100.0;
-            }
-            Sync();
-            Invalidate();
-        }
-
-        static void MessageBeep() { try { System.Media.SystemSounds.Asterisk.Play(); } catch { } }
-
         // ---- alarms ----
         void Tick()
         {
@@ -321,8 +381,7 @@ namespace D4BossHud
                 if (!e.Alarm) continue;
                 long next = e.NextStart(now);
                 long left = next - now;
-                string id5 = e.Key + next + "L5";
-                if (left <= 5 * MIN && left > 5 * MIN - 10000 && fired.Add(id5)) PlayAlarm(false);
+                if (left <= 5 * MIN && left > 5 * MIN - 10000 && fired.Add(e.Key + next + "L5")) PlayAlarm(false);
                 long last = e.LastStart(now);
                 if (now - last >= 0 && now - last < 10000 && fired.Add(e.Key + last + "S")) PlayAlarm(true);
             }
@@ -345,22 +404,58 @@ namespace D4BossHud
         }
 
         // ---- drawing ----
+        static GraphicsPath Pill(RectangleF r)
+        {
+            GraphicsPath p = new GraphicsPath();
+            float d = r.Height;
+            p.AddArc(r.X, r.Y, d, d, 90, 180);
+            p.AddArc(r.Right - d, r.Y, d, d, 270, 180);
+            p.CloseFigure();
+            return p;
+        }
+
         protected override void OnPaint(PaintEventArgs pe)
         {
             Graphics g = pe.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
             int w = ClientSize.Width, h = ClientSize.Height;
+            float s = (float)S;
+            int eh = ExtraH;
             g.Clear(Color.FromArgb(16, 18, 20));
-            float s = (float)w / BaseW;
-            using (Pen border = new Pen(clickThrough ? Color.FromArgb(70, 120, 125) : Color.FromArgb(255, 200, 80), Math.Max(1.5f, 1.5f * s)))
+            using (Pen border = new Pen(locked ? Color.FromArgb(70, 120, 125) : Color.FromArgb(255, 200, 80), Math.Max(1.5f, 1.5f * s)))
                 g.DrawRectangle(border, 0.5f, 0.5f, w - 2, h - 2);
+
+            StringFormat left = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
+            StringFormat right = new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
+            StringFormat mid = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
+
+            // header (edit mode only): lock checkbox on the left, close on the right
+            rLock = Rectangle.Empty; rClose = Rectangle.Empty;
+            for (int i = 0; i < 3; i++) rToggle[i] = Rectangle.Empty;
+            if (!locked)
+            {
+                float hh = eh;
+                using (SolidBrush hb = new SolidBrush(Color.FromArgb(38, 42, 46))) g.FillRectangle(hb, 1, 1, w - 2, hh - 1);
+                float cb = 13 * s;
+                RectangleF box = new RectangleF(7 * s, (hh - cb) / 2, cb, cb);
+                using (Pen bp = new Pen(Color.FromArgb(230, 220, 200), 1.5f * s)) g.DrawRectangle(bp, box.X, box.Y, box.Width, box.Height);
+                g.DrawString("고정", fBold, Brushes.White, new RectangleF(box.Right + 5 * s, 0, 40 * s, hh), left);
+                g.DrawString("끌어서 이동 · 끝나면 고정 체크", fSmall, new SolidBrush(Color.FromArgb(170, 175, 180)), new RectangleF(70 * s, 0, w - 70 * s - hh, hh), left);
+                rLock = new Rectangle(0, 0, (int)(66 * s), (int)hh);
+                rClose = new Rectangle(w - (int)hh - 2, 1, (int)hh, (int)hh - 1);
+                using (Pen xp = new Pen(Color.FromArgb(255, 110, 100), 2f * s))
+                {
+                    float cx = rClose.X + rClose.Width / 2f, cy = rClose.Y + rClose.Height / 2f, r = 4.5f * s;
+                    g.DrawLine(xp, cx - r, cy - r, cx + r, cy + r);
+                    g.DrawLine(xp, cx - r, cy + r, cx + r, cy - r);
+                }
+            }
 
             long now = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
             float[] rowH = { 52 * s, 28 * s, 28 * s };
-            float y = 3 * s;
-            StringFormat left = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
-            StringFormat right = new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
+            float mainW = BaseW * s;
+            float y = eh + 3 * s;
             for (int i = 0; i < 3; i++)
             {
                 EventDef e = events[i];
@@ -375,7 +470,7 @@ namespace D4BossHud
                 else if (ms <= 1 * MIN) c = (now / 500 % 2 == 0) ? Color.FromArgb(255, 70, 60) : Color.FromArgb(255, 140, 120);
                 else if (ms <= 5 * MIN) c = Color.FromArgb(255, 205, 70);
                 else c = Color.FromArgb(240, 236, 228);
-                RectangleF r = new RectangleF(8 * s, y, w - 16 * s, rowH[i]);
+                RectangleF r = new RectangleF(8 * s, y, mainW - 16 * s, rowH[i]);
                 using (SolidBrush dot = new SolidBrush(e.Accent))
                     g.FillEllipse(dot, 8 * s, y + rowH[i] / 2 - 4 * s, 8 * s, 8 * s);
                 RectangleF nameR = new RectangleF(22 * s, y, 110 * s, rowH[i]);
@@ -387,11 +482,20 @@ namespace D4BossHud
                 }
                 using (SolidBrush db = new SolidBrush(c))
                     g.DrawString(txt, big ? fDigitBig : fDigit, db, r, right);
+
+                if (!locked)
+                {
+                    // per-row alarm switch in the side column
+                    RectangleF pr = new RectangleF(mainW + 6 * s, y + rowH[i] / 2 - 9 * s, 46 * s, 18 * s);
+                    rToggle[i] = Rectangle.Round(pr);
+                    using (GraphicsPath gp = Pill(pr))
+                    using (SolidBrush pb = new SolidBrush(e.Alarm ? Color.FromArgb(46, 140, 80) : Color.FromArgb(70, 74, 78)))
+                        g.FillPath(pb, gp);
+                    g.DrawString(e.Alarm ? "알림" : "끔", fBold, Brushes.White, pr, mid);
+                }
                 y += rowH[i];
-                if (i < 2) using (Pen sep = new Pen(Color.FromArgb(48, 56, 58), 1f)) g.DrawLine(sep, 8 * s, y, w - 8 * s, y);
+                if (i < 2) using (Pen sep = new Pen(Color.FromArgb(48, 56, 58), 1f)) g.DrawLine(sep, 8 * s, y, mainW - 8 * s, y);
             }
-            if (!clickThrough)
-                g.DrawString("드래그해서 옮기세요 · 끝나면 트레이에서 다시 클릭", fSmall, Brushes.Gold, new RectangleF(0, 0, w, 14 * s), new StringFormat { Alignment = StringAlignment.Center });
         }
     }
 
