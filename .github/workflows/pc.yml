@@ -25,7 +25,7 @@ jobs:
         shell: pwsh
         run: |
           $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-          & $csc /nologo /target:winexe /optimize+ /out:D4BossHud.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll pc\D4BossHud.cs
+          & $csc /nologo /target:winexe /optimize+ /win32icon:pc\icon.ico /out:D4BossHud.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll pc\D4BossHud.cs
           if ($LASTEXITCODE -ne 0) { exit 1 }
           Get-Item D4BossHud.exe | Format-List Name,Length
 

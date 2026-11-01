@@ -309,7 +309,8 @@ namespace D4BossHud
         {
             tray = new NotifyIcon();
             tray.Text = "디아4 보스 HUD";
-            tray.Icon = MakeIcon();
+            try { tray.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); }
+            catch { tray.Icon = MakeIcon(); }
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Items.Add(Item("show", "보이기/숨기기  (Ctrl+Shift+H)", delegate { ToggleVisible(); }));
             menu.Items.Add(Item("lock", "고정 (게임용: 클릭·이동 안 됨)", delegate { SetLocked(!locked); }));
