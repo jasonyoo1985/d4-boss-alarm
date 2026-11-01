@@ -4,6 +4,9 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.NotificationManager
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -315,6 +318,23 @@ class MainActivity : Activity() {
                 .putExtra(Intent.EXTRA_SUBJECT, "디아4 월드보스 알람 PC")
                 .putExtra(Intent.EXTRA_TEXT, "PC에서 열면 알림이 울려요 (탭을 열어 두세요)\n$link")
             runOnUiThread { startActivity(Intent.createChooser(send, "PC로 링크 보내기")) }
+        }
+
+        /** PC HUD promo: plain address to the phone's share sheet (no settings in the link). */
+        @JavascriptInterface
+        fun sharePcHud() {
+            val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+                .putExtra(Intent.EXTRA_SUBJECT, "디아4 보스 알람 PC 프로그램")
+                .putExtra(Intent.EXTRA_TEXT, "게임 화면 위에 보스 타이머를 띄우는 PC 프로그램이에요 (Windows)\n$PC_PAGE")
+            runOnUiThread { startActivity(Intent.createChooser(send, "PC로 링크 보내기")) }
+        }
+
+        @JavascriptInterface
+        fun copyPcHud() = runOnUiThread {
+            try {
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager)
+                    .setPrimaryClip(ClipData.newPlainText("D4 alarm", "d4alarm.stackupinfra.com"))
+            } catch (e: Exception) {}
         }
 
         @JavascriptInterface
