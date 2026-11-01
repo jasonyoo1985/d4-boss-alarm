@@ -546,8 +546,13 @@ namespace D4BossHud
 
         void DrawChip(Graphics g, float s, string text, RectangleF r, bool on, Action act)
         {
+            DrawChip(g, s, text, r, on, act, Color.FromArgb(46, 120, 150));
+        }
+
+        void DrawChip(Graphics g, float s, string text, RectangleF r, bool on, Action act, Color onColor)
+        {
             using (GraphicsPath gp = Pill(r))
-            using (SolidBrush b = new SolidBrush(on ? Color.FromArgb(46, 120, 150) : Color.FromArgb(58, 63, 68)))
+            using (SolidBrush b = new SolidBrush(on ? onColor : Color.FromArgb(58, 63, 68)))
                 g.FillPath(b, gp);
             StringFormat mid = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
             g.DrawString(text, fBold, Brushes.White, r, mid);
@@ -594,7 +599,7 @@ namespace D4BossHud
                 RectangleF box = new RectangleF(7 * s, (hh - cb) / 2, cb, cb);
                 using (Pen bp = new Pen(Color.FromArgb(230, 220, 200), 1.5f * s)) g.DrawRectangle(bp, box.X, box.Y, box.Width, box.Height);
                 g.DrawString("고정", fBold, Brushes.White, new RectangleF(box.Right + 5 * s, 0, 40 * s, hh), left);
-                g.DrawString("끌어서 이동 · " + HkNames[hkIndex] + " 또는 □ 로 고정", fSmall, new SolidBrush(Color.FromArgb(170, 175, 180)), new RectangleF(70 * s, 0, w - 70 * s - hh, hh), left);
+                g.DrawString("끌어서 이동 · " + HkNames[hkIndex] + " 또는 □ 로 고정", fBold, new SolidBrush(Color.FromArgb(255, 214, 72)), new RectangleF(70 * s, 0, w - 70 * s - hh, hh), left);
                 rLock = new Rectangle(0, 0, (int)(66 * s), (int)hh);
                 rClose = new Rectangle(w - (int)hh - 2, 1, (int)hh, (int)hh - 1);
                 using (Pen xp = new Pen(Color.FromArgb(255, 110, 100), 2f * s))
@@ -613,9 +618,10 @@ namespace D4BossHud
                 ChipRow(g, s, py + 2 * rh, "크기", new int[] { 80, 100, 125, 150 }, "%", scalePct, delegate(int v) { scalePct = v; Settings.Set("scale", v); Settings.Save(); ApplyLayout(false); });
                 ChipRow(g, s, py + 3 * rh, "투명도", new int[] { 100, 90, 75, 60 }, "%", opacityPct, delegate(int v) { opacityPct = v; Settings.Set("opacity", v); Settings.Save(); });
                 float by = py + 4 * rh;
-                DrawChip(g, s, "소리 테스트", new RectangleF(8 * s, by, 84 * s, 18 * s), false, delegate { StartRing(); });
-                DrawChip(g, s, "자동 실행", new RectangleF(98 * s, by, 76 * s, 18 * s), IsAutoStart(), delegate { SetAutoStart(!IsAutoStart()); Sync(); });
-                DrawChip(g, s, "기본 위치", new RectangleF(180 * s, by, 76 * s, 18 * s), false, delegate { ApplyDefaultPos(); });
+                DrawChip(g, s, "소리 끄기", new RectangleF(8 * s, by, 64 * s, 18 * s), ringing, delegate { StopRing(); }, Color.FromArgb(200, 60, 50));
+                DrawChip(g, s, "소리 테스트", new RectangleF(76 * s, by, 72 * s, 18 * s), false, delegate { StartRing(); });
+                DrawChip(g, s, "기본 위치", new RectangleF(152 * s, by, 64 * s, 18 * s), false, delegate { ApplyDefaultPos(); });
+                DrawChip(g, s, "PC 켜면 자동", new RectangleF(220 * s, by, 82 * s, 18 * s), IsAutoStart(), delegate { SetAutoStart(!IsAutoStart()); Sync(); });
             }
             else
             {
