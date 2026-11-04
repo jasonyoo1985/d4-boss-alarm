@@ -1,0 +1,16 @@
+name: probe
+on:
+  push:
+    branches: ['claude/**']
+    paths: ['.github/workflows/probe.yml']
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for p in com/android/tools/build/gradle com/google/android/play/app-update com/google/android/play/app-update-ktx; do
+            echo "== $p"; curl -sL https://dl.google.com/dl/android/maven2/$p/maven-metadata.xml | grep -E "<latest>|<release>|<version>" | tail -8
+          done
+          ls $ANDROID_HOME/platforms; ls $ANDROID_HOME/build-tools | tail -3
+          curl -sL https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-gradle-plugin/maven-metadata.xml | grep -E "<release>"
+          curl -sL https://services.gradle.org/versions/current | head -c 300
