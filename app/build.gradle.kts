@@ -36,4 +36,6 @@ android {
 
 dependencies {
     implementation("com.google.android.play:app-update:2.1.0")
+    // Play flagged the old androidx.fragment 1.0.0 that app-update pulls in; this pins a current one
+    implementation("androidx.fragment:fragment:1.8.9")
 }
