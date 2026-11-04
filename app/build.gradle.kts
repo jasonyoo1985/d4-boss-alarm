@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.jaewook.d4timer"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.jaewook.d4timer"
