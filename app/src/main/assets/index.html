@@ -660,6 +660,14 @@ svg{display:block}
       <button class="switch quiet-sw" role="switch" id="follow-dnd" aria-label="폰 방해금지 모드 따르기"></button></div>
   </div>
   <div class="info-block">
+    <div class="info-row"><span class="k">시즌 종료 알림<span class="en b">Season-end reminder</span><span class="v" style="font-size:12.5px">시즌이 끝나기 7일 전과 하루 전 낮 12시에 알려줘요</span></span>
+      <button class="switch quiet-sw" role="switch" id="season-remind" aria-label="시즌 종료 알림"></button></div>
+  </div>
+  <div class="info-block">
+    <div class="info-row"><span class="k">설정 백업 · 복원<span class="en b">Backup &amp; restore</span><span class="v" style="font-size:12.5px">폰을 바꿔도 알람 설정을 그대로 가져와요</span></span></div>
+    <div class="clan-btns" style="padding:0 14px 12px"><button class="ghost" id="bk-save">백업 보내기</button><button class="ghost" id="bk-load">복사한 백업 복원</button></div>
+  </div>
+  <div class="info-block">
     <div class="info-row"><span class="k">앱을 닫으면 알림 안 울림<span class="en b">Only while app is open</span><span class="v" style="font-size:12.5px">켜면 최근 앱 목록에 앱이 있을 때만 울려요</span></span>
       <button class="switch quiet-sw" role="switch" id="only-open" aria-label="앱을 닫으면 알림 안 울림"></button></div>
   </div>
@@ -1059,6 +1067,7 @@ function paintQuiet() {
   $("q-on").setAttribute("aria-checked", q.on);
   $("only-open").setAttribute("aria-checked", !!S.onlyOpen);
   $("follow-dnd").setAttribute("aria-checked", !!S.followDnd);
+  $("season-remind").setAttribute("aria-checked", S.seasonRemind !== false);
   $("q-start").value = fmtMin(q.start); $("q-end").value = fmtMin(q.end);
   $("q-start").disabled = $("q-end").disabled = !q.on;
   $("q-evs").innerHTML = S.events.map(e => `<button data-k="${e.key}" aria-pressed="${e.quiet !== false}"${q.on ? "" : " disabled"}>${e.quiet !== false ? "✓ " : ""}${e.name}</button>`).join("");
@@ -1129,6 +1138,22 @@ $("follow-dnd").onclick = () => {
   bridge && bridge.setFollowDnd(S.followDnd);
   paintQuiet();
   toast(S.followDnd ? "폰이 방해금지일 때 알림이 울리지 않아요" : "폰 방해금지와 상관없이 울려요");
+};
+$("season-remind").onclick = () => {
+  S.seasonRemind = S.seasonRemind === false;
+  bridge && bridge.setSeasonRemind && bridge.setSeasonRemind(S.seasonRemind);
+  $("season-remind").setAttribute("aria-checked", S.seasonRemind);
+  toast(S.seasonRemind ? "시즌이 끝나기 7일 전과 하루 전에 알려줘요" : "시즌 종료 알림을 껐어요");
+};
+// 설정 백업: 공유창으로 내 카톡 등에 보내 두고, 새 폰에서 그 글을 복사한 뒤 [복사한 백업 복원]
+$("bk-save").onclick = () => { if (bridge && bridge.backupSettings) bridge.backupSettings(); else toast("앱에서 동작해요"); };
+$("bk-load").onclick = () => {
+  if (!bridge || !bridge.restoreSettings) { toast("앱에서 동작해요"); return; }
+  if (confirm("복사해 둔 백업으로 알람 설정을 바꿀까요? 지금 설정은 덮어써져요.")) bridge.restoreSettings();
+};
+window.restoreDone = n => {
+  if (n > 0) { toast(`설정 ${n}개를 복원했어요`); if (bridge) { S = loadState(); refresh(); } }
+  else toast("복사한 백업을 찾지 못했어요. 백업 글을 길게 눌러 [복사]한 뒤 다시 눌러 주세요");
 };
 $("only-open").onclick = () => {
   S.onlyOpen = !S.onlyOpen;
@@ -1779,7 +1804,7 @@ const WHATS_NEW = {
   "3.0": ["PC 프로그램 안내 시트에 실제 타이머 화면이 보여요."],
   "3.1": ["클랜 홍보가 완전 무료가 됐어요. 승인 없이 등록하면 바로 15일 동안 노출돼요.",
     "15일이 지나면 저절로 내려가고, 클랜 탭에서 다시 등록할 수 있어요.",
-    "최신 안드로이드 기준으로 앱을 다듬었어요."],
+    "정보 탭에 [시즌 종료 알림](끝나기 7일·1일 전)과 [설정 백업·복원](폰 바꿀 때)이 생겼어요."],
   "2.9": ["알람 버튼 글자가 잘리지 않게 [다음 회까지] [이번 회만] [끄기]로 짧아졌어요.",
     "홈 맨 위에 PC 프로그램 안내가 생겼어요. 게임 화면 위에 보스 타이머를 띄울 수 있어요."],
   "2.8": ["알람 버튼이 [끄기] [이번 회 건너뛰기] [다음 회까지 건너뛰기]로 바뀌어 뜻이 더 분명해졌어요.",

@@ -109,6 +109,10 @@ class Prefs(context: Context) {
     fun followDnd() = sp.getBoolean("follow_dnd", false)
     fun setFollowDnd(on: Boolean) = sp.edit().putBoolean("follow_dnd", on).apply()
 
+    /** Notify 7 and 1 day before the season ends; see [SeasonReminder]. */
+    fun seasonRemind() = sp.getBoolean("season_remind", true)
+    fun setSeasonRemind(on: Boolean) = sp.edit().putBoolean("season_remind", on).apply()
+
     /** Ring only while the app is still in the recent apps list. */
     fun onlyOpen() = sp.getBoolean("only_open", false)
     fun setOnlyOpen(on: Boolean) = sp.edit().putBoolean("only_open", on).apply()
