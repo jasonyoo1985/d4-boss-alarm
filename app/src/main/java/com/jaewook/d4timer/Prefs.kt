@@ -129,6 +129,10 @@ class Prefs(context: Context) {
     fun clanToken(): String = sp.getString("clan_token", "") ?: ""
     fun setClanToken(t: String) = sp.edit().putString("clan_token", t).apply()
 
+    /** A random code for this phone's reports, so the server counts one phone only once. Not tied to the user. */
+    fun reportToken(): String = sp.getString("report_token", "") ?: ""
+    fun setReportToken(t: String) = sp.edit().putString("report_token", t).apply()
+
     /** The state of this phone's own application (대기/예약/노출/거절 + reason), last good answer. */
     fun clanMineStatus(): String = sp.getString("clan_mine", "") ?: ""
     fun setClanMineStatus(json: String) = sp.edit().putString("clan_mine", json).apply()

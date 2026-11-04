@@ -811,7 +811,7 @@ function loadState() {
   if (bridge) return JSON.parse(bridge.getState());
   return {
     version: "미리보기", notif: true, exact: true, quiet: { on: true, start: 0, end: 480 }, phoneVol: 20,
-    fromAlarm: true, clanFollowing: [], clanMine: false, notice: { text: "클랜장님, 베타 동안 클랜 홍보가 무료예요", open: "clan" },
+    fromAlarm: true, clanFollowing: [], clanMine: false, notice: { text: "클랜장님, 클랜 홍보가 무료예요 (15일)", open: "clan" },
     clan: { id: "2", name: "대한민국클랜", line: "매일 저녁 월드보스 같이 잡아요. 초보 환영", when: "매일 21:00", chat: "https://open.kakao.com/o/sample", discord: "https://discord.gg/sample", tag: "선조의해머#3114", ends: Date.now() + 12 * 24 * 60 * MIN },
     clans: {
       slots: 3, days: 30, paid: false,
@@ -1434,7 +1434,7 @@ document.addEventListener("click", e2 => {
 
 function paintClanSheet() {
   const b = $("clan-body"), cfg = S.clans || {};
-  $("clan-h").textContent = clanView === "admin" ? "클랜 관리" : "우리 클랜 홍보 신청";
+  $("clan-h").textContent = clanView === "admin" ? "클랜 관리" : "우리 클랜 무료 등록";
   if (clanView === "admin") { b.innerHTML = adminHtml(); return; }
   b.innerHTML = clanApplyHtml(cfg);
 }
@@ -1446,18 +1446,19 @@ function paintClanPage() {
 }
 function clanListHtml(cfg) {
   const live = cfg.featured || [], queue = cfg.queue || [];
-  const slots = Math.min(cfg.slots || 3, 4), days = cfg.days || 30, free = Math.max(0, slots - live.length);
+  const slots = Math.min(cfg.slots || 3, 4), days = cfg.days || 15, free = Math.max(0, slots - live.length);
   const me = S.clanMineStatus;
-  const meText = !me || !me.state ? "" : me.state === "대기" ? "확인 중이에요. 신청 순서대로 보고 있어요"
-    : me.state === "예약" ? `승인됐어요 · 대기 ${me.pos || 1}번, 자리가 나면 바로 시작돼요`
+  const again = me && (me.state === "종료" || me.state === "거절");
+  const meText = !me || !me.state ? "" : (me.state === "대기" || me.state === "예약") ? `등록됐어요 · 대기 ${me.pos || 1}번, 자리가 나면 저절로 시작돼요`
     : me.state === "노출" ? `지금 홍보 중이에요${me.ends ? " · " + daysLeft(me.ends) : ""}`
-    : me.state === "거절" ? `승인되지 않았어요${me.reason ? " · " + me.reason : ""}. 고쳐서 다시 신청할 수 있어요`
-    : me.state === "종료" ? "홍보가 끝났어요. 다시 신청하면 대기 맨 뒤로 들어가요" : "";
-  const ok = me && (me.state === "예약" || me.state === "노출");
+    : me.state === "거절" ? `숨겨졌어요${me.reason ? " · " + me.reason : ""}. 내용을 고쳐서 다시 등록할 수 있어요`
+    : me.state === "종료" ? `${days}일 홍보가 끝났어요. 더 하고 싶으면 다시 등록하세요 (무료)` : "";
+  const ok = me && (me.state === "예약" || me.state === "대기" || me.state === "노출");
   const mine = me && me.state === "노출" ? live.find(c => c.name === me.name) : null;
-  let html = meText ? `<div class="clan-me ${ok ? "good" : "red"}"><b>내 신청 · ${esc(me.name || "")}</b>${esc(meText)}${mine
-    ? `<div class="clan-btns"><button data-share="${esc(mine.id)}">우리 클랜 단톡방에 알리기</button></div>` : ""}</div>` : "";
-  html += `<p class="clan-intro">마음에 드는 클랜에 바로 들어가고, 클랜장은 우리 클랜을${cfg.paid ? "" : " 무료로"} 알릴 수 있어요.</p>${clanSteps(cfg)}`;
+  let html = meText ? `<div class="clan-me ${ok ? "good" : "red"}"><b>내 클랜 · ${esc(me.name || "")}</b>${esc(meText)}${mine
+    ? `<div class="clan-btns"><button data-share="${esc(mine.id)}">우리 클랜 단톡방에 알리기</button></div>` : again
+    ? `<div class="clan-btns"><button data-view="apply">다시 등록하기</button></div>` : ""}</div>` : "";
+  html += `<p class="clan-intro">마음에 드는 클랜에 바로 들어가고, 클랜장은 우리 클랜을 무료로 알릴 수 있어요.</p>${clanSteps(cfg)}`;
 
   // 홍보 중인 클랜: 가장 크게, 가장 먼저
   html += live.map(c => `<div class="clan-hero" id="hero-${esc(c.id)}"><span class="shine"></span>
@@ -1475,7 +1476,7 @@ function clanListHtml(cfg) {
       ? `<button class="slot on" data-hero="${esc(c.id)}"><span class="sf">${crest(c.name)}</span><span class="sl"><b>${esc(c.name)}</b>${c.ends ? daysLeft(c.ends) : "홍보 중"}</span></button>`
       : `<button class="slot" data-view="apply"><span class="sf"><i>+</i></span><span class="sl"><b>자리 ${i + 1}</b>Open</span></button>`;
   }).join("") + `</div>`;
-  html += `<div class="clan-box">${free ? `홍보 자리 <b>${free}곳</b>이 비어 있어요 · 승인되면 바로 시작돼요` : "자리가 다 찼어요 · 승인되면 대기 순서대로 시작돼요"}</div>` + slotsHtml;
+  html += `<div class="clan-box">${free ? `홍보 자리 <b>${free}곳</b>이 비어 있어요 · 등록하면 바로 시작돼요` : "자리가 다 찼어요 · 등록하면 대기 순서대로 시작돼요"}</div>` + slotsHtml;
   if (queue.length) html += `<div class="clan-qline">${queue.map((q, i) => `대기 ${i + 1}번 <b>${esc(q.name)}</b>${q.starts ? ` · ${dateShort(q.starts)} 시작 예정` : ""}`).join("<br>")}</div>`;
 
   // 지난 클랜은 작게
@@ -1490,8 +1491,8 @@ function clanListHtml(cfg) {
   // 클랜장이 얻는 것 + 등록 버튼
   html += `<div class="clan-sec">클랜장이라면<span>FOR CLAN LEADERS</span></div>
     <div class="cp-g"><span><b>홈 화면 맨 위</b>앱을 열 때마다 우리 클랜 한 줄</span><span><b>알람 화면 카드</b>보스 알람을 누르면 크게</span><span><b>관심 클랜 일정</b>우리 클랜 일정이 일정 탭에</span></div>
-    <button class="cta-red" data-view="apply"><span>우리 클랜 등록</span><small>${days}일 노출${cfg.paid ? "" : " · 베타 기간 무료"}</small></button>
-    <p class="ad-note">클랜 정보는 클랜장이 직접 올린 내용이에요. 가입은 각 클랜 채널에서 진행돼요. 승인 기준은 등록 화면에 공개돼 있어요.</p>`;
+    <button class="cta-red" data-view="apply"><span>우리 클랜 등록</span><small>${days}일 노출 · 무료</small></button>
+    <p class="ad-note">클랜 정보는 클랜장이 직접 올린 내용이에요. 가입은 각 클랜 채널에서 진행돼요. 등록 규칙은 등록 화면에 공개돼 있어요.</p>`;
   return html;
 }
 // 클랜 문장: 방패 안에 클랜명 첫 글자
@@ -1509,7 +1510,7 @@ const CLAN_RULES = [
   "다른 앱·사이트·상품 광고나 공식 클랜 사칭이 없어요",
   "한 클랜은 한 번에 한 건만 (노출·대기 중이면 끝난 뒤 다시)",
   "신청자에게 게임에서 클랜장이 먼저 초대를 보내요"
-];
+]; // 관리 화면에서 내릴 때 사유로도 써요
 const NUM = ["①", "②", "③", "④", "⑤"];
 // 신청 → 승인 → 노출, 처음 온 사람도 한눈에
 const STEP_IC = [
@@ -1520,9 +1521,7 @@ const STEP_IC = [
   // 불꽃 고리
   '<svg viewBox="0 0 40 40"><circle cx="20" cy="21" r="12" fill="none" stroke="#ff7a1a" stroke-width="3.2" style="filter:drop-shadow(0 0 4px #ff5a00)"/><path d="M11 12c1-4 4-6 4-9 3 3 2 5 5 7 1-2 1-4 3-6 2 3 5 5 6 9" fill="none" stroke="#ffb347" stroke-width="2" stroke-linecap="round"/></svg>'
 ];
-const clanSteps = cfg => (cfg.days || 30) === 30
-  ? `<div class="clan-tiles"><img src="clan/step1.png" alt="1 앱에서 신청"><img src="clan/step2.png" alt="2 개발자 승인"><img src="clan/step3.png" alt="3 홈에 30일 노출"></div>`
-  : `<div class="clan-steps">${["앱에서 신청", "개발자 승인", `홈에 ${cfg.days || 30}일 노출`].map((t, i) =>
+const clanSteps = cfg => `<div class="clan-steps">${["앱에서 등록", `바로 ${cfg.days || 15}일 노출`, "끝나면 다시 등록"].map((t, i) =>
   `<span class="orn"><em>${STEP_IC[i]}<i>${i + 1}</i></em>${t}</span>`).join("")}</div>`;
 // 쓰던 신청서는 지워지지 않게 (오류가 나도, 거절 뒤 다시 낼 때도 그대로)
 let clanDraft = (() => { try { return JSON.parse(localStorage.getItem("clanDraft") || "{}"); } catch (e) { return {}; } })();
@@ -1534,8 +1533,8 @@ function pickLink(text, kind) {
   return m ? "https://" + m[0].replace(/^https?:\/\//i, "") : "";
 }
 function clanApplyHtml(cfg) {
-  const days = cfg.days || 30, d = clanDraft;
-  return `${clanSteps(cfg)}<p class="note" style="margin-top:0">아래 칸만 채우면 신청 끝이에요. 승인되면 홈 화면과, 알람을 눌러 앱을 열었을 때 보이고 ${days}일 뒤 저절로 내려가요.${cfg.paid ? "" : " 베타 기간에는 무료예요."}</p>
+  const days = cfg.days || 15, d = clanDraft;
+  return `${clanSteps(cfg)}<p class="note" style="margin-top:0">아래 칸만 채우면 끝이에요. 등록하면 바로 홈 화면과, 알람을 눌러 앱을 열었을 때 보이고 ${days}일 뒤 저절로 내려가요. 무료예요.</p>
     <div class="clan-lbl">클랜명 (게임에서 검색하기 쉽게 짧게)</div>
     <input class="clan-in" id="cf-name" value="${esc(d.name || "")}" maxlength="20" placeholder="예) 대한민국클랜">
     <div class="clan-lbl">한 줄 소개</div>
@@ -1548,17 +1547,17 @@ function clanApplyHtml(cfg) {
     <input class="clan-in" id="cf-tag" value="${esc(d.tag || "")}" maxlength="40" placeholder="클랜장 배틀태그 (예: 홍길동#1234)">
     <div class="clan-lbl">연락받을 곳 (공개되지 않아요)</div>
     <input class="clan-in" id="cf-contact" value="${esc(d.contact || "")}" maxlength="60" placeholder="이메일이나 오픈채팅 아이디">
-    <div class="clan-q" style="margin-top:12px"><b>승인 기준</b> · 아래를 모두 지키면 <b>신청 순서대로</b> 승인해요<br>
+    <div class="clan-q" style="margin-top:12px"><b>등록 규칙</b> · 승인 없이 바로 노출돼요. 아래를 지켜 주세요<br>
       ${CLAN_RULES.map((r, i) => `${NUM[i]} ${r}`).join("<br>")}<br>
-      · 거절되면 몇 번 기준 때문인지 이 화면에 표시돼요. 고쳐서 다음 날 다시 신청할 수 있어요<br>
-      · 노출 순서는 <b>승인된 순서</b>대로이고, 중간에 바꾸지 않아요 (개발자 지인 클랜도 같아요)<br>
-      · 노출은 ${days}일이고 끝나면 저절로 내려가요 (연장은 대기 맨 뒤)<br>
-      · 가입자 수는 약속하지 않아요. 파는 것은 노출 기간이에요<br>
-      · 정식 출시 뒤에는 유료로 바뀔 수 있어요 (그 전까지는 무료)</div>
+      · 규칙을 어기거나 여러 사용자가 신고하면 저절로 숨겨질 수 있어요<br>
+      · 노출은 <b>${days}일</b>이고 끝나면 저절로 내려가요. 더 하려면 다시 등록하면 돼요<br>
+      · 자리가 다 찼으면 등록한 순서대로 대기하다가 자리가 나면 시작돼요<br>
+      · 가입자 수는 약속하지 않아요. 제공하는 것은 노출이에요<br>
+      · 지금은 무료예요. 바뀌게 되면 미리 알려요</div>
     <label style="display:flex;gap:9px;align-items:center;font-size:14px;margin:4px 0 12px">
       <input type="checkbox" id="cf-ok" style="width:20px;height:20px;accent-color:#d9b66c"> 위 내용에 동의해요</label>
     ${clanMsg ? `<p class="clan-ok${clanMsg.bad ? " clan-bad" : ""}">${esc(clanMsg.text || clanMsg)}</p>` : ""}
-    <div class="clan-btns"><button class="ghost" data-view="list">목록으로</button><button id="cf-send">신청하기</button></div>`;
+    <div class="clan-btns"><button class="ghost" data-view="list">목록으로</button><button id="cf-send">등록하기</button></div>`;
 }
 
 // 대기 중인 신청은 판단에 필요한 내용을 다 펼쳐 보여요
@@ -1576,7 +1575,7 @@ function adminHtml() {
   const items = adminData.items || [];
   const order = { "대기": 0, "노출": 1, "예약": 2, "종료": 3, "거절": 4 };
   items.sort((a, b) => (order[a.state] ?? 9) - (order[b.state] ?? 9) || b.time - a.time);
-  let html = `<p class="note" style="margin-top:0">자리 ${adminData.slots}곳 · ${adminData.days}일 · ${adminData.paid ? "유료 모드" : "무료(베타)"} · 설정은 시트에서 바꿔요</p>`;
+  let html = `<p class="note" style="margin-top:0">자리 ${adminData.slots}곳 · ${adminData.days}일 · 무료 · 설정은 시트에서 바꿔요</p>`;
   if (items.some(c => c.state === "대기")) html += `<div class="clan-q"><b>승인 기준</b> · 모두 맞으면 승인, 하나라도 어기면 그 번호로 거절<br>${CLAN_RULES.slice(0, 4).map((r, i) => `${NUM[i]} ${r}`).join("<br>")}<br>· 오래된 신청부터 처리해요 (공개된 약속이에요)</div>`;
   html += items.map(c => {
     const live = c.state === "노출";
@@ -1620,7 +1619,7 @@ function clanClick(e2) {
     return;
   }
   if (e2.target.closest("#cf-send")) {
-    if (!$("cf-ok").checked) { clanMsg = { text: "운영 규칙에 동의해 주세요", bad: true }; paintClanSheet(); return; }
+    if (!$("cf-ok").checked) { clanMsg = { text: "등록 규칙에 동의해 주세요", bad: true }; paintClanSheet(); return; }
     const rawChat = $("cf-chat").value.trim(), rawDiscord = $("cf-discord").value.trim();
     const form = {
       name: $("cf-name").value.trim(), line: $("cf-line").value.trim(), when: $("cf-when").value.trim(),
@@ -1679,7 +1678,7 @@ window.clanDone = r => {
     if (clanView !== "admin") clanView = "admin";
   } else {
     clanMsg = { text: r.text || "연결하지 못했어요. 잠시 뒤 다시 해 주세요.", bad: !r.text };
-    if (r.tag === "apply" && r.text && r.text.indexOf("접수") >= 0) { clanMsg = { text: r.text + " 승인되면 목록의 [PC로 보내기]로 클랜 단톡방에도 알릴 수 있어요." }; }
+    if (r.tag === "apply" && r.text && r.text.indexOf("등록됐어요") >= 0) { clanMsg = { text: r.text + " 클랜 탭에서 [우리 클랜 단톡방에 알리기]로 클랜원에게도 알려 보세요." }; }
   }
   paintClanSheet();
 };
@@ -1778,6 +1777,9 @@ const WHATS_NEW = {
     "클랜장이라면 [우리 클랜 등록]으로 직접 올릴 수 있어요. 베타 기간에는 무료예요.",
     "관심 클랜을 담으면 그 클랜 일정이 전체 일정에 함께 보여요."],
   "3.0": ["PC 프로그램 안내 시트에 실제 타이머 화면이 보여요."],
+  "3.1": ["클랜 홍보가 완전 무료가 됐어요. 승인 없이 등록하면 바로 15일 동안 노출돼요.",
+    "15일이 지나면 저절로 내려가고, 클랜 탭에서 다시 등록할 수 있어요.",
+    "최신 안드로이드 기준으로 앱을 다듬었어요."],
   "2.9": ["알람 버튼 글자가 잘리지 않게 [다음 회까지] [이번 회만] [끄기]로 짧아졌어요.",
     "홈 맨 위에 PC 프로그램 안내가 생겼어요. 게임 화면 위에 보스 타이머를 띄울 수 있어요."],
   "2.8": ["알람 버튼이 [끄기] [이번 회 건너뛰기] [다음 회까지 건너뛰기]로 바뀌어 뜻이 더 분명해졌어요.",
