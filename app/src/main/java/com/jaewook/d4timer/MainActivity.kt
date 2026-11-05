@@ -448,6 +448,11 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun stopMyClan() {
+            Thread { answer("stop", Clans.stopMine(applicationContext)) }.start()
+        }
+
+        @JavascriptInterface
         fun reportClan(id: String, reason: String) {
             Thread { answer("report", Clans.report(applicationContext, id, reason)) }.start()
         }

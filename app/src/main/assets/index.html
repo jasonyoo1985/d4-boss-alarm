@@ -1482,7 +1482,7 @@ function clanListHtml(cfg) {
   const ok = me && (me.state === "예약" || me.state === "대기" || me.state === "노출");
   const mine = me && me.state === "노출" ? live.find(c => c.name === me.name) : null;
   let html = meText ? `<div class="clan-me ${ok ? "good" : "red"}"><b>내 클랜 · ${esc(me.name || "")}</b>${esc(meText)}${mine
-    ? `<div class="clan-btns"><button data-share="${esc(mine.id)}">우리 클랜 단톡방에 알리기</button></div>` : again
+    ? `<div class="clan-btns"><button data-share="${esc(mine.id)}">우리 클랜 단톡방에 알리기</button><button class="ghost" data-stopmine="1">내리기</button></div>` : (me && (me.state === "예약" || me.state === "대기")) ? `<div class="clan-btns"><button class="ghost" data-stopmine="1">대기 취소</button></div>` : again
     ? `<div class="clan-btns"><button data-view="apply">다시 등록하기</button></div>` : ""}</div>` : "";
   html += `<p class="clan-intro">마음에 드는 클랜에 바로 들어가고, 클랜장은 우리 클랜을 무료로 알릴 수 있어요.</p>${clanSteps(cfg)}`;
 
@@ -1636,6 +1636,12 @@ function clanClick(e2) {
     toast(on ? "관심 클랜에 담았어요. 일정 탭에서 이 클랜 일정이 보여요" : "관심을 해제했어요");
     return;
   }
+  const sm = e2.target.closest("[data-stopmine]");
+  if (sm) {
+    if (!confirm("우리 클랜을 지금 내릴까요? 남은 기간은 사라지고, 다시 등록하면 새로 15일이 시작돼요.")) return;
+    if (bridge && bridge.stopMyClan) { bridge.stopMyClan(); toast("처리하는 중이에요…"); } else toast("앱에서 동작해요");
+    return;
+  }
   const r = e2.target.closest("[data-report]");
   if (r) {
     const why = prompt("어떤 점이 문제인가요? (현금거래, 욕설, 허위 정보 등)");
@@ -1702,6 +1708,11 @@ window.clanDone = r => {
     if (parsed && parsed.items) { adminData = parsed; clanMsg = ""; }
     else { clanMsg = { text: r.text || "연결하지 못했어요. 잠시 뒤 다시 해 주세요.", bad: !r.text || r.text.indexOf("비밀번호") >= 0 }; if (adminData) bridge.clanAdmin(adminPw, "list", "", ""); }
     if (clanView !== "admin") clanView = "admin";
+  } else if (r.tag === "stop") {
+    toast(r.text || "연결하지 못했어요. 잠시 뒤 다시 해 주세요");
+    if (bridge) { S = loadState(); }
+    paintClanPage();
+    return;
   } else {
     clanMsg = { text: r.text || "연결하지 못했어요. 잠시 뒤 다시 해 주세요.", bad: !r.text };
     if (r.tag === "apply" && r.text && r.text.indexOf("등록됐어요") >= 0) { clanMsg = { text: r.text + " 클랜 탭에서 [우리 클랜 단톡방에 알리기]로 클랜원에게도 알려 보세요." }; }
@@ -1808,6 +1819,7 @@ const WHATS_NEW = {
     "클랜장이라면 [우리 클랜 등록]으로 직접 올릴 수 있어요. 베타 기간에는 무료예요.",
     "관심 클랜을 담으면 그 클랜 일정이 전체 일정에 함께 보여요."],
   "3.0": ["PC 프로그램 안내 시트에 실제 타이머 화면이 보여요."],
+  "3.2": ["클랜 탭에서 우리 클랜을 15일 전에 직접 [내리기]할 수 있어요."],
   "3.1": ["홈의 PC 프로그램 안내는 [줄이기]로 작게 접을 수 있고, 칩을 누르면 다시 펼쳐져요.",
     "클랜 홍보가 완전 무료가 됐어요. 승인 없이 등록하면 바로 15일 동안 노출돼요.",
     "15일이 지나면 저절로 내려가고, 클랜 탭에서 다시 등록할 수 있어요.",
