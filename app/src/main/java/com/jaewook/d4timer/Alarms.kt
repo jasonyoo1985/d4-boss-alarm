@@ -110,6 +110,7 @@ object Alarms {
 
     fun scheduleAll(context: Context) {
         Schedule.events.forEach { schedule(context, it) }
+        SeasonReminder.schedule(context)
         Widgets.refreshAll(context)
     }
 }

@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.jaewook.d4timer"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.jaewook.d4timer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 52
-        versionName = "3.0"
+        versionCode = 53
+        versionName = "3.1"
     }
 
     // A fixed key so each new APK installs over the previous one
@@ -36,4 +36,6 @@ android {
 
 dependencies {
     implementation("com.google.android.play:app-update:2.1.0")
+    // Play flagged the old androidx.fragment 1.0.0 that app-update pulls in; this pins a current one
+    implementation("androidx.fragment:fragment:1.8.9")
 }

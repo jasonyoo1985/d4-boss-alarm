@@ -259,6 +259,7 @@ class MainActivity : Activity() {
             .put("events", events)
             .put("onlyOpen", prefs.onlyOpen())
             .put("popupOff", popupOffKey() ?: JSONObject.NULL).put("lockOff", !AlarmActivity.allowed(this))
+            .put("seasonRemind", prefs.seasonRemind())
             .put("followDnd", prefs.followDnd()).put("dndNow", AlarmReceiver.phoneDnd(this))
             .put("phoneVol", phoneAlarmVolume())
             .put("season", prefs.remoteSeason() ?: JSONObject.NULL)
@@ -371,6 +372,32 @@ class MainActivity : Activity() {
         fun markFeedbackSeen() {
             Feedback.markSeen(this@MainActivity)
             runOnUiThread { refreshPage() }
+        }
+
+        @JavascriptInterface
+        fun setSeasonRemind(on: Boolean) {
+            Prefs(this@MainActivity).setSeasonRemind(on)
+            SeasonReminder.schedule(applicationContext)
+        }
+
+        /** Shares the settings text (e.g. to the user's own chat) so it can be restored on another phone. */
+        @JavascriptInterface
+        fun backupSettings() = runOnUiThread {
+            val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+                .putExtra(Intent.EXTRA_SUBJECT, "디아4 보스알람 설정 백업")
+                .putExtra(Intent.EXTRA_TEXT, SettingsBackup.export(this@MainActivity))
+            runCatching { startActivity(Intent.createChooser(send, "설정 백업 보내기")) }
+        }
+
+        /** Restores from the copied backup text on the clipboard; the page gets the count back (-1 = no backup found). */
+        @JavascriptInterface
+        fun restoreSettings() = runOnUiThread {
+            val text = runCatching {
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).primaryClip?.getItemAt(0)?.coerceToText(this@MainActivity)?.toString()
+            }.getOrNull().orEmpty()
+            val n = SettingsBackup.restore(this@MainActivity, text)
+            if (n > 0) Alarms.scheduleAll(applicationContext)
+            web.evaluateJavascript("window.restoreDone && restoreDone($n)", null)
         }
 
         @JavascriptInterface

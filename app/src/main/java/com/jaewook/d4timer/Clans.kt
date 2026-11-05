@@ -14,8 +14,8 @@ import java.net.URLEncoder
  * so the whole feature can be turned on, off or moved without an app update. With no "clans" entry,
  * or with nothing cached, every clan line stays hidden - the app must never look broken (see [Sync]).
  *
- * The server (a Google Apps Script on the developer's sheet) keeps the applications, the approved
- * clans, the first-come queue and the reports; the app only reads its answer and posts forms to it.
+ * The server (a Google Apps Script on the developer's sheet) keeps the registrations, the live
+ * clans (free, 15 days each, no approval step), the first-come queue and the reports; the app only reads its answer and posts forms to it.
  * Nothing here identifies the user: an application carries the clan's own details, a report carries
  * only the clan id.
  */
@@ -69,7 +69,7 @@ object Clans {
         return o
     }
 
-    /** A clan applies from inside the app. Returns the server's message, or null when it couldn't be sent. */
+    /** A clan registers from inside the app and goes live at once unless the server's checks refuse it. Returns the server's message, or null when it couldn't be sent. */
     fun apply(context: Context, form: JSONObject): String? {
         val base = url(context) ?: return null
         val token = Prefs(context).clanToken().ifEmpty {
@@ -80,10 +80,13 @@ object Clans {
         return answer
     }
 
-    /** Anyone can report a clan's text; the server counts them and hides a free clan at three. */
+    /** Anyone can report a clan's text; the server hides a clan once three different phones have reported it. */
     fun report(context: Context, id: String, reason: String): String? {
         val base = url(context) ?: return null
-        return send(base, "a=report&id=" + enc(id) + "&reason=" + enc(reason))
+        val token = Prefs(context).reportToken().ifEmpty {
+            (1..12).map { TOKEN_CHARS.random() }.joinToString("").also { Prefs(context).setReportToken(it) }
+        }
+        return send(base, "a=report&id=" + enc(id) + "&token=" + token + "&reason=" + enc(reason))
     }
 
     /** The developer's own screen: password-checked by the server, never stored in the app. */
