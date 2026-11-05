@@ -172,6 +172,7 @@ function doPost(e) {
   var action = p.a || '';
   if (action === 'apply') return apply_(p);
   if (action === 'report') return report_(p);
+  if (action === 'stop') return stopMine_(p);
   if (action === 'admin') return admin_(p);
   return text_('');
 }
@@ -236,6 +237,29 @@ function applyLocked_(p) {
     started ? '노출' : '예약', begin, end, 0, 0, '']);
   notify_('새 클랜 등록: ' + name, (started ? '바로 노출을 시작했어요.' : '자리가 없어 대기에 들어갔어요.') + ' 문제가 있으면 앱 관리자 화면에서 내릴 수 있어요.');
   return text_(started ? '등록됐어요! 지금 바로 노출 중이에요 (' + FREE_DAYS + '일)' : '등록됐어요. 자리가 차 있어 대기에 들어갔고, 자리가 나면 저절로 시작돼요.');
+}
+
+/** 등록한 폰이 자기 클랜을 15일 전에 직접 내려요 (등록할 때 만든 토큰을 아는 폰만). */
+function stopMine_(p) {
+  var token = String(p.token || '').trim();
+  if (token.length < 8) return text_('');
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (err) { return text_('지금 사람이 많아요. 잠시 뒤 다시 해 주세요'); }
+  try {
+    var sh = sheet_('신청');
+    var values = sh.getDataRange().getValues(), last = null;
+    for (var i = 1; i < values.length; i++) if (String(values[i][1]).trim() === token) last = i;
+    if (last === null) return text_('내릴 클랜이 없어요');
+    var st = String(values[last][9]).trim();
+    if (st !== '노출' && st !== '예약' && st !== '대기') return text_('이미 내려간 클랜이에요');
+    sh.getRange(last + 1, 10).setValue('종료');
+    sh.getRange(last + 1, 12).setValue(new Date());
+    if (st === '노출') sheet_('기록').appendRow([values[last][2], values[last][10], new Date(), values[last][12]]);
+    rotate_();
+    return text_('내렸어요. 다시 등록하면 새로 ' + FREE_DAYS + '일이 시작돼요.');
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /** 신청한 폰이 자기 신청의 상태와 거절 사유를 확인합니다 (토큰을 아는 폰만). */

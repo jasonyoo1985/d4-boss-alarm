@@ -80,6 +80,15 @@ object Clans {
         return answer
     }
 
+    /** The clan's own phone takes it down before the 15 days are up; only the code made at registration works. */
+    fun stopMine(context: Context): String? {
+        val base = url(context) ?: return null
+        val token = Prefs(context).clanToken().ifEmpty { return null }
+        val answer = send(base, "a=stop&token=$token") ?: return null
+        sync(context)
+        return answer
+    }
+
     /** Anyone can report a clan's text; the server hides a clan once three different phones have reported it. */
     fun report(context: Context, id: String, reason: String): String? {
         val base = url(context) ?: return null
