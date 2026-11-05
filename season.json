@@ -18,11 +18,11 @@
     "answers": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWfD6vPXuLj3S2ZU4fyxTYAZjnBkTfwbtWdVOr_afKsT8KVxzqRDf5pEa_o_Lsf242xrYIsa_cUZMN/pub?gid=2118330553&single=true&output=csv"
   },
   "release": {
-    "code": 51,
-    "name": "2.9",
+    "code": 53,
+    "name": "3.1",
     "notes": [
-      "알람 버튼 글자가 잘리지 않게 [다음 회까지] [이번 회만] [끄기]로 짧아졌어요.",
-      "홈 맨 위에 PC 프로그램 안내가 생겼어요. 게임 화면 위에 보스 타이머를 띄울 수 있어요."
+      "클랜 홍보가 완전 무료예요. 승인 없이 등록하면 바로 15일 동안 노출돼요.",
+      "시즌 종료 알림과 설정 백업·복원이 정보 탭에 생겼어요."
     ]
   },
   "clans": {
