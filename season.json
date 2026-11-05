@@ -18,11 +18,11 @@
     "answers": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWfD6vPXuLj3S2ZU4fyxTYAZjnBkTfwbtWdVOr_afKsT8KVxzqRDf5pEa_o_Lsf242xrYIsa_cUZMN/pub?gid=2118330553&single=true&output=csv"
   },
   "release": {
-    "code": 53,
-    "name": "3.1",
+    "code": 55,
+    "name": "3.3",
     "notes": [
-      "클랜 홍보가 완전 무료예요. 승인 없이 등록하면 바로 15일 동안 노출돼요.",
-      "시즌 종료 알림과 설정 백업·복원이 정보 탭에 생겼어요."
+      "클랜을 등록한 사람이 15일 전에 [내리기]할 수 있어요.",
+      "[내리기]·[신고]·[설정 복원] 버튼이 눌리지 않던 문제를 고쳤어요."
     ]
   },
   "clans": {
