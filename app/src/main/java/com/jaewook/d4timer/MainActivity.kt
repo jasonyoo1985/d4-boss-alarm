@@ -19,6 +19,9 @@ import android.view.View
 import android.view.WindowManager
 import android.window.OnBackInvokedDispatcher
 import android.webkit.JavascriptInterface
+import android.webkit.JsPromptResult
+import android.webkit.JsResult
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
@@ -70,6 +73,36 @@ class MainActivity : Activity() {
             isVerticalScrollBarEnabled = false
             overScrollMode = View.OVER_SCROLL_NEVER
             addJavascriptInterface(Bridge(), "Android")
+            // WebView shows no confirm()/prompt() boxes unless the app draws them; without this, buttons that ask
+            // "are you sure?" or for a reason (take down, report, restore backup) did nothing at all
+            webChromeClient = object : WebChromeClient() {
+                override fun onJsConfirm(view: WebView, url: String, message: String, result: JsResult): Boolean {
+                    if (isFinishing) { result.cancel(); return true }
+                    android.app.AlertDialog.Builder(this@MainActivity).setMessage(message)
+                        .setPositiveButton("확인") { _, _ -> result.confirm() }
+                        .setNegativeButton("취소") { _, _ -> result.cancel() }
+                        .setOnCancelListener { result.cancel() }.show()
+                    return true
+                }
+
+                override fun onJsAlert(view: WebView, url: String, message: String, result: JsResult): Boolean {
+                    if (isFinishing) { result.cancel(); return true }
+                    android.app.AlertDialog.Builder(this@MainActivity).setMessage(message)
+                        .setPositiveButton("확인") { _, _ -> result.confirm() }
+                        .setOnCancelListener { result.cancel() }.show()
+                    return true
+                }
+
+                override fun onJsPrompt(view: WebView, url: String, message: String, default: String?, result: JsPromptResult): Boolean {
+                    if (isFinishing) { result.cancel(); return true }
+                    val input = android.widget.EditText(this@MainActivity).apply { setText(default ?: "") }
+                    android.app.AlertDialog.Builder(this@MainActivity).setMessage(message).setView(input)
+                        .setPositiveButton("확인") { _, _ -> result.confirm(input.text.toString()) }
+                        .setNegativeButton("취소") { _, _ -> result.cancel() }
+                        .setOnCancelListener { result.cancel() }.show()
+                    return true
+                }
+            }
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String) {
                     pageReady = true
