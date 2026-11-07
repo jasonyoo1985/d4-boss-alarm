@@ -23,6 +23,25 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
         val start = intent.getLongExtra(Alarms.EXTRA_START, 0L)
+        if (intent.action == ACTION_DISABLE) {
+            // Turn this event's alarm off completely; the settings (lead times, sound...) stay as they are
+            Prefs(context).setOn(e, false)
+            context.getSystemService(AlarmManager::class.java).cancel(snoozeIntent(context, e, start))
+            AlarmSound.stop(context, e.key)
+            context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
+            Alarms.schedule(context, e)
+            OffReminder.schedule(context, e)
+            OffReminder.showJustOff(context, e)
+            Widgets.refreshAll(context)
+            return
+        }
+        if (intent.action == ACTION_ENABLE) {
+            Prefs(context).setOn(e, true)
+            Alarms.schedule(context, e)
+            OffReminder.clear(context, e)
+            Widgets.refreshAll(context)
+            return
+        }
         if (intent.action == ACTION_SNOOZE) {
             AlarmSound.stop(context, e.key)
             context.getSystemService(NotificationManager::class.java).cancel(notificationId(e))
@@ -71,6 +90,8 @@ class AlarmReceiver : BroadcastReceiver() {
         const val ACTION_SKIP_NEXT = "com.jaewook.d4timer.SKIP_NEXT"
         const val ACTION_SNOOZE = "com.jaewook.d4timer.SNOOZE"
         const val ACTION_DISMISS = "com.jaewook.d4timer.DISMISS"
+        const val ACTION_DISABLE = "com.jaewook.d4timer.DISABLE"
+        const val ACTION_ENABLE = "com.jaewook.d4timer.ENABLE"
         const val ACTION_REMIND = "com.jaewook.d4timer.REMIND"
 
         /** Snoozing only makes sense while at least two minutes remain before the start. */
@@ -160,8 +181,8 @@ class AlarmReceiver : BroadcastReceiver() {
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 // Locked or dark screen: the full alarm screen. In use: Android shows a pop-up at the top instead
                 .setFullScreenIntent(fullScreen(context, e, start, title, text), true)
-            // Left to right: C (this + next spawn), B (this spawn's remaining alerts), A (just this ring, most used)
-            builder.addAction(Notification.Action.Builder(null, "다음 회까지", action(context, e, start, ACTION_SKIP_NEXT, 700)).build())
+            // Left to right: 알람 해제 (whole alarm off), 이번 회만 (this spawn's remaining alerts), 끄기 (just this ring, most used)
+            builder.addAction(Notification.Action.Builder(null, "알람 해제", action(context, e, start, ACTION_DISABLE, 700)).build())
             if (moreAlerts(context, e, start)) {
                 builder.addAction(Notification.Action.Builder(null, "이번 회만", action(context, e, start, ACTION_DISMISS, 600)).build())
             }

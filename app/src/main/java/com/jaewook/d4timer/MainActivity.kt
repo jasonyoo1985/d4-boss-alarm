@@ -525,6 +525,7 @@ class MainActivity : Activity() {
             val e = event(key)
             Prefs(this@MainActivity).setOn(e, on)
             Alarms.schedule(this@MainActivity, e)
+            if (on) OffReminder.clear(this@MainActivity, e) else OffReminder.schedule(this@MainActivity, e)
         }
 
         @JavascriptInterface

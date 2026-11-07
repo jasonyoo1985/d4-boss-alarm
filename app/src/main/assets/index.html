@@ -610,7 +610,7 @@ svg{display:block}
     <div class="tip" id="tip-popup">
       <div class="tip-h"><span>알림을 처음부터 크게 보려면<span class="en b">Galaxy: show alerts expanded</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
       <div class="tip-b">
-        <p>갤럭시는 알림을 작은 알약 모양으로 먼저 띄우고, 화살표를 눌러야 버튼이 보이는 경우가 있어요. 아래처럼 바꾸면 처음부터 [다음 회까지 건너뛰기] [이번 회 건너뛰기] [끄기] 버튼까지 크게 보여요.</p>
+        <p>갤럭시는 알림을 작은 알약 모양으로 먼저 띄우고, 화살표를 눌러야 버튼이 보이는 경우가 있어요. 아래처럼 바꾸면 처음부터 [알람 해제] [이번 회만] [끄기] 버튼까지 크게 보여요.</p>
         <ol>
           <li>폰 <b>설정</b> → <b>알림</b></li>
           <li><b>알림 팝업 스타일</b> 누르기</li>
@@ -912,7 +912,11 @@ function buildHome() {
       toast(e.on ? `${e.name} 알림을 켰어요` : `${e.name} 알림을 껐어요`);
       paintSettings();
     } else if (ev2.target.closest('[data-r="alarm"]')) {
-      openSheet(e.key);
+      if (!e.on) {
+        // Off (e.g. after 알람 해제): one tap turns it back on
+        e.on = true; bridge && bridge.setOn(e.key, true);
+        toast(`${e.name} 알림을 다시 켰어요`); paintSettings();
+      } else openSheet(e.key);
     } else if (ev2.target.closest('[data-r="fix"]')) {
       openSheet(e.key);
       setTimeout(() => $("cal-lbl").scrollIntoView({ block: "start", behavior: "smooth" }), 250);
@@ -935,7 +939,7 @@ function paintSettings() {
     card.querySelector('[data-r="switch"]').setAttribute("aria-checked", e.on);
     card.querySelector('[data-r="alarm"]').innerHTML = e.on
       ? `${BELL}<span class="txt"><span class="t">알림: ${leadsLabel(e.leads)}</span><div class="s">${esc(e.sound)}${e.repeat ? " · 계속 울림" : ""}${e.vol >= 0 ? ` · 음량 ${e.vol}%` : " · 눌러서 변경"}</div></span>${CHEV}`
-      : `${BELL_OFF}<span class="txt"><span class="t">알림 꺼짐</span><div class="s">스위치를 켜면 알려드려요 · 눌러서 설정</div></span>${CHEV}`;
+      : `${BELL_OFF}<span class="txt"><span class="t">알림 꺼짐</span><div class="s">눌러서 다시 켜기 · 설정은 그대로 남아 있어요</div></span>${CHEV}`;
     const sk = card.querySelector('[data-r="skip"]');
     sk.hidden = !e.on;
     if (e.on) {
@@ -1813,6 +1817,9 @@ window.handleBack = () => {
 /* ---------- update offer / what's new ---------- */
 // Shown once after updating to this version (bundled, works offline). Add the new version's lines each release.
 const WHATS_NEW = {
+  "3.4": ["알람 버튼이 [끄기](지금 울리는 것만) [이번 회만](이번 회 남은 알림 모두) [알람 해제](이 알림 자체를 끔)로 정리됐어요.",
+    "[알람 해제]는 한 번 더 물어보고, 해제하면 [다시 켜기] 알림이 남아요. 3일 동안 꺼져 있으면 한 번 알려드려요.",
+    "홈에서 꺼진 알림 줄을 누르면 바로 다시 켜져요."],
   "2.3": ["업데이트 안내 창이 새로워졌어요. 새 버전이 나오면 바뀐 점을 바로 보여드려요."],
   "2.4": ["정보 탭에 '폰 방해금지 모드 따르기'가 생겼어요. 켜 두면 폰이 방해금지일 때 알림이 울리지 않아요."],
   "2.5": ["클랜 모집이 생겼어요. 홈의 클랜 줄을 누르면 같이 보스 잡을 클랜을 찾을 수 있어요.",

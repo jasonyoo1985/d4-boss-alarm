@@ -51,6 +51,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".OffReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".BossWidget"
             android:exported="true"
             android:label="월드보스 알람">
