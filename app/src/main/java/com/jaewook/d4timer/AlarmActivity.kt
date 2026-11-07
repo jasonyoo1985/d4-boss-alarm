@@ -90,13 +90,14 @@ class AlarmActivity : Activity() {
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val grey = Color.parseColor("#26211E")
         val light = Color.parseColor("#E8E2DC")
-        // Same buttons and order as the notification: C (this + next spawn), B (this spawn's remaining alerts)
-        val small = mutableListOf<Pair<String, String>>()
-        small += "다음 회까지" to AlarmReceiver.ACTION_SKIP_NEXT
-        if (i.getBooleanExtra(EXTRA_MORE, false)) small += "이번 회만" to AlarmReceiver.ACTION_DISMISS
-        small.forEachIndexed { n, (text, action) ->
+        // Same buttons and order as the notification: 이번 회만 (this spawn's remaining alerts), 알람 해제 (whole alarm off)
+        val small = mutableListOf<Pair<String, () -> Unit>>()
+        val more = i.getBooleanExtra(EXTRA_MORE, false)
+        if (more) small += "이번 회만" to { send(AlarmReceiver.ACTION_DISMISS, start) }
+        small += "알람 해제" to { confirmDisable(e, start) }
+        small.forEachIndexed { n, (text, onTap) ->
             row.addView(
-                button(text, grey, light, false) { send(action, start) },
+                button(text, grey, light, false) { onTap() },
                 LinearLayout.LayoutParams(0, px(60), 1f).apply { if (n > 0) marginStart = px(8) },
             )
         }
@@ -108,6 +109,12 @@ class AlarmActivity : Activity() {
             )
         }
         root.addView(
+            label(
+                (if (more) "이번 회만: 이번 회 남은 알림 끄기\n" else "") + "알람 해제: 이 알림을 아예 끄기 (설정은 유지)",
+                12f, Color.parseColor("#8A817A"),
+            ).apply { setPadding(0, px(14), 0, 0) },
+        )
+        root.addView(
             label("앱 열기", 14f, Color.parseColor("#8A817A")).apply {
                 setPadding(0, px(22), 0, px(8))
                 setOnClickListener { openApp() }
@@ -118,6 +125,16 @@ class AlarmActivity : Activity() {
         // The screen goes away on its own, like the sound does
         handler.removeCallbacksAndMessages(null)
         handler.postDelayed({ finishAndRemoveTask() }, if (Prefs(this).repeat(e)) 5 * MIN else 60_000L)
+    }
+
+    /** Turning the whole alarm off is easy to do by mistake, so ask once. */
+    private fun confirmDisable(e: GameEvent, start: Long) {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("${e.name} 알람을 아예 끌까요?")
+            .setMessage("다시 켜기 전까지 울리지 않아요. 알림 시간 같은 설정은 그대로 남아요.")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("해제") { _, _ -> send(AlarmReceiver.ACTION_DISABLE, start) }
+            .show()
     }
 
     private fun send(action: String, start: Long) {

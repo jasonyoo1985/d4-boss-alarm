@@ -6,7 +6,17 @@ class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("d4timer", Context.MODE_PRIVATE)
 
     fun isOn(e: GameEvent) = sp.getBoolean("on_${e.key}", e.defaultOn)
-    fun setOn(e: GameEvent, on: Boolean) = sp.edit().putBoolean("on_${e.key}", on).apply()
+    fun setOn(e: GameEvent, on: Boolean) {
+        val was = isOn(e)
+        val ed = sp.edit().putBoolean("on_${e.key}", on)
+        // Remember when it was turned off so a reminder can come a few days later (see OffReminder)
+        if (!on && was) ed.putLong("off_since_${e.key}", System.currentTimeMillis()).remove("off_notified_${e.key}")
+        if (on) ed.remove("off_since_${e.key}")
+        ed.apply()
+    }
+    fun offSince(e: GameEvent) = sp.getLong("off_since_${e.key}", 0L)
+    fun offNotified(e: GameEvent) = sp.getBoolean("off_notified_${e.key}", false)
+    fun setOffNotified(e: GameEvent) = sp.edit().putBoolean("off_notified_${e.key}", true).apply()
 
     /** Minutes before the start to ring, earliest first; up to [MAX_LEADS] alerts per event. */
     fun leads(e: GameEvent): List<Int> {
