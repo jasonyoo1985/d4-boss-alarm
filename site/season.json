@@ -1,0 +1,44 @@
+{
+  "season": {
+    "no": 15,
+    "name": "Season of Hell's Legacy",
+    "nameKo": "",
+    "start": "2026-09-15T17:00:00Z",
+    "end": "2026-12-01T17:00:00Z",
+    "estimate": true
+  },
+  "schedule": {},
+  "checked": "2026-11-20T05:55:00Z",
+  "feedback": {
+    "form": "https://docs.google.com/forms/d/e/1FAIpQLSfTQQ-Km-cx3NcVmZwZn3wun6k7phZEC6QEwnL6LCypU8KN3w/formResponse",
+    "stars": "entry.1722262232",
+    "text": "entry.1995170333",
+    "info": "entry.1927915023",
+    "code": "entry.496642990",
+    "answers": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWfD6vPXuLj3S2ZU4fyxTYAZjnBkTfwbtWdVOr_afKsT8KVxzqRDf5pEa_o_Lsf242xrYIsa_cUZMN/pub?gid=2118330553&single=true&output=csv"
+  },
+  "release": {
+    "code": 58,
+    "name": "3.6",
+    "notes": [
+      "월드보스 알림에서 알람 받을 보스를 고를 수 있어요.",
+      "알림 시점에 20분·30분·60분 전이 추가됐어요.",
+      "시즌 종료 알림이 3일·1일 전으로 바뀌고, 새 시즌이 시작되면 자동으로 바뀌어요."
+    ],
+    "notesEn": [
+      "Choose which world bosses ring your alarm.",
+      "New reminder times: 20, 30 and 60 minutes before.",
+      "Season-end reminders 3 days and 1 day before; the season switches automatically."
+    ]
+  },
+  "clans": {
+    "url": "https://script.google.com/macros/s/AKfycbxkePu-V3CBavlMUMOzmjJpm0VQTcdYMJMaatL2RhL8RwyXPvIgZmR-HflFbTelY10c/exec"
+  },
+  "next": {
+    "no": 16,
+    "name": "",
+    "nameKo": "",
+    "start": "2026-12-01T17:00:00Z",
+    "estimate": true
+  }
+}

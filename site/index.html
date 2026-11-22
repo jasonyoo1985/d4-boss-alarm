@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>디아4 월드보스 알람 PC</title>
+<style>
+:root{--bg:#0d0b0b;--card:#1a1616;--line:#2c2424;--text:#eee6e2;--sub:#a8998f;--red:#e2483f;--orange:#f08a1c;--purple:#8b6cf0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+main{max-width:640px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}
+.lead{color:var(--sub);font-size:14px;margin:0 0 20px;line-height:1.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:12px}
+.ev{display:flex;align-items:center;gap:14px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.info{flex:1;min-width:0}
+.name{font-weight:700;font-size:17px}
+.when{color:var(--sub);font-size:13px;margin-top:2px}
+.cd{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums}
+.opts{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;color:var(--sub);flex-wrap:wrap}
+select{background:#241e1e;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:14px}
+.sw{position:relative;width:46px;height:26px;flex:none}
+.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:#3a3232;border-radius:13px;cursor:pointer;transition:.2s}
+.sw span:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#ddd;border-radius:50%;transition:.2s}
+.sw input:checked+span{background:var(--red)}
+.sw input:checked+span:before{transform:translateX(20px)}
+button{background:var(--red);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-size:15px;font-weight:700;cursor:pointer;width:100%}
+button.ghost{background:#2a2323;color:var(--text)}
+.row{display:flex;gap:10px;margin-bottom:12px}
+.note{color:var(--sub);font-size:13px;line-height:1.6}
+.ok{color:#7ad48a}
+.dev{display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--text);margin-top:16px;background:linear-gradient(135deg,rgba(64,140,255,.16),rgba(64,200,220,.08));border-color:rgba(90,170,255,.35)}
+.dev-ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none;background:rgba(90,170,255,.18);color:#8cc4ff}
+.dev-ic svg{width:24px;height:24px}
+.dev-tx{flex:1;display:flex;flex-direction:column;gap:4px;font-size:15px}
+.dev-tx span{color:#8cc4ff;font-size:14px}
+.dev-go{font-size:28px;color:#8cc4ff}
+.setup{border-color:#6b2a24;background:#221413}
+.setup b{color:var(--text)}
+.setup ol{margin:8px 0 0;padding-left:20px;line-height:1.8;font-size:14px;color:var(--sub)}
+.setup .st{font-size:15px;font-weight:700;margin-bottom:10px}
+.vol{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.vol input{width:76px;accent-color:#e2483f}.vol b{width:38px;font-size:13px;color:var(--text)}
+.ring{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9;display:flex;align-items:center;gap:12px;background:#2a1414;border:1px solid var(--red);border-radius:14px;padding:10px 12px 10px 16px;box-shadow:0 8px 30px rgba(0,0,0,.6);font-weight:700;white-space:nowrap;max-width:calc(100% - 32px)}
+.ring span{overflow:hidden;text-overflow:ellipsis}.ring button{width:auto;padding:8px 14px;font-size:14px;flex:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>디아4 월드보스 알람 · PC</h1>
+  <p class="lead">이 탭을 열어 두면 시간에 맞춰 PC 알림과 소리로 알려 드려요. 설치는 필요 없어요.</p>
+
+  <div class="card setup" id="setup"></div>
+  <div class="card">
+    <div class="name">🖥️ 게임 화면 위에 뜨는 HUD 프로그램 (Windows)</div>
+    <p class="note" style="margin:6px 0 12px">월드보스·지옥물결·군단 남은 시간을 게임 위 작은 박스로 보여 줘요. 설치 없이 실행 파일 하나이고, 인터넷도 필요 없어요.</p>
+    <a href="/D4BossHud.zip" style="text-decoration:none"><button>HUD 프로그램 받기 (D4BossHud.zip)</button></a>
+    <ol class="note" style="margin:12px 0 0;padding-left:20px">
+      <li>크롬이 "멀웨어일 수 있는 파일"이라고 경고하면 <b>의심스러운 파일 다운로드</b>를 눌러 받아요. (서명이 없는 개인 프로그램이라 뜨는 안내예요.)</li>
+      <li>받은 zip 파일을 열어 <b>D4BossHud.exe</b>를 바탕화면 같은 곳에 꺼낸 뒤(압축 풀기), 더블클릭해 실행해요.</li>
+      <li>파란 창 "Windows의 PC 보호"가 뜨면 <b>추가 정보</b> → <b>실행</b>을 눌러요. (서명이 없는 개인 프로그램이라 뜨는 안내예요.)</li>
+      <li>실행하면 박스가 <b>편집 상태</b>로 떠요. 끌어서 위치를 옮기고, 박스 안 버튼으로 알림 시각·음량·크기·투명도를 정한 뒤 <b>고정</b>을 체크하거나 <b>F8</b>을 눌러요. 고정하면 게임 중에는 보기만 돼요.</li>
+      <li>알람이 울리면 <b>F8</b> 한 번으로 소리가 꺼져요. 평소에 F8을 누르면 편집 상태와 고정 상태가 바뀌어요. 기본 알림은 월드보스 1분 전이고, 지옥물결·군단은 박스의 알림 스위치로 켤 수 있어요.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <div class="opts" style="margin:0;padding:0;border:0;gap:8px">
+      <span style="color:var(--text);font-weight:700">알림 소리</span>
+      <select id="snd-pick" style="max-width:120px"></select>
+      <span class="vol" title="음량 (PC 스피커 음량 기준)"><span>🔊</span><input type="range" id="snd-vol" min="0" max="100" step="5" aria-label="알림 음량"><b id="snd-vol-v"></b></span>
+      <select id="snd-mode" aria-label="울림 방식"><option value="1">끌 때까지 계속</option><option value="0">한 번만</option></select>
+      <button id="snd-play" class="ghost" style="width:auto;padding:7px 11px;font-size:14px">▶ 듣기</button>
+      <input type="file" id="snd-file" accept="audio/*" hidden>
+    </div>
+    <p class="note" id="snd-note" style="margin:10px 0 0">'내 파일 선택'으로 PC에 있는 mp3 등 원하는 소리를 쓸 수 있어요.</p>
+  </div>
+  <div class="row">
+    <button id="test" class="ghost">알림 테스트 (소리·알림 확인)</button>
+  </div>
+  <div id="list"></div>
+  <p class="note">
+    · 이 탭(창)을 닫으면 알림이 오지 않아요. 다른 탭을 보고 있어도 괜찮아요.<br>
+    · 설정은 이 PC 브라우저에만 저장돼요. 어떤 정보도 보내지 않아요.<br>
+    · 휴대폰 앱: <a href="https://play.google.com/apps/testing/com.jaewook.d4timer" style="color:var(--orange)">디아4 월드보스 알람</a><br>
+    · 팬이 만든 비공식 도구이며 Blizzard Entertainment와 관련이 없습니다.
+  </p>
+  <a class="card dev" href="https://www.stackupinfra.com" target="_blank" rel="noopener">
+    <span class="dev-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r=".9" fill="currentColor"/><circle cx="7" cy="17" r=".9" fill="currentColor"/></svg></span>
+    <span class="dev-tx"><b>개발자 운영 사이트</b><span>www.stackupinfra.com (IT 인프라 입문 홈페이지)</span></span>
+    <span class="dev-go">›</span>
+  </a>
+</main>
+<script>
+const MIN = 60000;
+// Same cycle as the phone app (Schedule.kt); season.json can override it
+const EVENTS = [
+  { key: "boss", name: "월드보스", anchor: 1792587600000, period: 210 * MIN, duration: 15 * MIN, color: "var(--red)", on: true },
+  { key: "tide", name: "지옥물결", anchor: 1792540800000, period: 60 * MIN, duration: 55 * MIN, color: "var(--orange)", on: false },
+  { key: "legion", name: "군단", anchor: 1792589700000, period: 25 * MIN, duration: 4 * MIN, color: "var(--purple)", on: false },
+];
+const LEADS = [1, 2, 3, 5, 10, 15, 30];
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("d4pc_" + k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
+  set(k, v) { try { localStorage.setItem("d4pc_" + k, JSON.stringify(v)); } catch (_) {} },
+};
+const fired = new Set();
+
+function nextStart(e, now) { return e.anchor + (Math.floor((now - e.anchor) / e.period) + 1) * e.period; }
+function lastStart(e, now) { return nextStart(e, now) - e.period; }
+const pad = n => String(n).padStart(2, "0");
+const hm = t => { const d = new Date(t); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+function clock(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+  return (h ? h + ":" + pad(m) : m) + ":" + pad(s % 60);
+}
+
+function render() {
+  document.getElementById("list").innerHTML = EVENTS.map(e => `
+    <div class="card">
+      <div class="ev">
+        <i class="dot" style="background:${e.color}"></i>
+        <div class="info"><div class="name">${e.name}</div><div class="when" id="w-${e.key}"></div></div>
+        <div class="cd" id="c-${e.key}" style="color:${e.color}"></div>
+      </div>
+      <div class="opts">
+        <label class="sw"><input type="checkbox" id="on-${e.key}" ${store.get("on_" + e.key, e.on) ? "checked" : ""}><span></span></label>
+        <span>알림</span>
+        <select id="lead-${e.key}">${LEADS.map(l => `<option value="${l}" ${l === store.get("lead_" + e.key, 5) ? "selected" : ""}>${l}분 전</option>`).join("")}</select>
+      </div>
+    </div>`).join("");
+  EVENTS.forEach(e => {
+    document.getElementById("on-" + e.key).onchange = ev => store.set("on_" + e.key, ev.target.checked);
+    document.getElementById("lead-" + e.key).onchange = ev => store.set("lead_" + e.key, +ev.target.value);
+  });
+}
+
+function tick() {
+  const now = Date.now();
+  for (const e of EVENTS) {
+    const live = now < lastStart(e, now) + e.duration;
+    const s = live ? lastStart(e, now) : nextStart(e, now);
+    document.getElementById("w-" + e.key).textContent = live ? `진행 중 · ${hm(s + e.duration)} 종료까지 남은 시간` : `다음 ${hm(s)}`;
+    document.getElementById("c-" + e.key).textContent = live ? clock(s + e.duration - now) : clock(s - now);
+    // Background tabs may only tick once a minute, so ring if the alert time passed within the last 2 minutes
+    if (!store.get("on_" + e.key, e.on)) continue;
+    const next = nextStart(e, now), at = next - store.get("lead_" + e.key, 5) * MIN, id = e.key + next;
+    if (now >= at && now - at < 2 * MIN && !fired.has(id)) {
+      fired.add(id);
+      alarm(`${e.name} ${Math.max(1, Math.round((next - now) / MIN))}분 전`, `${hm(next)} 시작`);
+    }
+  }
+}
+
+// Browsers only allow sound after the user has clicked the page once
+let ctx = null, audioOn = false;
+function unlockAudio() {
+  try {
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    audioOn = true;
+  } catch (_) {}
+}
+document.addEventListener("click", () => { if (!audioOn) { unlockAudio(); paintPerm(); } });
+
+// Built-in sounds are synthesized, so the page needs no audio files
+const SOUNDS = {
+  chime: { name: "띵동 차임", notes: [[988, 0, .5], [784, .45, .8], [988, 1.6, .5], [784, 2.05, .8]], type: "sine" },
+  bell: { name: "알람 벨", notes: Array.from({ length: 12 }, (_, i) => [1046, i * .22, .16]), type: "square", vol: .12 },
+  horn: { name: "전투 나팔", notes: [[196, 0, .5], [262, .5, .5], [330, 1, .5], [392, 1.5, 1.2]], type: "sawtooth", vol: .14 },
+  melody: { name: "경쾌한 멜로디", notes: [[523, 0, .18], [659, .2, .18], [784, .4, .18], [1046, .6, .4], [784, 1.1, .18], [1046, 1.3, .6]], type: "triangle" },
+};
+function playNotes(snd) {
+  if (!ctx) unlockAudio();
+  const t0 = ctx.currentTime + .05, vol = Math.max(0.0002, (snd.vol || .3) * volPct() / 100);
+  for (const [f, at, len] of snd.notes) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = snd.type; o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.0001, t0 + at);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + at + .02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + len);
+    o.start(t0 + at); o.stop(t0 + at + len + .05);
+  }
+}
+// 0~100% of the PC's own speaker volume, remembered on this PC
+const volPct = () => store.get("vol", 100);
+// Returns a stopper for looping file sounds
+function beep(loop) {
+  if (volPct() <= 0) return null;
+  try {
+    const pick = store.get("sound", "chime");
+    if (pick === "file") {
+      const data = store.get("sound_file", null);
+      if (data) { const a = new Audio(data); a.volume = volPct() / 100; a.loop = !!loop; a.play().catch(() => playNotes(SOUNDS.chime)); return () => a.pause(); }
+    }
+    playNotes(SOUNDS[pick] || SOUNDS.chime);
+  } catch (_) {}
+  return null;
+}
+function paintSounds() {
+  const sel = document.getElementById("snd-pick");
+  const has = !!store.get("sound_file", null);
+  sel.innerHTML = Object.entries(SOUNDS).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join("") +
+    (has ? `<option value="file">내 파일: ${store.get("sound_file_name", "")}</option>` : "") +
+    `<option value="pick">내 파일 선택…</option>`;
+  sel.value = store.get("sound", "chime") === "file" && !has ? "chime" : store.get("sound", "chime");
+}
+document.getElementById("snd-pick").onchange = ev => {
+  if (ev.target.value === "pick") { document.getElementById("snd-file").click(); paintSounds(); return; }
+  store.set("sound", ev.target.value); unlockAudio(); beep();
+};
+const volIn = document.getElementById("snd-vol");
+const paintVol = () => { volIn.value = volPct(); document.getElementById("snd-vol-v").textContent = volPct() + "%"; };
+volIn.oninput = () => { store.set("vol", Number(volIn.value)); paintVol(); };
+volIn.onchange = () => { unlockAudio(); beep(); };
+paintVol();
+const modeIn = document.getElementById("snd-mode");
+modeIn.value = store.get("repeat", true) ? "1" : "0";
+modeIn.onchange = () => store.set("repeat", modeIn.value === "1");
+document.getElementById("snd-play").onclick = () => { unlockAudio(); beep(); };
+document.getElementById("snd-file").onchange = ev => {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  const note = document.getElementById("snd-note");
+  if (f.size > 3 * 1024 * 1024) { note.textContent = "3MB 이하 소리 파일만 쓸 수 있어요. 짧은 mp3를 골라 주세요."; return; }
+  const r = new FileReader();
+  r.onload = () => {
+    try { localStorage.setItem("d4pc_sound_file", JSON.stringify(r.result)); } catch (_) { note.textContent = "파일을 저장하지 못했어요. 더 작은 파일을 골라 주세요."; return; }
+    store.set("sound_file_name", f.name); store.set("sound", "file");
+    note.textContent = "내 파일로 바꿨어요: " + f.name;
+    paintSounds(); unlockAudio(); beep();
+  };
+  r.readAsDataURL(f);
+};
+
+// "끌 때까지 계속": repeat until the stop button (max 5 minutes), like the phone app
+const RING_MAX = 5 * 60 * 1000;
+let ringStop = null;
+function stopRing() {
+  if (ringStop) { ringStop(); ringStop = null; }
+  const bar = document.getElementById("ring"); if (bar) bar.remove();
+}
+function alarm(title, body) {
+  stopRing();
+  const repeat = store.get("repeat", true);
+  const fileStop = beep(repeat);
+  let timer = null, until = null;
+  if (repeat) {
+    if (!fileStop) timer = setInterval(() => beep(), 4000);
+    until = setTimeout(stopRing, RING_MAX);
+    const bar = document.createElement("div");
+    bar.id = "ring"; bar.className = "ring";
+    bar.innerHTML = `<span>🔔 ${title}</span><button>소리 끄기</button>`;
+    bar.querySelector("button").onclick = stopRing;
+    document.body.appendChild(bar);
+  }
+  ringStop = () => { clearInterval(timer); clearTimeout(until); fileStop && fileStop(); };
+  try {
+    if ("Notification" in window && Notification.permission === "granted") {
+      const n = new Notification(title, { body, requireInteraction: true });
+      n.onclick = () => { window.focus(); stopRing(); n.close(); };
+      n.onclose = stopRing;
+    }
+  } catch (_) {}
+  document.title = "🔔 " + title;
+  setTimeout(() => { document.title = "디아4 월드보스 알람 PC"; }, 60000);
+}
+
+function paintPerm() {
+  const p = "Notification" in window ? Notification.permission : "none";
+  const box = document.getElementById("setup");
+  if (p === "granted" && audioOn) { box.style.display = "none"; return; }
+  box.style.display = "";
+  const sound = audioOn ? "" : `<div class="st">🔊 먼저 아래 버튼을 한 번 눌러 주세요</div>
+    <p class="note" style="margin:0 0 10px">브라우저는 화면을 한 번 눌러야 소리를 낼 수 있어요.</p>`;
+  const perm =
+    p === "default" ? `<button id="perm">PC 알림 허용하기</button>
+      <p class="note" style="margin:10px 0 0">누르면 주소창 아래에 창이 떠요 → <b>허용</b>을 눌러 주세요.</p>` :
+    p === "denied" ? `<div class="st">PC 알림이 꺼져 있어요 (소리만 울려요)</div>
+      <ol><li>주소창 왼쪽 <b>자물쇠(또는 설정) 아이콘</b> 누르기</li>
+      <li><b>알림</b> 항목을 <b>허용</b>으로 바꾸기</li>
+      <li>이 페이지 <b>새로고침</b>(F5)</li></ol>` :
+    p === "none" ? `<p class="note" style="margin:0">이 브라우저는 PC 알림을 지원하지 않아요. 소리로만 알려 드려요.</p>` :
+    `<div class="ok">● PC 알림이 켜져 있어요.</div>`;
+  box.innerHTML = (audioOn ? "" : sound + (p === "default" ? "" : `<button id="snd">소리 켜기</button><div style="height:12px"></div>`)) + perm;
+  const pb = document.getElementById("perm");
+  if (pb) pb.onclick = () => { unlockAudio(); try { Notification.requestPermission().then(paintPerm); } catch (_) { paintPerm(); } };
+  const sb = document.getElementById("snd");
+  if (sb) sb.onclick = () => { unlockAudio(); paintPerm(); };
+}
+document.getElementById("test").onclick = () => unlockAudio() || alarm("알림 테스트", "이렇게 알려 드려요");
+
+// Optional schedule override from the app's season.json; any failure keeps the built-in cycle
+fetch("/season.json", { cache: "no-store" })
+  .then(r => r.ok ? r.json() : null)
+  .then(cfg => {
+    const sc = cfg && cfg.schedule;
+    if (!sc) return;
+    for (const e of EVENTS) {
+      const o = sc[e.key];
+      const a = o && Date.parse(o.anchor);
+      if (!a || !(o.periodMin > 0)) continue;
+      e.anchor = a; e.period = o.periodMin * MIN;
+      if (o.durationMin > 0) e.duration = o.durationMin * MIN;
+    }
+  }).catch(() => {});
+
+// A link shared from the phone app carries its settings: ?boss=5&tide=0&legion=0 (minutes before, 0 = off)
+try {
+  const q = new URLSearchParams(location.search);
+  let used = false;
+  for (const e of EVENTS) {
+    if (!q.has(e.key)) continue;
+    const m = parseInt(q.get(e.key), 10);
+    if (isNaN(m)) continue;
+    used = true;
+    store.set("on_" + e.key, m > 0);
+    if (m > 0) store.set("lead_" + e.key, LEADS.reduce((a, b) => Math.abs(b - m) < Math.abs(a - m) ? b : a));
+  }
+  if (used) history.replaceState(null, "", location.pathname);
+} catch (_) {}
+
+render(); paintSounds(); paintPerm(); tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>
