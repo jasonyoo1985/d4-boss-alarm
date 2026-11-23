@@ -18,17 +18,13 @@
     "answers": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWfD6vPXuLj3S2ZU4fyxTYAZjnBkTfwbtWdVOr_afKsT8KVxzqRDf5pEa_o_Lsf242xrYIsa_cUZMN/pub?gid=2118330553&single=true&output=csv"
   },
   "release": {
-    "code": 58,
-    "name": "3.6",
+    "code": 59,
+    "name": "3.7",
     "notes": [
-      "월드보스 알림에서 알람 받을 보스를 고를 수 있어요.",
-      "알림 시점에 20분·30분·60분 전이 추가됐어요.",
-      "시즌 종료 알림이 3일·1일 전으로 바뀌고, 새 시즌이 시작되면 자동으로 바뀌어요."
+      "앱 내부 최적화(코드 난독화·경량화), 앱 용량 절감 및 안정성 개선"
     ],
     "notesEn": [
-      "Choose which world bosses ring your alarm.",
-      "New reminder times: 20, 30 and 60 minutes before.",
-      "Season-end reminders 3 days and 1 day before; the season switches automatically."
+      "Internal optimization (code shrinking and obfuscation) for a smaller app size and better stability"
     ]
   },
   "clans": {
