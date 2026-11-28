@@ -18,13 +18,15 @@
     "answers": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWfD6vPXuLj3S2ZU4fyxTYAZjnBkTfwbtWdVOr_afKsT8KVxzqRDf5pEa_o_Lsf242xrYIsa_cUZMN/pub?gid=2118330553&single=true&output=csv"
   },
   "release": {
-    "code": 59,
-    "name": "3.7",
+    "code": 64,
+    "name": "3.10",
     "notes": [
-      "앱 내부 최적화(코드 난독화·경량화), 앱 용량 절감 및 안정성 개선"
+      "광고를 모두 없앴어요. 이제 깔끔하게 알람만 쓸 수 있어요.",
+      "알림 시간 프리셋, 오늘 하루 알람 끄기, 알람 상태 점검·고치기가 추가됐어요."
     ],
     "notesEn": [
-      "Internal optimization (code shrinking and obfuscation) for a smaller app size and better stability"
+      "All ads have been removed. Just a clean alarm app now.",
+      "Added notification timing presets, a one-day alarm pause, and alarm diagnostics with a quick fix."
     ]
   },
   "clans": {
