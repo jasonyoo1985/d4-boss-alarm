@@ -18,15 +18,15 @@
     "answers": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRWfD6vPXuLj3S2ZU4fyxTYAZjnBkTfwbtWdVOr_afKsT8KVxzqRDf5pEa_o_Lsf242xrYIsa_cUZMN/pub?gid=2118330553&single=true&output=csv"
   },
   "release": {
-    "code": 65,
-    "name": "3.11",
+    "code": 64,
+    "name": "3.10",
     "notes": [
-      "홈의 알람 점검 줄을 정리했어요. 직접 꺼둔 알람이나 고칠 수 없는 항목은 세지 않아요.",
-      "알람 진단 맨 아래 [이 안내 숨기기]로 홈의 점검 줄을 숨길 수 있어요."
+      "광고를 모두 없앴어요. 이제 깔끔하게 알람만 쓸 수 있어요.",
+      "알림 시간 프리셋, 오늘 하루 알람 끄기, 알람 상태 점검·고치기가 추가됐어요."
     ],
     "notesEn": [
-      "Cleaned up the alarm check line on Home. Alarms you turned off and things you can't fix are no longer counted.",
-      "Tap [Hide this notice] at the bottom of Alarm check to hide the Home line."
+      "All ads have been removed. Just a clean alarm app now.",
+      "Added notification timing presets, a one-day alarm pause, and alarm diagnostics with a quick fix."
     ]
   },
   "clans": {
